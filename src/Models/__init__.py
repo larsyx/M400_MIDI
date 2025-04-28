@@ -7,3 +7,4 @@ from .scena import Scena
 from .utente import RuoloUtente
 from .utente import Utente
 from .partecipazioneScena import PartecipazioneScena
+from .layoutCanale import LayoutCanale 

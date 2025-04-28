@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>M-400 remote control</title>
+    </head>
+
+    <body>
+        <h3>Scene</h3>
+        <p>Seleziona una scena</p>
+
+        <div>
+            {% for scene in scenes %}
+                <form class="buttons" action ="./scene_{{ scene.id }}" method="get" style="display: inline;">
+                    <button type="submit">{{scene.nome}}</button>
+                </form>
+            {% endfor %}
+        </div>
+
+    </body>
+</html>

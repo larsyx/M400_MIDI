@@ -1,12 +1,20 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from Models import Base, Aux, Canale
+import os
+import sys
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from Models.base import Base
+from Models.aux_ import Aux
+from Models.canale import Canale
+from Models.utente import Utente
+from Models.partecipazioneScena import PartecipazioneScena
+from Models.scena import Scena
+from Models.layoutCanale import LayoutCanale
 
 # Inizializzazione DB canali e aux
 
-
-# Connessione al DB SQLite (file locale)
 DATABASE_URL = "sqlite:///Database/database.db"
 engine = create_engine(DATABASE_URL, echo=True)
 
@@ -44,8 +52,38 @@ canali = [
     for i in range(1, 49)
 ]
 
+utente = Utente(username="admin", nome="admin", ruolo="amministratore")
+utente1 = Utente(username="Gabri", nome="Gabriele", ruolo="utente")
+
+scena = Scena(id= 0, nome="Domenica", descrizione="scena della domenica")
+
+
+
+partecipazione = PartecipazioneScena(
+    scenaId=scena.id,
+    utenteUsername=utente1.username,
+    aux_id=aux[0].id,
+)
+
+layoutCanale = [
+    LayoutCanale(
+        scenaId=scena.id,
+        canaleId=canali[i].id,
+        user=utente1.username,
+        posizione=i,
+        descrizione=f"Descrizione canale {i + 1}",
+    )
+    for i in range(len(canali))
+]
+
+
 session.add_all(aux)
 session.add_all(canali)
+session.add(utente)
+session.add(utente1)
+session.add(scena)
+session.add(partecipazione)
+session.add_all(layoutCanale)
 session.commit()
 
 session.close()

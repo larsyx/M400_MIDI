@@ -17,5 +17,6 @@ class Utente(Base):
     nome = Column(String, nullable=False)
     ruolo = Column(SQLEnum(RuoloUtente), nullable=False)
 
-    partecipazioneScena = relationship("partecipazioneScena", back_populates="utente")
-
+    partecipazioneScena = relationship("PartecipazioneScena", back_populates="utente")
+    layoutCanale = relationship("LayoutCanale", back_populates="utente")
+    

@@ -8,4 +8,5 @@ class Scena(Base):
     nome = Column(String, nullable=False)
     descrizione = Column(String, nullable=True)
 
-    partecipazioneScena = relationship("partecipazioneScena", back_populates="scena")
+    partecipazioneScena = relationship("PartecipazioneScena", back_populates="scena")
+    layoutCanale = relationship("LayoutCanale", back_populates="scena")

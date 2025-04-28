@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+sqlalchemy
+mido
+dotenv
+python-multipart
+python-jose[cryptography]
+jinja2

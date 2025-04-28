@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>M-400 remote control</title>
+    </head>
+
+    <body>
+       <div class="slider">
+            {% for canale in canali %}
+                <div>
+                    {{ canale.descrizione}}
+                    <input type="range" min="0" max="100" value="0" id="canale_{{ canale.canaleId }}" onchange="sendMessage( this.id , this.value);", oninput="sendMessage(this.id , this.value);">
+                </div>
+            {% endfor %}
+       </div>
+
+
+       <script>
+            let aux = {{ indirizzoaux | tojson}};
+
+            let socket = new WebSocket("ws://localhost:8000/ws/liveControl");
+
+            socket.onopen = function(event) {
+                console.log("connessione aperta");
+            }
+
+            socket.onmessage = function(event){
+                const data = JSON.parse(event.data);
+                let doc = document.getElementById("canale_"+data.canaleId);
+                doc.value = data.value;
+            }
+
+            socket.onclose = function(event) {
+                console.log("connessione chiusa");
+            }
+
+            function sendMessage(canaleId, value) {
+                console.log("sendMessage", canaleId, value);
+                const message = {
+                    canaleId: canaleId,
+                    value: value
+                };
+                socket.send(JSON.stringify(message));
+            }
+       </script>
+    </body>
+</html>

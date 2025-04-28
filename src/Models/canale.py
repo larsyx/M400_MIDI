@@ -1,13 +1,15 @@
-from sqlalchemy import Column, String
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship, foreign
+
+
 from .base import Base
 
 
 class Canale(Base):
     __tablename__ = 'canale'
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     nome = Column(String, nullable=False)
     indirizzoMidi = Column(String, nullable=False)
 
-    partecipazioneScena = relationship("PartecipazioneScena", back_populates="canale")
+    layoutCanale = relationship("LayoutCanale", back_populates="canale")
