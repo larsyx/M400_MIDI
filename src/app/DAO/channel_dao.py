@@ -21,3 +21,8 @@ class ChannelDAO:
         except Exception as e:
             print(f"Error retrieving all channels: {e}")
             return None
+
+    def get_channel_address(self, channel_id):
+        channel = self.get_channel_by_id(channel_id)
+
+        return channel.indirizzoMidi if channel else None

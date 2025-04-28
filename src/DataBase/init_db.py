@@ -54,6 +54,7 @@ canali = [
 
 utente = Utente(username="admin", nome="admin", ruolo="amministratore")
 utente1 = Utente(username="Gabri", nome="Gabriele", ruolo="utente")
+utente2 = Utente(username="Gionathan", nome="Gionathan", ruolo="utente")
 
 scena = Scena(id= 0, nome="Domenica", descrizione="scena della domenica")
 
@@ -62,6 +63,12 @@ scena = Scena(id= 0, nome="Domenica", descrizione="scena della domenica")
 partecipazione = PartecipazioneScena(
     scenaId=scena.id,
     utenteUsername=utente1.username,
+    aux_id=aux[13].id,
+)
+
+partecipazione2 = PartecipazioneScena(
+    scenaId=scena.id,
+    utenteUsername=utente2.username,
     aux_id=aux[0].id,
 )
 
@@ -71,19 +78,33 @@ layoutCanale = [
         canaleId=canali[i].id,
         user=utente1.username,
         posizione=i,
-        descrizione=f"Descrizione canale {i + 1}",
+        descrizione=f"CH {i + 1}",
     )
     for i in range(len(canali))
 ]
 
 
+layoutCanale2 = [
+    LayoutCanale(
+        scenaId=scena.id,
+        canaleId=canali[i].id,
+        user=utente2.username,
+        posizione=i,
+        descrizione=f"CH {i + 1}",
+    )
+    for i in range(len(canali))
+]
+
 session.add_all(aux)
 session.add_all(canali)
 session.add(utente)
 session.add(utente1)
+session.add(utente2)
 session.add(scena)
 session.add(partecipazione)
+session.add(partecipazione2)
 session.add_all(layoutCanale)
+session.add_all(layoutCanale2)
 session.commit()
 
 session.close()

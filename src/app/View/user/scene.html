@@ -1,47 +1,109 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>M-400 remote control</title>
+
+        <style>
+            .slider {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                padding: 50px;
+            }
+        
+            .canale-container {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+        
+            .descrizione {
+                min-width: 150px; /* larghezza fissa per il nome del canale */
+                text-align: left;
+                font-weight: bold;
+            }
+        
+            input[type="range"] {
+                height: fit-content;
+                width: 90%;
+                flex: 1; /* prende tutto lo spazio disponibile */
+            }
+
+            @media (max-width: 900px) {
+                .canale-container {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .descrizione {
+                    min-width: unset;
+                    width: 100%;
+                    text-align: center;
+                    margin-bottom: 10px;
+                    font-size: 1rem; /* ancora più grande su mobile */
+                }
+
+                .inputRange {
+                    height: 150px; /* slider ancora più alto su mobile */
+                }
+            }
+        </style>
     </head>
 
     <body>
        <div class="slider">
             {% for canale in canali %}
-                <div>
-                    {{ canale.descrizione}}
-                    <input type="range" min="0" max="100" value="0" id="canale_{{ canale.canaleId }}" onchange="sendMessage( this.id , this.value);", oninput="sendMessage(this.id , this.value);">
+                <div class="canale-container">
+                    <span class="descrizione">{{ canale.descrizione}}</span>
+                    <input class="inputRange"type="range" min="0" max="100" value="0" id="canale_{{ canale.canaleId }}" onchange="sendMessage( {{canale.canaleId}} , this.value);", oninput="sendMessage({{canale.canaleId}} , this.value);">
                 </div>
             {% endfor %}
        </div>
 
 
        <script>
-            let aux = {{ indirizzoaux | tojson}};
+             let aux = {{ indirizzoaux | tojson}};
+            // let socket = new WebSocket("wss://localhost:8000/ws/liveControl");
 
-            let socket = new WebSocket("ws://localhost:8000/ws/liveControl");
+            // socket.onopen = function(event) {
+            //     console.log("connessione aperta");
+            // }
 
-            socket.onopen = function(event) {
-                console.log("connessione aperta");
-            }
+            // socket.onmessage = function(event){
+            //     const data = JSON.parse(event.data);
+            //     let doc = document.getElementById("canale_"+data.canaleId);
+            //     doc.value = data.value;
+            // }
 
-            socket.onmessage = function(event){
-                const data = JSON.parse(event.data);
-                let doc = document.getElementById("canale_"+data.canaleId);
-                doc.value = data.value;
-            }
+            // socket.onclose = function(event) {
+            //     console.log("connessione chiusa");
+            // }
 
-            socket.onclose = function(event) {
-                console.log("connessione chiusa");
-            }
+            // function sendMessage(canaleId, value) {
+            //     console.log("sendMessage", canaleId, value);
+            //     const message = {
+            //         canaleId: canaleId,
+            //         value: value,
+            //         aux: aux
+            //     };
+            //     socket.send(JSON.stringify(message));
+            // }
 
             function sendMessage(canaleId, value) {
-                console.log("sendMessage", canaleId, value);
-                const message = {
+            const xhttp = new XMLHttpRequest();
+            xhttp.open("POST", "./set", true)
+            xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+            const message = {
                     canaleId: canaleId,
-                    value: value
-                };
-                socket.send(JSON.stringify(message));
-            }
+                    value: value,
+                    aux: aux
+            };
+
+;
+            xhttp.send(JSON.stringify(message));
+}
        </script>
     </body>
 </html>

@@ -13,13 +13,13 @@ midicontr.send_command([0x00, 0x00, 0x00], [0x00, 0x00, 0x00])
 
 
 app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # oppure specifica ["http://localhost:8080"]
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["*"],  # oppure specifica ["http://localhost:8080"]
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 app.include_router(admin_routes.router)
 app.include_router(login_routes.router)
 app.include_router(ws_routes.router)

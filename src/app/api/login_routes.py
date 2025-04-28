@@ -24,7 +24,7 @@ async def login(username: str = Form(...)):
 @router.get("/home", response_class=RedirectResponse)
 async def home(request: Request):
     access_token = request.cookies.get("access_token")
-
+    
     if not access_token:
         raise HTTPException(status_code=401, detail="Unauthorized")
     

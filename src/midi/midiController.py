@@ -1,3 +1,4 @@
+import math
 import mido
 from dotenv import load_dotenv
 import os
@@ -13,6 +14,7 @@ Command_ID = int(os.getenv("Command_ID_Data_Set"), 0)
 header = [int(Manufacturer_ID), int(Device_ID)] + [int(a) for a in Model_ID] + [int(Command_ID)]
 
 
+
 class MidiController: 
     def __init__(self, name):
         self.ped = mido.get_output_names()[1]
@@ -26,6 +28,35 @@ class MidiController:
         with mido.open_output(self.ped) as outport:
             outport.send(msg)
 
+    def convertValue(value):
+        if value == 0:
+            return [0x78, 0x76]
+        if value >=75:
+            newvalue = ((value-75)/25)*100 
+            return [0x00, int(newvalue)]
+        
+        #conversione in db
+        decibel = 0
+        if value >= 50:
+            decibel = (((value-50)*10)/25) -10
+
+        if value < 50 and value >= 20:
+            decibel = value - 60
+
+        if value < 20 and value >= 10:
+            decibel = ((value-10)*2) -60
+
+        if value < 10 and value >= 1:
+            decibel = ((value-1)*(29.6/9))-89.6
+
+
+        div = decibel/-12.
+        8
+        first_value = 128 - math.ceil(div)
+        second_value = int((math.ceil(div) - div)*127)
+
+        return [first_value, second_value]
+    
 
 def roland_checksum(address_bytes, data_bytes):
     total = sum(address_bytes) + sum(data_bytes)
