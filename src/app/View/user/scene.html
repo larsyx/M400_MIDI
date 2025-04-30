@@ -59,11 +59,20 @@
                     <input class="inputRange"type="range" min="0" max="100" value="0" id="canale_{{ canale.canaleId }}" onchange="sendMessage( {{canale.canaleId}} , this.value);", oninput="sendMessage({{canale.canaleId}} , this.value);">
                 </div>
             {% endfor %}
+            <div class="canale-container">
+                <span class="descrizione">Main</span>
+                <input class="inputRange"type="range" min="0" max="100" value="0" id="main" onchange="sendMessageMain(this.value);", oninput="sendMessageMain(this.value);">
+            </div>
+       </div>
+
+       <div>
+            <button onclick="window.location.href='./layout'">Modifica Layout</button>
        </div>
 
 
        <script>
              let aux = {{ indirizzoaux | tojson}};
+             let auxMain = {{ indirizzoauxMain | tojson}};
             // let socket = new WebSocket("wss://localhost:8000/ws/liveControl");
 
             // socket.onopen = function(event) {
@@ -91,19 +100,32 @@
             // }
 
             function sendMessage(canaleId, value) {
-            const xhttp = new XMLHttpRequest();
-            xhttp.open("POST", "./set", true)
-            xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("POST", "./set", true)
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
 
-            const message = {
-                    canaleId: canaleId,
-                    value: value,
-                    aux: aux
-            };
+                const message = {
+                        canaleId: canaleId,
+                        value: value,
+                        aux: aux
+                };
 
-;
-            xhttp.send(JSON.stringify(message));
-}
+                xhttp.send(JSON.stringify(message));
+            }
+
+            function sendMessageMain(value){
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("POST", "./set/main", true)
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+                const message = {
+                        value: value,
+                        aux:auxMain
+                };
+
+                xhttp.send(JSON.stringify(message));
+            }
+
        </script>
     </body>
 </html>

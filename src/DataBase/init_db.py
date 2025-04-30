@@ -29,22 +29,22 @@ session = Session()
 
 # Inizializzazione
 aux = [
-    Aux(id=1, nome="Aux 1", indirizzoMidi="0x01, 0x02"),
-    Aux(id=2, nome="Aux 2", indirizzoMidi="0x01, 0x0A"),
-    Aux(id=3, nome="Aux 3", indirizzoMidi="0x01, 0x12"),
-    Aux(id=4, nome="Aux 4", indirizzoMidi="0x01, 0x1A"),
-    Aux(id=5, nome="Aux 5", indirizzoMidi="0x01, 0x22"),
-    Aux(id=6, nome="Aux 6", indirizzoMidi="0x01, 0x2A"),
-    Aux(id=7, nome="Aux 7", indirizzoMidi="0x01, 0x32"),
-    Aux(id=8, nome="Aux 8", indirizzoMidi="0x01, 0x3A"),
-    Aux(id=9, nome="Aux 9", indirizzoMidi="0x01, 0x42"),
-    Aux(id=10, nome="Aux 10", indirizzoMidi="0x01, 0x4A"),
-    Aux(id=11, nome="Aux 11", indirizzoMidi="0x01, 0x52"),
-    Aux(id=12, nome="Aux 12", indirizzoMidi="0x01, 0x5A"),
-    Aux(id=13, nome="Aux 13", indirizzoMidi="0x01, 0x62"),
-    Aux(id=14, nome="Aux 14", indirizzoMidi="0x01, 0x6A"),
-    Aux(id=15, nome="Aux 15", indirizzoMidi="0x01, 0x72"),
-    Aux(id=16, nome="Aux 16", indirizzoMidi="0x01, 0x7A"),
+    Aux(id=1, nome="Aux 1", indirizzoMidi="0x01, 0x02", indirizzoMidiMain="0x05, 0x00, 0x00, 0x0E"),
+    Aux(id=2, nome="Aux 2", indirizzoMidi="0x01, 0x0A", indirizzoMidiMain="0x05, 0x01, 0x00, 0x0E"),
+    Aux(id=3, nome="Aux 3", indirizzoMidi="0x01, 0x12", indirizzoMidiMain="0x05, 0x02, 0x00, 0x0E"),
+    Aux(id=4, nome="Aux 4", indirizzoMidi="0x01, 0x1A", indirizzoMidiMain="0x05, 0x03, 0x00, 0x0E"),
+    Aux(id=5, nome="Aux 5", indirizzoMidi="0x01, 0x22", indirizzoMidiMain="0x05, 0x04, 0x00, 0x0E"),
+    Aux(id=6, nome="Aux 6", indirizzoMidi="0x01, 0x2A", indirizzoMidiMain="0x05, 0x05, 0x00, 0x0E"),
+    Aux(id=7, nome="Aux 7", indirizzoMidi="0x01, 0x32", indirizzoMidiMain="0x05, 0x06, 0x00, 0x0E"),
+    Aux(id=8, nome="Aux 8", indirizzoMidi="0x01, 0x3A", indirizzoMidiMain="0x05, 0x07, 0x00, 0x0E"),
+    Aux(id=9, nome="Aux 9", indirizzoMidi="0x01, 0x42", indirizzoMidiMain="0x05, 0x08, 0x00, 0x0E"),
+    Aux(id=10, nome="Aux 10", indirizzoMidi="0x01, 0x4A", indirizzoMidiMain="0x05, 0x09, 0x00, 0x0E"),
+    Aux(id=11, nome="Aux 11", indirizzoMidi="0x01, 0x52", indirizzoMidiMain="0x05, 0x0A, 0x00, 0x0E"),
+    Aux(id=12, nome="Aux 12", indirizzoMidi="0x01, 0x5A", indirizzoMidiMain="0x05, 0x0B, 0x00, 0x0E"),
+    Aux(id=13, nome="Aux 13", indirizzoMidi="0x01, 0x62", indirizzoMidiMain="0x05, 0x0C, 0x00, 0x0E"),
+    Aux(id=14, nome="Aux 14", indirizzoMidi="0x01, 0x6A", indirizzoMidiMain="0x05, 0x0D, 0x00, 0x0E"),
+    Aux(id=15, nome="Aux 15", indirizzoMidi="0x01, 0x72", indirizzoMidiMain="0x05, 0x0E, 0x00, 0x0E"),
+    Aux(id=16, nome="Aux 16", indirizzoMidi="0x01, 0x7A", indirizzoMidiMain="0x05, 0x0F, 0x00, 0x0E"),
 ]
 
 canali = [
@@ -84,16 +84,16 @@ layoutCanale = [
 ]
 
 
-layoutCanale2 = [
-    LayoutCanale(
-        scenaId=scena.id,
-        canaleId=canali[i].id,
-        user=utente2.username,
-        posizione=i,
-        descrizione=f"CH {i + 1}",
-    )
-    for i in range(len(canali))
-]
+# layoutCanale2 = [
+#     LayoutCanale(
+#         scenaId=scena.id,
+#         canaleId=canali[i].id,
+#         user=utente2.username,
+#         posizione=i,
+#         descrizione=f"CH {i + 1}",
+#     )
+#     for i in range(40)
+# ]
 
 session.add_all(aux)
 session.add_all(canali)
@@ -104,7 +104,7 @@ session.add(scena)
 session.add(partecipazione)
 session.add(partecipazione2)
 session.add_all(layoutCanale)
-session.add_all(layoutCanale2)
+# session.add_all(layoutCanale2)
 session.commit()
 
 session.close()

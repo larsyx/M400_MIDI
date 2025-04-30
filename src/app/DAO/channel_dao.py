@@ -26,3 +26,4 @@ class ChannelDAO:
         channel = self.get_channel_by_id(channel_id)
 
         return channel.indirizzoMidi if channel else None
+    

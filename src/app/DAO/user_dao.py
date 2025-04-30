@@ -1,7 +1,7 @@
 
 from Database.database import DBSession
 from Models.utente import RuoloUtente, Utente
-
+from sqlalchemy.orm import Session
 
 class UserDAO:
     def __init__(self):

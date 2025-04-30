@@ -1,6 +1,8 @@
 
 
+from sqlalchemy import exists
 from Database.database import DBSession
+from Models.canale import Canale
 from Models.layoutCanale import LayoutCanale
 
 
@@ -27,7 +29,7 @@ class LayoutCanaleDAO:
             layout = self.db.query(LayoutCanale).filter(
                 LayoutCanale.user == user,
                 LayoutCanale.scenaId == scene
-            ).all()
+            ).order_by(LayoutCanale.posizione).all()
             return layout
         except Exception as e:
             print(f"Error retrieving layout: {e}")
@@ -44,6 +46,44 @@ class LayoutCanaleDAO:
             self.db.commit()
 
             return layout
+        except Exception as e:
+            print(f"Error retrieving layout: {e}")
+            return None
+        
+    def addLayoutCanale(self, user, scene, canale, posizione, descrizione):
+        try: 
+            layout = LayoutCanale(
+                scenaId=scene,
+                canaleId=canale,
+                user=user,
+                posizione=posizione,
+                descrizione=descrizione
+            )
+
+            self.db.add(layout)
+            self.db.commit()
+            return True
+        except Exception as e:
+            print(f"Error retrieving layout: {e}")
+            return None
+        
+    def removeLayoutCanale(self, user, scene, canale):
+        try:
+            channelToRemove = self.getLayoutCanaleById(user, scene, canale)
+
+            updateChannel = self.db.query(LayoutCanale).filter(
+                    LayoutCanale.user == user,
+                    LayoutCanale.scenaId == scene,
+                    LayoutCanale.posizione > channelToRemove.posizione
+            ).all()
+
+            for channel in updateChannel:
+                self.setLayoutCanale(user,scene,channel.canaleId, channel.posizione-1, channel.descrizione)
+
+            self.db.delete(channelToRemove)
+            self.db.commit()
+            return True
+        
         except Exception as e:
             print(f"Error retrieving layout: {e}")
             return None

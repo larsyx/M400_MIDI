@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>M-400 remote control</title>
+
+        <style>
+            ul {
+              list-style: none;
+              padding: 0;
+              width: 300px;
+            }
+            li {
+              padding: 10px;
+              margin: 5px 0;
+              background-color: #f0f0f0;
+              cursor: move;
+              border: 1px solid #ccc;
+            }
+        </style>
+
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    </head>
+
+    <body>
+        <div>
+            {% for canale in canali %}
+            <form action="./layout/addChannelLayout", method="POST" style="display: inline-block;">
+                <input type="hidden" name="canale_id" value={{canale.id}}>
+                <input type="hidden" name="posizione" value="{{layout | length}}">
+                <input type="hidden" name="descrizione" value="{{canale.nome}}">
+                <button type="submit">{{canale.nome}}</button>
+            </form>
+            {% endfor %}
+        </div>
+
+        <div>
+            <span>Canali layout</span>
+            <ul id="sortable element">
+            {% for layoutcanale in layout %}
+                <li class="channelLayout" draggable="true" style="display: inline-block;">{{layoutcanale.canaleId}} 
+                    <input value="{{layoutcanale.descrizione}}"> 
+                    <form action="./layout/removeChannelLayout", method="POST" style="display: inline-block;">
+                        <input type="hidden" name="canale_id" value="{{layoutcanale.canaleId}}">
+                        <button type="submit">Elimina</button>
+                    </form>
+                </li>                
+            {% endfor %}
+            </ul>
+        </div>
+
+        <div>
+            <button type = "button" onclick='window.location.href = "./";'>Torna a Live Control</button>
+            <button type = "button" onclick="saveLayout()">Salva Layout</button>
+        </div>
+
+        <script>
+            new Sortable(document.getElementById("sortable element"), {
+                animation: 150
+            });
+            const list = document.getElementById("sortable element")
+
+            let draggedItem = null;
+
+            list.addEventListener('dragstart', e => {
+                draggedItem = e.target;
+                setTimeout(() => {
+                    e.target.style.display = 'none';
+                }, 0);
+                });
+
+            list.addEventListener('dragend', e => {
+                setTimeout(() => {
+                    draggedItem.style.display = 'block';
+                    draggedItem = null;
+                }, 0);
+            });
+
+            list.addEventListener('dragover', e => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(list, e.clientY);
+                if (afterElement == null) {
+                    list.appendChild(draggedItem);
+                } else {
+                    list.insertBefore(draggedItem, afterElement);
+                }
+            });
+
+            function getDragAfterElement(container, y) {
+                const draggableElements = [...container.querySelectorAll('li:not(.dragging)')];
+
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                    } else {
+                    return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+
+            function saveLayout(){
+                let list = document.getElementById("sortable element");
+
+                let channelsLayout = list.getElementsByClassName("channelLayout");
+                
+                let channelsLayoutArray = []
+                for(let i=0; i<channelsLayout.length; i++){
+                    const canaleId = channelsLayout[i].childNodes[0].nodeValue.trim();
+                    const descrizione = channelsLayout[i].querySelector('input[type="text"], input:not([type="hidden"])').value;
+
+                    ch = { 
+                        canaleId: canaleId,
+                        descrizione: descrizione,
+                        posizione: i
+                    };
+                    channelsLayoutArray.push(ch);
+                }
+
+                request = {
+                    channelsLayout: channelsLayoutArray
+                };
+
+
+                const xhttp = new XMLHttpRequest()
+                xhttp.open("POST", "./layout/updateLayout")
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+                xhttp.onload = function(){
+                    alert(xhttp.responseText);
+                }
+
+                xhttp.send(JSON.stringify(request));
+
+            }
+        </script>
+    </body>
+</html>
