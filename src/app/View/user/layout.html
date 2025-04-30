@@ -23,14 +23,11 @@
     </head>
 
     <body>
-        <div>
+        <div id ="addbuttons">
             {% for canale in canali %}
-            <form action="./layout/addChannelLayout", method="POST" style="display: inline-block;">
-                <input type="hidden" name="canale_id" value={{canale.id}}>
-                <input type="hidden" name="posizione" value="{{layout | length}}">
-                <input type="hidden" name="descrizione" value="{{canale.nome}}">
-                <button type="submit">{{canale.nome}}</button>
-            </form>
+            <div id= "Add_{{canale.id}}"" style="display: inline-block;">
+                <button type="button" onclick="addChannelLayout({{canale.id}}, '{{canale.nome}}')">{{canale.nome}}</button>
+            </div>
             {% endfor %}
         </div>
 
@@ -38,12 +35,11 @@
             <span>Canali layout</span>
             <ul id="sortable element">
             {% for layoutcanale in layout %}
-                <li class="channelLayout" draggable="true" style="display: inline-block;">{{layoutcanale.canaleId}} 
+                <li id ="Remove_{{layoutcanale.canaleId}}" class="channelLayout" draggable="true" style="display: inline-block;">{{layoutcanale.canaleId}} 
                     <input value="{{layoutcanale.descrizione}}"> 
-                    <form action="./layout/removeChannelLayout", method="POST" style="display: inline-block;">
-                        <input type="hidden" name="canale_id" value="{{layoutcanale.canaleId}}">
-                        <button type="submit">Elimina</button>
-                    </form>
+                    <div style="display: inline-block;">
+                        <button type="button" onclick="removeChannelLayout({{layoutcanale.canaleId}})">Elimina</button>
+                    </div>
                 </li>                
             {% endfor %}
             </ul>
@@ -100,6 +96,74 @@
                 }, { offset: Number.NEGATIVE_INFINITY }).element;
             }
 
+            function addChannelLayout(canaleId, descrizione){
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("POST", "./layout/addChannelLayout");
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+                message = {
+                    canale_id : canaleId,
+                    descrizione : descrizione
+                };
+
+                xhttp.send(JSON.stringify(message));
+
+                xhttp.onload = function(){
+                    let form = document.getElementById( `Add_${canaleId}`);
+                    form.remove()
+
+                    let li = document.createElement("li");
+                    li.id = `Remove_${canaleId}`
+                    li.className = "ChannelLayout";
+                    li.setAttribute("draggable", "true");
+                    li.style.display = "inline-block";
+                    li.innerHTML = `
+                        ${canaleId}
+                        <input value="${descrizione}">
+                        <div style="display: inline-block;">
+                            <button type="button" onclick="removeChannelLayout(${canaleId})">Elimina</button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                }
+
+                xhttp.onerror = function(){
+                    alert("errore", xhttp.responseText);
+                }
+            }
+
+            function removeChannelLayout(canaleId){
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("POST", "./layout/removeChannelLayout");
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+                xhttp.onload = function(){
+                    const name = xhttp.responseText.slice(1, -1)
+                    let li = document.getElementById(`Remove_${canaleId}`);
+                    if(li)
+                        li.remove();
+
+                    const div = document.createElement("div");
+                    div.id = `Add_${canaleId}`;
+                    div.style.display = "inline-block";
+                    div.innerHTML = `
+                        <button type="button" onclick="addChannelLayout(${canaleId}, '${name}')">${name}</button>
+                    `;
+
+                    const container = document.getElementById("addbuttons");
+                    container.appendChild(div);
+                }
+                
+                xhttp.onerror = function(){
+                    alert("errore", xhttp.responseText);
+                }
+
+                message = {canale_id : canaleId};
+
+                xhttp.send(JSON.stringify(message));
+                
+            }
+
             function saveLayout(){
                 let list = document.getElementById("sortable element");
 
@@ -123,8 +187,8 @@
                 };
 
 
-                const xhttp = new XMLHttpRequest()
-                xhttp.open("POST", "./layout/updateLayout")
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("POST", "./layout/updateLayout");
                 xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
 
                 xhttp.onload = function(){

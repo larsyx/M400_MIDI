@@ -1,6 +1,6 @@
 
 
-from sqlalchemy import exists
+from sqlalchemy import desc, exists
 from Database.database import DBSession
 from Models.canale import Canale
 from Models.layoutCanale import LayoutCanale
@@ -50,8 +50,16 @@ class LayoutCanaleDAO:
             print(f"Error retrieving layout: {e}")
             return None
         
-    def addLayoutCanale(self, user, scene, canale, posizione, descrizione):
+    def addLayoutCanale(self, user, scene, canale, descrizione):
         try: 
+            layout = self.db.query(LayoutCanale).filter(
+                LayoutCanale.user == user,
+                LayoutCanale.scenaId == scene
+            ).order_by(desc(LayoutCanale.posizione)).first()
+            posizione=0
+            if(layout):
+                posizione = layout.posizione +1
+
             layout = LayoutCanale(
                 scenaId=scene,
                 canaleId=canale,

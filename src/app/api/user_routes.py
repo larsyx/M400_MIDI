@@ -94,7 +94,7 @@ async def setFaderMain(request: Request):
     midiController.send_command(addressAuxhex, MidiController.convertValue(int(value)))
    
 @router.post("/user/scene_{scene_id}/layout/addChannelLayout")
-async def aggiungiCanaleLayout(request: Request, scene_id: int, canale_id : int = Form(...), posizione: str = Form(...), descrizione: str = Form(...)):
+async def aggiungiCanaleLayout(request: Request, scene_id: int):
     access_token = request.cookies.get("access_token")
 
     user_data = get_current_user(access_token)
@@ -104,13 +104,16 @@ async def aggiungiCanaleLayout(request: Request, scene_id: int, canale_id : int 
     
     layoutDAO = LayoutCanaleDAO()
 
-    layoutDAO.addLayoutCanale(user_data["sub"], scene_id, canale_id, posizione, descrizione)
+    data = await request.json()
 
-    return RedirectResponse(url="./", status_code=302)
+
+    layoutDAO.addLayoutCanale(user_data["sub"], scene_id, data.get("canale_id"), data.get("descrizione"))
+
+    return True
 
 
 @router.post("/user/scene_{scene_id}/layout/removeChannelLayout")
-async def removeCanaleLayout(request: Request, scene_id: int, canale_id : int = Form(...)):
+async def removeCanaleLayout(request: Request, scene_id: int):
     access_token = request.cookies.get("access_token")
 
     user_data = get_current_user(access_token)
@@ -121,10 +124,14 @@ async def removeCanaleLayout(request: Request, scene_id: int, canale_id : int = 
 
     layoutDAO = LayoutCanaleDAO()
 
-    if layoutDAO.removeLayoutCanale(user_data["sub"], scene_id, canale_id):
-        print(True)
+    data = await request.json()
+    canale_id = data.get("canale_id")
 
-    return RedirectResponse(url="./", status_code=302)
+    layoutDAO.removeLayoutCanale(user_data["sub"], scene_id, canale_id)
+
+    channelDAO = ChannelDAO()
+    channel = channelDAO.get_channel_by_id(canale_id)
+    return channel.nome
 
     
 @router.post("/user/scene_{scene_id}/layout/updateLayout")
