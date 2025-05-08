@@ -26,7 +26,11 @@
         <div id ="addbuttons">
             {% for canale in canali %}
             <div id= "Add_{{canale.id}}"" style="display: inline-block;">
-                <button type="button" onclick="addChannelLayout({{canale.id}}, '{{canale.nome}}')">{{canale.nome}}</button>
+                <button type="button" onclick="addChannelLayout({{canale.id}}, '{{ canale.nome}}{% if canale.descrizione is not none %}: {{ canale.descrizione }}{% endif %}')">{{canale.nome}}
+                    {% if canale.descrizione is not none %}
+                        : {{ canale.descrizione }}
+                    {% endif %}
+                </button>
             </div>
             {% endfor %}
         </div>
@@ -40,6 +44,7 @@
                     <div style="display: inline-block;">
                         <button type="button" onclick="removeChannelLayout({{layoutcanale.canaleId}})">Elimina</button>
                     </div>
+                    <input type="checkbox">
                 </li>                
             {% endfor %}
             </ul>
@@ -123,6 +128,7 @@
                         <div style="display: inline-block;">
                             <button type="button" onclick="removeChannelLayout(${canaleId})">Elimina</button>
                         </div>
+                        <input type="checkbox">
                     `;
                     list.appendChild(li);
                 }
@@ -173,11 +179,13 @@
                 for(let i=0; i<channelsLayout.length; i++){
                     const canaleId = channelsLayout[i].childNodes[0].nodeValue.trim();
                     const descrizione = channelsLayout[i].querySelector('input[type="text"], input:not([type="hidden"])').value;
+                    const isBatteria = channelsLayout[i].querySelector('input[type="checkbox"]').checked;
 
                     ch = { 
                         canaleId: canaleId,
                         descrizione: descrizione,
-                        posizione: i
+                        posizione: i,
+                        isBatteria: isBatteria
                     };
                     channelsLayoutArray.push(ch);
                 }

@@ -53,21 +53,29 @@
 
     <body>
        <div class="slider">
-            {% for canale in canali %}
+            {% for canale, value in canali %}
                 <div class="canale-container">
                     <span class="descrizione">{{ canale.descrizione}}</span>
-                    <input class="inputRange"type="range" min="0" max="100" value="0" id="canale_{{ canale.canaleId }}" onchange="sendMessage( {{canale.canaleId}} , this.value);", oninput="sendMessage({{canale.canaleId}} , this.value);">
+                    <div style="display: inline-flex;">
+                    <button type="button"  onclick="changeValue({{ canale.canaleId }}, 'minus')" >-</button>
+                    <input class="inputRange"type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.canaleId }}" onchange="sendMessage( {{canale.canaleId}} , this.value);", oninput="sendMessage({{canale.canaleId}} , this.value);">
+                    <button type="button" onclick="changeValue({{ canale.canaleId }}, 'plus')">+</button>
+                    </div>
                 </div>
             {% endfor %}
             <div class="canale-container">
                 <span class="descrizione">Main</span>
-                <input class="inputRange"type="range" min="0" max="100" value="0" id="main" onchange="sendMessageMain(this.value);", oninput="sendMessageMain(this.value);">
+                <div style="display: inline-flex;">
+                    <button type="button" onclick="changeValue('main', 'minus')">-</button>
+                    <input class="inputRange" type="range" min="0" max="100" value="{{valueMain}}" id="canale_main" onchange="sendMessageMain(this.value);", oninput="sendMessageMain(this.value);">       
+                    <button type="button" onclick="changeValue('main', 'plus')">+</button>
+                </div>
             </div>
        </div>
 
        <div>
-            <button onclick="window.location.href='./layout'">Modifica Layout</button>
-       </div>
+            <button  onclick="window.location.href='./layout'">Modifica Layout</button>
+        </div>
 
 
        <script>
@@ -126,6 +134,21 @@
                 xhttp.send(JSON.stringify(message));
             }
 
+            function changeValue(canaleId, action){
+                inputRange = document.getElementById("canale_"+canaleId);
+                let value = parseInt(inputRange.value, 10);
+
+                if(action == "plus")
+                    value = Math.min(value + 2, 100);
+                else if(action == "minus")
+                    value = Math.max(value -2, 0);
+                inputRange.value = value;
+
+                if(canaleId == "main")
+                    sendMessageMain(value);
+                else
+                    sendMessage(canaleId, value);
+            }
        </script>
     </body>
 </html>

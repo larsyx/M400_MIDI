@@ -36,11 +36,12 @@ class LayoutCanaleDAO:
             return None
        
         
-    def setLayoutCanale(self, user, scene, canale, posizione, descrizione):
+    def setLayoutCanale(self, user, scene, canale, posizione, descrizione, isBatteria):
         try:
             layout = self.getLayoutCanaleById(user, scene, canale)
             layout.descrizione = descrizione
             layout.posizione = posizione
+            layout.isBatteria = isBatteria
 
             self.db.add(layout)
             self.db.commit()

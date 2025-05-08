@@ -1,7 +1,10 @@
 import math
+import threading
+import time
 import mido
 from dotenv import load_dotenv
 import os
+from queue import Queue
 
 #header = [0xF0, 0x41, 0x10, 0x00, 0x00, 0x24, 0x12]
 
@@ -9,9 +12,10 @@ load_dotenv()
 Manufacturer_ID = int(os.getenv("MANUFACTURER_ID"), 0)
 Device_ID = int(os.getenv("DEVICE_ID"), 0)
 Model_ID = [int(val,0) for val in os.getenv("MODEL_ID").split(",")]
-Command_ID = int(os.getenv("Command_ID_Data_Set"), 0)
+Command_ID_Set = int(os.getenv("Command_ID_Data_Set"), 0)
+Command_ID_Request = int(os.getenv("Command_ID_Data_Request"), 0)
 
-header = [int(Manufacturer_ID), int(Device_ID)] + [int(a) for a in Model_ID] + [int(Command_ID)]
+header = [int(Manufacturer_ID), int(Device_ID)] + [int(a) for a in Model_ID] 
 
 
 
@@ -21,7 +25,7 @@ class MidiController:
 
     
     def send_command(self, address, data):
-        sysex_msg = build_sysex(address, data)
+        sysex_msg = build_sysex(address, Command_ID_Set, data)
 
         msg = mido.Message('sysex', data=sysex_msg)
 
@@ -50,13 +54,24 @@ class MidiController:
             decibel = ((value-1)*(29.6/9))-89.6
 
 
-        div = decibel/-12.
-        8
+        div = decibel/-12.8
         first_value = 128 - math.ceil(div)
         second_value = int((math.ceil(div) - div)*127)
 
         return [first_value, second_value]
     
+    def convertSwitch(switch):
+        return [0x01] if switch else [0x00] 
+
+    def request_value(self, address):
+        data = [0x00, 0x00, 0x00, 0x04]
+        sysex_msg = build_sysex(address, Command_ID_Request, data)
+
+        msg = mido.Message('sysex', data=sysex_msg)
+
+        with mido.open_output(self.ped) as outport:
+            outport.send(msg)
+
 
 def roland_checksum(address_bytes, data_bytes):
     total = sum(address_bytes) + sum(data_bytes)
@@ -64,10 +79,65 @@ def roland_checksum(address_bytes, data_bytes):
     return checksum
     
 
-def build_sysex(address, data):
+def build_sysex(address, command, data):
     checksum = roland_checksum(address, data)
-    return header + address + data + [checksum]
+    return header + [command] + address + data + [checksum]
 
    
 
+class MidiListener:
+    def __init__(self, midi_addresses):
+        self.midi_addresses = [tuple(addr) for addr in midi_addresses]
+        self.received = {}
+        self.lock = threading.Lock()
+        self.running = True
 
+        self.port = mido.open_input(mido.get_input_names()[0], callback=self.callback)
+
+    def callback(self, msg):
+        if not self.running:
+            return
+        if msg.type == 'sysex':
+            data = tuple(msg.data)
+            key = data[6:10]
+            with self.lock:
+                if key in self.midi_addresses and key not in self.received:
+                    print(f"Ricevuto {key}: {data[10:12]}")
+                    self.received[key] = MidiListener.convert_value(data[10], data[11])
+
+    def stop(self):
+        self.running = False
+        self.port.close()
+
+    def has_received_all(self):
+        with self.lock:
+            return len(self.received) == len(self.midi_addresses)
+    
+    def get_results(self):
+        with self.lock:
+            return dict(self.received)
+        
+    def convert_value(firstValue, secondValue):
+        if firstValue == 0x00:
+            value = (secondValue / 100) * 25 + 75
+            return round(value)
+        elif firstValue == 0x78:
+            return 0
+        elif firstValue == 0x79 or firstValue == 0x7A:
+            norm = round(((secondValue/127) * 4) + 1)
+            return norm if firstValue == 0x79 else norm + 4
+        elif firstValue == 0x7B:
+            norm = round((secondValue/127) * 6) 
+            return norm + 9
+        elif firstValue == 0x7C:
+            norm = round((secondValue/127) * 6)
+            return norm + 15
+        elif firstValue == 0x7D:
+            norm = round((secondValue/127) * 12)
+            return norm + 22
+        elif firstValue == 0x7E:
+            norm = round((secondValue/127) * 12)
+            return norm + 35
+        elif firstValue == 0x7F:
+            norm = round((secondValue/127) * 24)
+            return norm + 48

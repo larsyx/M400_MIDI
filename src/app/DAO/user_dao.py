@@ -28,6 +28,19 @@ class UserDAO:
             return False
 
 
+    def isMixer(self, username):
+        try:
+            user = self.getUserByUsername(username)
+
+            if user:
+                return user.ruolo == RuoloUtente.mixerista
+            else:
+                return False
+        except Exception as e:
+            print(f"Error checking mixer status: {e}")
+            return False
+
+
     def createUser(self, username, nome, ruolo):
         try:
             new_user = Utente(username=username, nome=nome, ruolo=RuoloUtente[ruolo])

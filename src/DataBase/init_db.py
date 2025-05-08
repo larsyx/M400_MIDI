@@ -52,11 +52,40 @@ canali = [
     for i in range(1, 49)
 ]
 
+canali[0].descrizione = "Fisarmonica/basso"
+canali[1].descrizione = "Gtr Gab"
+canali[2].descrizione = "Gtr Gio"
+canali[3].descrizione = "Gtr Samu"
+canali[4].descrizione = "Piano L"
+canali[5].descrizione = "Piano R"
+canali[6].descrizione = "Piano Don"
+canali[7].descrizione = "Sax"
+canali[9].descrizione = "Vox 1"
+canali[10].descrizione = "Vox 2"
+canali[11].descrizione = "Vox 3"
+canali[12].descrizione = "Vox 4"
+canali[13].descrizione = "Vox 5"
+canali[14].descrizione = "Vox 6"
+canali[16].descrizione = "Mac L"
+canali[17].descrizione = "Mac R"
+canali[20].descrizione = "Shure"
+canali[21].descrizione = "Pulputo"
+canali[24].descrizione = "Kick"
+canali[25].descrizione = "SN up" 
+canali[26].descrizione = "SN dw"
+canali[27].descrizione = "HH"
+canali[28].descrizione = "Tom"
+canali[29].descrizione = "Tom"
+canali[30].descrizione = "Floor Tom"
+canali[31].descrizione = "OH L"
+canali[32].descrizione = "OH R"
+
 utente = Utente(username="admin", nome="admin", ruolo="amministratore")
+utente3 = Utente(username="Thomas", nome="Thomas", ruolo="mixerista")
 utente1 = Utente(username="Gabri", nome="Gabriele", ruolo="utente")
 utente2 = Utente(username="Gionathan", nome="Gionathan", ruolo="utente")
 
-scena = Scena(id= 0, nome="Domenica", descrizione="scena della domenica")
+scena = Scena(id = 0, nome="Domenica", descrizione="scena della domenica")
 
 
 
@@ -72,16 +101,16 @@ partecipazione2 = PartecipazioneScena(
     aux_id=aux[0].id,
 )
 
-layoutCanale = [
-    LayoutCanale(
-        scenaId=scena.id,
-        canaleId=canali[i].id,
-        user=utente1.username,
-        posizione=i,
-        descrizione=f"CH {i + 1}",
-    )
-    for i in range(len(canali))
-]
+# layoutCanale = [
+#     LayoutCanale(
+#         scenaId=scena.id,
+#         canaleId=canali[i].id,
+#         user=utente1.username,
+#         posizione=i,
+#         descrizione=f"CH {i + 1}",
+#     )
+#     for i in range(len(canali))
+# ]
 
 
 # layoutCanale2 = [
@@ -100,11 +129,12 @@ session.add_all(canali)
 session.add(utente)
 session.add(utente1)
 session.add(utente2)
+session.add(utente3)
 session.add(scena)
 session.add(partecipazione)
 session.add(partecipazione2)
-session.add_all(layoutCanale)
-# session.add_all(layoutCanale2)
+#session.add_all(layoutCanale)
+#session.add_all(layoutCanale2)
 session.commit()
 
 session.close()

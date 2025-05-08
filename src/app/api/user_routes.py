@@ -65,15 +65,8 @@ async def setFader(request: Request):
     value = data.get("value")
     indirizzoAux = data.get("aux")
 
-    canaleAddress = channelDao.get_channel_address(canaleId)
-    
-    if(canaleAddress != None):
-        addressAuxhex = [int(x,16) for x in indirizzoAux.split(",")]
-        channelAddresshex = [int(x,16) for x in canaleAddress.split(",")]
-
-        indirizzo = channelAddresshex + addressAuxhex
-        
-        midiController.send_command(indirizzo, MidiController.convertValue(int(value)))
+    userController = UserController()
+    userController.setFader(canaleId, value, indirizzoAux)
     
 
 @router.post("/user/scene_{scene_id}/set/main")
@@ -82,16 +75,13 @@ async def setFaderMain(request: Request):
 
     if not access_token:
         raise HTTPException(status_code=401, detail="Unauthorized")
-    
-    midiController = MidiController("pedal")
 
     data = await request.json()
     value = data.get("value")
     indirizzoAux = data.get("aux")
     
-    addressAuxhex = [int(x,16) for x in indirizzoAux.split(",")]
-
-    midiController.send_command(addressAuxhex, MidiController.convertValue(int(value)))
+    userController = UserController()
+    userController.setFaderMain(value, indirizzoAux)
    
 @router.post("/user/scene_{scene_id}/layout/addChannelLayout")
 async def aggiungiCanaleLayout(request: Request, scene_id: int):
@@ -131,7 +121,7 @@ async def removeCanaleLayout(request: Request, scene_id: int):
 
     channelDAO = ChannelDAO()
     channel = channelDAO.get_channel_by_id(canale_id)
-    return channel.nome
+    return f"{channel.nome} : {channel.descrizione}"
 
     
 @router.post("/user/scene_{scene_id}/layout/updateLayout")
@@ -149,6 +139,6 @@ async def setLayouts(request: Request, scene_id : int):
     channelslayout = data.get("channelsLayout")
 
     for layout in channelslayout:
-        layoutDAO.setLayoutCanale(user_data["sub"], scene_id, layout.get("canaleId"), layout.get("posizione"), layout.get("descrizione"))
+        layoutDAO.setLayoutCanale(user_data["sub"], scene_id, layout.get("canaleId"), layout.get("posizione"), layout.get("descrizione"), layout.get("isBatteria"))
 
     return "Layout salvato con successo"

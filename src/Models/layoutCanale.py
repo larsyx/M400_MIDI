@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import Column, String, Integer, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 
 
@@ -12,6 +12,7 @@ class LayoutCanale(Base):
 
     posizione = Column(Integer, nullable=False)
     descrizione = Column(String, nullable=True)
+    isBatteria = Column(Boolean, nullable=False, default = False)
 
     scena = relationship("Scena", back_populates="layoutCanale")
     canale = relationship("Canale", back_populates="layoutCanale")

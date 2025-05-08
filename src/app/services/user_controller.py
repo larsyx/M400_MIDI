@@ -1,10 +1,13 @@
 
+import time
 from fastapi.templating import Jinja2Templates
 from app.DAO.channel_dao import ChannelDAO
 from app.DAO.layout_canale_dao import LayoutCanaleDAO
 from app.DAO.partecipazione_scena_dao import PartecipazioneScenaDAO
 from app.DAO.user_dao import UserDAO
 import os
+
+from midi.midiController import MidiController, MidiListener
 
 class UserController:
     def __init__(self):
@@ -13,6 +16,7 @@ class UserController:
         self.layoutCanaleDAO = LayoutCanaleDAO()
         self.channelDAO = ChannelDAO()
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "View", "user"))
+        self.midiController = MidiController("pedal")
 
     def load_scene(self, scenaID, userID, request):
         
@@ -20,8 +24,53 @@ class UserController:
         aux = self.partecipazioneScenaDAO.getAuxUser(userID, scenaID)
             
         # get value canali
-       
-        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": canali, "indirizzoaux": aux.indirizzoMidi, "indirizzoauxMain": aux.indirizzoMidiMain})
+        midiController = MidiController("pedal")
+
+        listenAddress = []
+        auxAddress = [int(x,16) for x in aux.indirizzoMidi.split(",")]
+        auxAddressMain = [int(x,16) for x in aux.indirizzoMidiMain.split(",")]
+
+        for canale in canali:
+            channelMidi = self.channelDAO.get_channel_address(channel_id= canale.canaleId)
+            channelAddress = [int(x,16) for x in channelMidi.split(",")] 
+            
+            listenAddress.append(channelAddress + auxAddress)
+
+        listenAddress.append(auxAddressMain)
+        listen = MidiListener(listenAddress)
+
+        start = time.time()
+
+        for address in listenAddress:
+            midiController.request_value(address)
+
+        while time.time() - start < 10:
+            time.sleep(0.5)
+            if listen.has_received_all():
+                print("Tutti ricevuti.")
+                break
+
+        listen.stop()
+        print("thread terminato")
+        resultsValue = listen.get_results()
+        
+        resultsValueSet = []
+        
+        for canale in canali:
+            channelMidi = self.channelDAO.get_channel_address(channel_id = canale.canaleId)
+            channelAddress = [int(x,16) for x in channelMidi.split(",")] 
+          
+            resultsValueSet.append(resultsValue[tuple(channelAddress + auxAddress)])
+
+        valueMain = resultsValue[tuple(auxAddressMain)]
+
+        print(f"auxaddress {tuple(auxAddress)}")
+
+        print(resultsValueSet)
+
+        coppieCanali = list(zip(canali, resultsValueSet))
+        
+        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "indirizzoaux": aux.indirizzoMidi, "indirizzoauxMain": aux.indirizzoMidiMain, "valueMain": valueMain })
         
     def set_layout(self, userID, scenaID, request):
         
@@ -34,5 +83,18 @@ class UserController:
 
         return self.templates.TemplateResponse("layout.html", {"request": request, "canali": channel, "layout": layouts})
       
+    def setFader(self, canaleId, value, indirizzoAux):
+        canaleAddress = self.channelDAO.get_channel_address(canaleId)
+    
+        if(canaleAddress != None):
+            addressAuxhex = [int(x,16) for x in indirizzoAux.split(",")]
+            channelAddresshex = [int(x,16) for x in canaleAddress.split(",")]
 
-      
+            indirizzo = channelAddresshex + addressAuxhex
+            
+            self.midiController.send_command(indirizzo, MidiController.convertValue(int(value)))
+        
+    def setFaderMain(self, value, auxAddress):
+        addressAuxhex = [int(x,16) for x in auxAddress.split(",")]
+
+        self.midiController.send_command(addressAuxhex, MidiController.convertValue(int(value)))

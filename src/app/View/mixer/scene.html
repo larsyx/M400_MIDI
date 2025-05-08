@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>M-400 remote control</title>
+
+        <style>
+            .slider {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                padding: 50px;
+            }
+        
+            .canale-container {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+        
+            .descrizione {
+                min-width: 150px; /* larghezza fissa per il nome del canale */
+                text-align: left;
+                font-weight: bold;
+            }
+        
+            input[type="range"] {
+                height: fit-content;
+                width: 90%;
+                flex: 1; /* prende tutto lo spazio disponibile */
+            }
+
+            @media (max-width: 900px) {
+                .canale-container {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .descrizione {
+                    min-width: unset;
+                    width: 100%;
+                    text-align: center;
+                    margin-bottom: 10px;
+                    font-size: 1rem; /* ancora più grande su mobile */
+                }
+
+                .inputRange {
+                    height: 150px; /* slider ancora più alto su mobile */
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+       <div class="slider">
+            {% for canale, value in canali %}
+                <div class="canale-container">
+                    <span class="descrizione">{{canale.nome}}
+                        {% if canale.descrizione is not none %}
+                            : {{ canale.descrizione }}
+                        {% endif %}
+                    </span>
+                    <div style="display: inline-flex;">
+                    <button type="button"  onclick="changeValue({{ canale.id }}, 'minus')" >-</button>
+                    <input class="inputRange"type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.id }}" onchange="sendMessage( {{canale.id}} , this.value);" oninput="sendMessage({{canale.id}} , this.value);">
+                    <button type="button" onclick="changeValue({{ canale.id }}, 'plus')">+</button>
+                    <input id="switch_{{canale.id}}" onchange="checkSwitch({{canale.id}}, this.checked)" type="checkbox"> 
+                    </div>
+                </div>
+            {% endfor %}
+       </div>
+
+
+       <script>
+
+            function sendMessage(canaleId, value) {
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("POST", "./set", true)
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+                const message = {
+                        canaleId: canaleId,
+                        value: value
+                };
+
+                xhttp.send(JSON.stringify(message));
+            }
+
+            function changeValue(canaleId, action){
+                inputRange = document.getElementById("canale_"+canaleId);
+                let value = parseInt(inputRange.value, 10);
+
+                if(action == "plus")
+                    value = Math.min(value + 1, 100);
+                else if(action == "minus")
+                    value = Math.max(value -1, 0);
+                inputRange.value = value;
+
+                sendMessage(canaleId, value);
+            }
+
+            function checkSwitch(canaleId, switchValue){
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("POST", "./switch", true)
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+                const message = {
+                    canaleId: canaleId,
+                    switch: switchValue
+                };
+
+                xhttp.send(JSON.stringify(message));
+            }
+       </script>
+    </body>
+</html>

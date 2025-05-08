@@ -3,13 +3,14 @@ from midi.midiController import MidiController
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi import FastAPI
-from app.api import admin_routes, ws_routes, login_routes, user_routes
+from app.api import admin_routes, ws_routes, login_routes, user_routes, mixer_routes
 from fastapi.staticfiles import StaticFiles
 import os
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 midicontr = MidiController("pedal")
-midicontr.send_command([0x00, 0x00, 0x00], [0x00, 0x00, 0x00])
+
+
 
 
 app = FastAPI()
@@ -24,6 +25,7 @@ app.include_router(admin_routes.router)
 app.include_router(login_routes.router)
 app.include_router(ws_routes.router)
 app.include_router(user_routes.router)
+app.include_router(mixer_routes.router)
 
 app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "View", "static")), name="static")
 
