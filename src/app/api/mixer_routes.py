@@ -1,29 +1,24 @@
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
-from app.DAO.channel_dao import ChannelDAO
-from app.auth.security import get_current_user
-from app.services.auth_controller import AuthController
-import os
-
+from fastapi import APIRouter, Request
+from fastapi.responses import HTMLResponse
+from app.auth.security import get_current_user, verify_mixer
 from app.services.mixer_controller import MixerController
 
 router = APIRouter()
+mixerController = MixerController()
 
 @router.get("/mixer/home", response_class=HTMLResponse)
 async def home(request : Request):
-    mixerController = MixerController()
+    user = get_current_user(request)
+    verify_mixer(user["sub"])   
+
     return mixerController.loadFader(request)
 
 
 @router.post("/mixer/set")
 async def setFader(request: Request):
-    access_token = request.cookies.get("access_token")
-
-    if not access_token:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+    user = get_current_user(request)
+    verify_mixer(user["sub"])   
     
-    mixerController = MixerController()
-
     data = await request.json()
     canaleId = data.get("canaleId")
     value = data.get("value")
@@ -32,12 +27,8 @@ async def setFader(request: Request):
 
 @router.post("/mixer/switch")
 async def setSwitchChannel(request : Request):
-    access_token = request.cookies.get("access_token")
-
-    if not access_token:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    
-    mixerController = MixerController()
+    user = get_current_user(request)
+    verify_mixer(user["sub"])   
 
     data = await request.json()
     canaleId = data.get("canaleId")

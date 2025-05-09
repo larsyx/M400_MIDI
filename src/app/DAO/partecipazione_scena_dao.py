@@ -1,4 +1,3 @@
-
 from Database.database import DBSession
 from Models.aux_ import Aux
 from Models.partecipazioneScena import PartecipazioneScena

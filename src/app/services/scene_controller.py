@@ -1,7 +1,5 @@
 from http.client import HTTPResponse
 import os
-
-from fastapi import HTTPException
 from fastapi.templating import Jinja2Templates
 from app.DAO.scene_dao import SceneDAO
 from app.DAO.user_dao import UserDAO

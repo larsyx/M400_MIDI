@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, Form
 from app.auth.security import get_current_user
-from fastapi.responses import HTMLResponse, FileResponse
-from Models import RuoloUtente
 from app.services.admin_controller import AdminController
 from app.services.scene_controller import SceneController 
 router = APIRouter()
 
+
+sceneController = SceneController()
 
 @router.get("/admin")
 async def admin():
@@ -13,29 +13,24 @@ async def admin():
 
 @router.post("/admin/createScene")
 async def create_scene(nome: str = Form(...), descrizione:str = Form(...), current_user: dict = Depends(get_current_user)):
-    sceneController = SceneController()
     return sceneController.create_scene(current_user["sub"], nome, descrizione)
 
 
 @router.post("/admin/deleteScene")
 async def delete_scene(id: int = Form(...), current_user: dict = Depends(get_current_user)):
-    sceneController = SceneController()
     return sceneController.delete_scene(current_user["sub"], id)
 
 
 @router.post("/admin/updateScene")
 async def create_scene(nome: str = Form(...), descrizione:str = Form(...), current_user: dict = Depends(get_current_user)):
-    sceneController = SceneController()
     return sceneController.update_scene(current_user["sub"], nome, descrizione)
 
 @router.get("/admin/getScenes")
 async def get_scenes(current_user: dict = Depends(get_current_user)):
-    sceneController = SceneController()
     return sceneController.get_all_scene(current_user["sub"])
 
 @router.post("/admin/getScene")
 async def get_scene(id: int = Form(...), current_user: dict = Depends(get_current_user)):
-    sceneController = SceneController()
     return sceneController.get_scene(current_user["sub"], id)
 
 #update scene

@@ -1,9 +1,5 @@
-
-
-
 import os
 import time
-
 from fastapi.templating import Jinja2Templates
 from app.DAO.channel_dao import ChannelDAO
 from midi.midiController import MidiController, MidiListener
@@ -22,7 +18,6 @@ class MixerController:
     def loadFader(self, request):
         canali = self.channelDAO.get_all_channels()
                     
-
         # get value canali
         midiController = MidiController("pedal")
         

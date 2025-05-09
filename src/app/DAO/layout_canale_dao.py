@@ -1,6 +1,4 @@
-
-
-from sqlalchemy import desc, exists
+from sqlalchemy import desc
 from Database.database import DBSession
 from Models.canale import Canale
 from Models.layoutCanale import LayoutCanale

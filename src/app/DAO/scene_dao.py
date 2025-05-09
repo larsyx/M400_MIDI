@@ -1,4 +1,3 @@
-
 from Database.database import DBSession
 from Models.scena import Scena
 

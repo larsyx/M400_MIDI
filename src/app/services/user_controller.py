@@ -60,9 +60,17 @@ class UserController:
             channelMidi = self.channelDAO.get_channel_address(channel_id = canale.canaleId)
             channelAddress = [int(x,16) for x in channelMidi.split(",")] 
           
-            resultsValueSet.append(resultsValue[tuple(channelAddress + auxAddress)])
+            try:
+                resultsValueSet.append(resultsValue[tuple(channelAddress + auxAddress)])
+            except KeyError as e:
+                print(f"error key {e}")
+                resultsValueSet.append(0)
 
-        valueMain = resultsValue[tuple(auxAddressMain)]
+        try:
+            valueMain = resultsValue[tuple(auxAddressMain)]
+        except KeyError as e:
+            print(f"error key {e}")
+            valueMain = 0
 
         print(f"auxaddress {tuple(auxAddress)}")
 

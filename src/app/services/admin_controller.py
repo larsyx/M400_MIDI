@@ -1,6 +1,4 @@
 from fastapi.responses import HTMLResponse
-from Models import Utente, RuoloUtente
-from Database.database import DBSession
 from app.DAO.user_dao import UserDAO
 
 

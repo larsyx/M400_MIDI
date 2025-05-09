@@ -1,50 +1,34 @@
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import HTMLResponse
 from app.DAO.channel_dao import ChannelDAO
 from app.DAO.layout_canale_dao import LayoutCanaleDAO
 from app.auth.security import get_current_user
 from app.services.scene_controller import SceneController
 from app.services.user_controller import UserController
-from midi.midiController import MidiController
 
 router = APIRouter()
 
+sceneController = SceneController()
+userController = UserController()
+
 @router.get("/user/getScenes", response_class=HTMLResponse)
 async def getScenes(request: Request):
-    access_token = request.cookies.get("access_token")
-
-    if not access_token:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    
-    user_data = get_current_user(access_token)
-    sceneController = SceneController()
+    user_data = get_current_user(request)
 
     return sceneController.get_all_user_scene(user_data["sub"], request)
 
     
 @router.get("/user/scene_{scene_id}/", response_class=HTMLResponse)
 async def loadScene(request: Request, scene_id: int):
-    access_token = request.cookies.get("access_token")
-
-    if not access_token:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+    user_data = get_current_user(request)
     
-    user_data = get_current_user(access_token)
-    userController = UserController()
     return userController.load_scene(userID = user_data["sub"], scenaID = scene_id, request=request)
 
 
 @router.get("/user/scene_{scene_id}/layout", response_class=HTMLResponse)
 async def setLayout(request: Request, scene_id: int):
-    access_token = request.cookies.get("access_token")
-
-    if not access_token:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    
-    user_data = get_current_user(access_token)
-    userController = UserController()
-    
+    user_data = get_current_user(request)
 
     return userController.set_layout(userID = user_data["sub"], scenaID = scene_id, request=request)
 
@@ -52,51 +36,33 @@ async def setLayout(request: Request, scene_id: int):
 
 @router.post("/user/scene_{scene_id}/set")
 async def setFader(request: Request):
-    access_token = request.cookies.get("access_token")
-
-    if not access_token:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    
-    midiController = MidiController("pedal")
-    channelDao = ChannelDAO()
+    user_data = get_current_user(request)
 
     data = await request.json()
     canaleId = data.get("canaleId")
     value = data.get("value")
     indirizzoAux = data.get("aux")
 
-    userController = UserController()
     userController.setFader(canaleId, value, indirizzoAux)
     
 
 @router.post("/user/scene_{scene_id}/set/main")
 async def setFaderMain(request: Request):
-    access_token = request.cookies.get("access_token")
-
-    if not access_token:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+    user_data = get_current_user(request)
 
     data = await request.json()
     value = data.get("value")
     indirizzoAux = data.get("aux")
     
-    userController = UserController()
     userController.setFaderMain(value, indirizzoAux)
    
 @router.post("/user/scene_{scene_id}/layout/addChannelLayout")
 async def aggiungiCanaleLayout(request: Request, scene_id: int):
-    access_token = request.cookies.get("access_token")
-
-    user_data = get_current_user(access_token)
-
-    if not user_data:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+    user_data = get_current_user(request)
     
+
     layoutDAO = LayoutCanaleDAO()
-
     data = await request.json()
-
-
     layoutDAO.addLayoutCanale(user_data["sub"], scene_id, data.get("canale_id"), data.get("descrizione"))
 
     return True
@@ -104,16 +70,10 @@ async def aggiungiCanaleLayout(request: Request, scene_id: int):
 
 @router.post("/user/scene_{scene_id}/layout/removeChannelLayout")
 async def removeCanaleLayout(request: Request, scene_id: int):
-    access_token = request.cookies.get("access_token")
+    user_data = get_current_user(request)
 
-    user_data = get_current_user(access_token)
-
-    if not user_data:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    
 
     layoutDAO = LayoutCanaleDAO()
-
     data = await request.json()
     canale_id = data.get("canale_id")
 
@@ -126,12 +86,7 @@ async def removeCanaleLayout(request: Request, scene_id: int):
     
 @router.post("/user/scene_{scene_id}/layout/updateLayout")
 async def setLayouts(request: Request, scene_id : int):
-    access_token = request.cookies.get("access_token")
-
-    user_data = get_current_user(access_token)
-
-    if not user_data:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+    user_data = get_current_user(request)
     
     layoutDAO = LayoutCanaleDAO()   
     data = await request.json()

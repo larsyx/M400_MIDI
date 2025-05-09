@@ -1,4 +1,3 @@
-
 from Database.database import DBSession
 from Models.utente import RuoloUtente, Utente
 from sqlalchemy.orm import Session
@@ -10,7 +9,7 @@ class UserDAO:
     def getUserByUsername(self, username):
         try:
             user = self.db.query(Utente).filter(Utente.username == username).first()
-            return user
+            return user if user else None
         except Exception as e:
             print(f"Error retrieving user: {e}")
             return None
