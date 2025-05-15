@@ -2,7 +2,7 @@ import os
 import time
 from fastapi.templating import Jinja2Templates
 from app.DAO.channel_dao import ChannelDAO
-from midi.midiController import MidiController, MidiListener
+from midi.midiController import MidiController, MidiListener, call_type
 from dotenv import load_dotenv
 
 
@@ -21,30 +21,33 @@ class MixerController:
         # get value canali
         midiController = MidiController("pedal")
         
-        listenAddress = []
+        listenAddressFader = []
+        listenAddressSwitch = []
 
+        # Channel fader sync
         for canale in canali:
             channelAddress = [int(x,16) for x in canale.indirizzoMidi.split(",")] 
             
-            listenAddress.append(channelAddress + self.postMainFader)
+            listenAddressFader.append(channelAddress + self.postMainFader)
+            listenAddressSwitch.append(channelAddress + self.postSwitch)
 
 
-        listen = MidiListener(listenAddress)
+        listen = MidiListener(listenAddressFader, call_type.CHANNEL)
 
         start = time.time()
 
-        for address in listenAddress:
-            print(f"indirizzo: {address}")
+        for address in listenAddressFader:
+            # print(f"indirizzo: {address}")
             midiController.request_value(address)
 
         while time.time() - start < 10:
             time.sleep(0.5)
             if listen.has_received_all():
-                print("Tutti ricevuti.")
+                # print("Tutti ricevuti.")
                 break
 
         listen.stop()
-        print("thread terminato")
+        # print("thread terminato")
         resultsValue = listen.get_results()
         
         resultsValueSet = []
@@ -59,8 +62,44 @@ class MixerController:
 
         print(resultsValueSet)
 
-        coppieCanali = list(zip(canali, resultsValueSet))
+
+        # Channel switch sync
+
+        listenSwitch = MidiListener(listenAddressSwitch, call_type.SWITCH)
+
+        start = time.time()
+
+        for address in listenAddressSwitch:
+            # print(f"indirizzo: {address}")
+            midiController.request_value(address)
+
+        while time.time() - start < 10:
+            time.sleep(0.5)
+            if listenSwitch.has_received_all():
+                # print("Tutti ricevuti.")
+                break
+
+        listenSwitch.stop()
+        # print("thread terminato")
+        resultsValueSwitch = listenSwitch.get_results()
         
+        resultsValueSetSwitch = []
+        
+        for canale in canali:
+            channelAddress = [int(x,16) for x in canale.indirizzoMidi.split(",")] 
+            try:
+                resultsValueSetSwitch.append(resultsValueSwitch[tuple(channelAddress + self.postSwitch)])
+            except KeyError as k:
+                print("errore chiave ", k)
+                resultsValueSetSwitch.append(0)
+
+        print(resultsValueSetSwitch)
+
+        coppieCanali = list(zip(canali, resultsValueSet, resultsValueSetSwitch))
+        
+
+        #DCA
+
         return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali})
         
 

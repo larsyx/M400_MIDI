@@ -53,7 +53,7 @@
 
     <body>
        <div class="slider">
-            {% for canale, value in canali %}
+            {% for canale, value, switch in canali %}
                 <div class="canale-container">
                     <span class="descrizione">{{canale.nome}}
                         {% if canale.descrizione is not none %}
@@ -64,13 +64,12 @@
                     <button type="button"  onclick="changeValue({{ canale.id }}, 'minus')" >-</button>
                     <input class="inputRange"type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.id }}" onchange="sendMessage( {{canale.id}} , this.value);" oninput="sendMessage({{canale.id}} , this.value);">
                     <button type="button" onclick="changeValue({{ canale.id }}, 'plus')">+</button>
-                    <input id="switch_{{canale.id}}" onchange="checkSwitch({{canale.id}}, this.checked)" type="checkbox"> 
+                    <input id="switch_{{canale.id}}" onchange="checkSwitch({{canale.id}}, this.checked)" type="checkbox"  {% if switch %} checked {% endif %}>
                     </div>
                 </div>
             {% endfor %}
        </div>
-
-
+       
        <script>
 
             function sendMessage(canaleId, value) {
@@ -111,6 +110,39 @@
 
                 xhttp.send(JSON.stringify(message));
             }
+       
+            const socket = new WebSocket('wss://192.168.50.200:8000/ws/liveSyncMixer'); 
+
+            socket.onopen = function(){
+
+            };
+
+            socket.onmessage = function(event){
+                console.log(event.data);
+                const response = JSON.parse(event.data);
+                if(response != null){
+                    let element = null;
+                    if(response.type === "switch")
+                        element = document.getElementById("switch_"+response.channel);
+                        if(element != null)
+                            element.checked = response.value;
+                    else if(response.type === "fader")
+                        element = document.getElementById("canale_"+response.channel);
+                        if(element != null)
+                            element.value = response.value;
+
+                }
+            };
+
+            socket.onerror = function(error){
+                console.log("Errore sincronizzazione:", error);
+                
+            };
+
+            socket.onclose = function(e){
+                console.log("soket chiusa");
+            };
+            
        </script>
     </body>
 </html>

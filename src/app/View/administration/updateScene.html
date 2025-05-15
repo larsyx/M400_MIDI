@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>M-400 remote control</title>
+    </head>
+
+    <body>
+        {% if scene %}
+        <div>
+            <h3>Nome: {{scene.nome}}</h3>
+            <h5>Id: {{scene.id}}</h5>
+            <h5>Descrizione: {{scene.descrizione}}</h5>
+        </div>
+
+        <div>
+            <form action="./addPartecipazione" method="POST">
+                <label for="user">Utente</label>
+                <select name="username" id="user">
+                    {% for user in users%}
+                    <option value="{{user.username}}">{{user.nome}}</option>
+                    {% endfor %}    
+                </select><br>
+
+                <label for="aux">Aux</label>
+                <select name="aux" id="aux">
+                    {% for aux in auxs%}
+                    <option value="{{aux.id}}">{{aux.nome}}</option>
+                    {% endfor %}
+                </select> <br><br>
+                <button type="submit">Inserisci Partecipante</button>
+            </form>
+        </div>
+        <div>
+            {% if message != None %}
+            <p>{{ message}}</p>
+            {% endif %}
+        </div>
+
+        {% for partecipante in partecipanti%}
+        <li style="display: flex; align-items: center; gap: 0.5rem;">{{partecipante.utenteUsername}} {{partecipante.aux_id}} 
+            <form action="./removePartecipazione" method="post"> 
+                <input type="hidden" name="username" value="{{partecipante.utenteUsername}}">
+                <input type="hidden" name="aux" value="{{partecipante.aux_id}}">
+                <button type="submit">Elimina</button>
+            </form>
+        </li>
+        {% endfor %}
+
+        <div style="margin-top: 5rem;">
+            <form action="./deleteScene" method="post">
+                <button type="submit">Elimina Scena</button>
+            </form>
+        </div>
+        {% endif %}
+    </body>
+</html>

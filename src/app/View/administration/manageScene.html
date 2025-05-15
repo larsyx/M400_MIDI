@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>M-400 remote control</title>
+    </head>
+
+
+    <body>
+        <div>
+            <form action="/admin/createScene" method="POST">
+                <label for="name">Nome</label><br>
+                <input name="nome" type="text" id="name"><br>
+                <label for="description">Descrizione</label><br>
+                <textarea name="descrizione" id="description"></textarea><br>
+                <button type="submit">Crea Scena</button>
+            </form>
+        </div>
+        {% if messagge != None %}
+        <p>{{message}}</p>
+        {% endif%}
+        <div>
+            <ul>
+                {% for scene in scenes %}
+                    <li>{{scene.id}} : {{scene.nome}}                        
+                        <form class="buttons" action ="./scene_{{ scene.id }}/" method="get" style="display: inline;">
+                            <button type="submit">Modifica</button>
+                        </form>
+                    </li> 
+                {% endfor %}
+            </ul>
+        </div>
+    </body>
+</html>

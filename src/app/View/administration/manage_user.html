@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>M-400 remote control</title>
+    </head>
+
+
+    <body>
+        <div>
+            <form action="/admin/createUser" method="POST">
+                <label for="user">Username</label><br>
+                <input name="username" type="text" id="user"><br>
+                <label for="name">Nome</label><br>
+                <input name="nome" type="text" id="name"><br>
+                <label for="role">Ruolo</label><br>
+                <select name="ruolo" id="role">
+                    <option value="utente" >Utente</option>
+                    <option value="mixerista" >Mixerista</option>
+                </select><br><br>
+                <button type="submit">Aggiungi utente</button>
+            </form>
+        </div>
+        {% if messagge != None %}
+        <p>{{message}}</p>
+        {% endif%}
+        <div>
+            <ul>
+                {% for user in users %}
+                    <li>{{user.nome}} : {{user.username}} : {{user.ruolo.value}} 
+                        {% if user.ruolo.value != "amministratore"%}
+                        <form action="/admin/deleteUser" method="POST">
+                            <input type="hidden" name="username" value ="{{user.username}}">
+                            <button type="submit">Elimina</button>
+                        {% endif %}
+                    </li> 
+                {% endfor %}
+            </ul>
+        </div>
+    </body>
+</html>

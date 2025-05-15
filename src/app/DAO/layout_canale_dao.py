@@ -85,7 +85,7 @@ class LayoutCanaleDAO:
             ).all()
 
             for channel in updateChannel:
-                self.setLayoutCanale(user,scene,channel.canaleId, channel.posizione-1, channel.descrizione)
+                self.setLayoutCanale(user,scene,channel.canaleId, channel.posizione-1, channel.descrizione, channel.isBatteria)
 
             self.db.delete(channelToRemove)
             self.db.commit()

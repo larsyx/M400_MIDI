@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, Form
-from app.auth.security import get_current_user
+from fastapi import APIRouter, Depends, Form, Request
+from fastapi.responses import FileResponse, HTMLResponse
+from app.auth.security import get_current_user, verify_admin
 from app.services.admin_controller import AdminController
 from app.services.scene_controller import SceneController 
 router = APIRouter()
@@ -7,13 +8,37 @@ router = APIRouter()
 
 sceneController = SceneController()
 
-@router.get("/admin")
-async def admin():
-    return ""
+import os
+
+adminController = AdminController()
+
+@router.get("/admin", response_class=HTMLResponse)
+async def admin(request: Request):
+    user = get_current_user(request)
+    verify_admin(user["sub"])
+
+    index_path = os.path.join(os.path.dirname(__file__), ".." ,"View", "administration", "home.html")  
+    return FileResponse(index_path)
+
+@router.get("/admin/manageUser", response_class=HTMLResponse)
+async def manageUser(request: Request):
+    user = get_current_user(request)
+    verify_admin(user["sub"])
+
+    return adminController.loadManageUser(request, user["sub"])
+
+@router.get("/admin/manageScene", response_class=HTMLResponse)
+async def manageScene(request: Request):
+    user = get_current_user(request)
+    verify_admin(user["sub"])
+
+    return sceneController.manageScene(request, user["sub"])
 
 @router.post("/admin/createScene")
-async def create_scene(nome: str = Form(...), descrizione:str = Form(...), current_user: dict = Depends(get_current_user)):
-    return sceneController.create_scene(current_user["sub"], nome, descrizione)
+async def create_scene(request : Request, nome: str = Form(...), descrizione:str = Form(...)):
+    user = get_current_user(request)
+    verify_admin(user["sub"])
+    return sceneController.create_scene(request, user["sub"], nome, descrizione)
 
 
 @router.post("/admin/deleteScene")
@@ -25,27 +50,38 @@ async def delete_scene(id: int = Form(...), current_user: dict = Depends(get_cur
 async def create_scene(nome: str = Form(...), descrizione:str = Form(...), current_user: dict = Depends(get_current_user)):
     return sceneController.update_scene(current_user["sub"], nome, descrizione)
 
-@router.get("/admin/getScenes")
-async def get_scenes(current_user: dict = Depends(get_current_user)):
-    return sceneController.get_all_scene(current_user["sub"])
 
-@router.post("/admin/getScene")
-async def get_scene(id: int = Form(...), current_user: dict = Depends(get_current_user)):
-    return sceneController.get_scene(current_user["sub"], id)
+@router.get("/admin/scene_{scene_id}/")
+async def get_scene(request : Request, scene_id: int):
+    user = get_current_user(request)
+    verify_admin(user["sub"])
+    
+    return sceneController.get_scene(request, user["sub"], scene_id)
 
 #update scene
 
+#manage user scene
+@router.post("/admin/scene_{scene_id}/addPartecipazione", response_class=HTMLResponse)
+async def add_partecipanti_scena(request : Request, scene_id : int, username : str = Form(...), aux : str = Form(...)):
+    user = get_current_user(request)
+    verify_admin(user["sub"])
 
-#get aux, channel, user
-@router.get("/admin/getAuxs")
-async def get_aux(current_user: dict = Depends(get_current_user)):
-    return ""
+    return sceneController.add_partecipante(request, user["sub"], scene_id, username, aux)
 
-@router.get("/admin/getChannels")
-async def get_channel(current_user: dict = Depends(get_current_user)):
-    return ""
+@router.post("/admin/scene_{scene_id}/removePartecipazione", response_class=HTMLResponse)
+async def add_partecipanti_scena(request : Request, scene_id : int, username : str = Form(...), aux : int = Form(...)):
+    user = get_current_user(request)
+    verify_admin(user["sub"])
+
+    return sceneController.remove_partecipante(request, user["sub"], scene_id, username, aux)
 
 
+@router.post("/admin/scene_{scene_id}/deleteScene", response_class=HTMLResponse)
+async def add_partecipanti_scena(request : Request, scene_id : int):
+    user = get_current_user(request)
+    verify_admin(user["sub"])
+
+    return sceneController.delete_scene(request, user["sub"], scene_id)
 
 #user management
 @router.get("/admin/getUsers")
@@ -54,15 +90,19 @@ async def get_users(current_user: dict = Depends(get_current_user)):
     return userController.get_all_users(current_user["sub"])
 
 @router.post("/admin/createUser")
-async def create_user(username: str = Form(...), nome: str = Form(...), ruolo: str = Form(...), current_user: dict = Depends(get_current_user)):
-    userController = AdminController()
-    return userController.create_user(current_user["sub"], username, nome, ruolo)
+async def create_user(request: Request, username: str = Form(...), nome: str = Form(...), ruolo: str = Form(...)):
+    user = get_current_user(request)
+    verify_admin(user["sub"])
+
+    return adminController.create_user(request, user["sub"], username, nome, ruolo)
 
 
-@router.post("/admin/deleteUser")
-async def delete_user(username: str, current_user: dict = Depends(get_current_user)):
-    userController = AdminController()
-    return userController.delete_user(current_user["sub"], username)
+@router.post("/admin/deleteUser", response_class=HTMLResponse)
+async def delete_user(request : Request, username: str = Form(...)):
+    user = get_current_user(request)
+    verify_admin(user["sub"])
+
+    return adminController.delete_user(request, user["sub"], username)
 
 
 

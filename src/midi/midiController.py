@@ -1,11 +1,11 @@
+import asyncio
 import math
 import threading
 import time
 import mido
 from dotenv import load_dotenv
 import os
-from queue import Queue
-
+from enum import Enum
 #header = [0xF0, 0x41, 0x10, 0x00, 0x00, 0x24, 0x12]
 
 load_dotenv()
@@ -61,7 +61,7 @@ class MidiController:
         return [first_value, second_value]
     
     def convertSwitch(switch):
-        return [0x01] if switch else [0x00] 
+        return [0x00] if switch else [0x01] 
 
     def request_value(self, address):
         data = [0x00, 0x00, 0x00, 0x04]
@@ -85,16 +85,25 @@ def build_sysex(address, command, data):
 
    
 
+class call_type(Enum):
+    CHANNEL = "channel"
+    SWITCH = "switch"
+
 class MidiListener:
-    def __init__(self, midi_addresses):
+    def __init__(self, midi_addresses, calltype):
         self.midi_addresses = [tuple(addr) for addr in midi_addresses]
         self.received = {}
         self.lock = threading.Lock()
         self.running = True
 
-        self.port = mido.open_input(mido.get_input_names()[0], callback=self.callback)
+        if calltype == call_type.CHANNEL:
+            callfn = self.callbackChannel
+        elif calltype == call_type.SWITCH:
+            callfn = self.callbackSwitch
 
-    def callback(self, msg):
+        self.port = mido.open_input(mido.get_input_names()[0], callback=callfn)
+
+    def callbackChannel(self, msg):
         if not self.running:
             return
         if msg.type == 'sysex':
@@ -102,8 +111,17 @@ class MidiListener:
             key = data[6:10]
             with self.lock:
                 if key in self.midi_addresses and key not in self.received:
-                    print(f"Ricevuto {key}: {data[10:12]}")
                     self.received[key] = MidiListener.convert_value(data[10], data[11])
+
+    def callbackSwitch(self, msg):
+        if not self.running:
+            return
+        if msg.type == 'sysex':
+            data = tuple(msg.data)
+            key = data[6:10]
+            with self.lock:
+                if key in self.midi_addresses and key not in self.received:
+                    self.received[key] = MidiListener.convert_switch(data[10])
 
     def stop(self):
         self.running = False
@@ -118,26 +136,65 @@ class MidiListener:
             return dict(self.received)
         
     def convert_value(firstValue, secondValue):
-        if firstValue == 0x00:
-            value = (secondValue / 100) * 25 + 75
-            return round(value)
-        elif firstValue == 0x78:
+        try:
+            if firstValue == 0x00:
+                value = (secondValue / 100) * 25 + 75
+                return round(value)
+            elif firstValue == 0x78:
+                return 0
+            elif firstValue == 0x79 or firstValue == 0x7A:
+                norm = round(((secondValue/127) * 4) + 1)
+                return norm if firstValue == 0x79 else norm + 4
+            elif firstValue == 0x7B:
+                norm = round((secondValue/127) * 6) 
+                return norm + 9
+            elif firstValue == 0x7C:
+                norm = round((secondValue/127) * 6)
+                return norm + 15
+            elif firstValue == 0x7D:
+                norm = round((secondValue/127) * 12)
+                return norm + 22
+            elif firstValue == 0x7E:
+                norm = round((secondValue/127) * 12)
+                return norm + 35
+            elif firstValue == 0x7F:
+                norm = round((secondValue/127) * 24)
+                return norm + 48
+            
             return 0
-        elif firstValue == 0x79 or firstValue == 0x7A:
-            norm = round(((secondValue/127) * 4) + 1)
-            return norm if firstValue == 0x79 else norm + 4
-        elif firstValue == 0x7B:
-            norm = round((secondValue/127) * 6) 
-            return norm + 9
-        elif firstValue == 0x7C:
-            norm = round((secondValue/127) * 6)
-            return norm + 15
-        elif firstValue == 0x7D:
-            norm = round((secondValue/127) * 12)
-            return norm + 22
-        elif firstValue == 0x7E:
-            norm = round((secondValue/127) * 12)
-            return norm + 35
-        elif firstValue == 0x7F:
-            norm = round((secondValue/127) * 24)
-            return norm + 48
+        except Exception as e:
+            print(f"errore: {e}")
+        
+
+    def convert_switch(value):
+        return False if value == 0x01 else True
+    
+
+class MidiMixerSync():
+    def __init__(self, send_back):
+        self.loop =  asyncio.get_event_loop()
+        self.send_back = send_back
+        self.fader_post = [0x00, 0x0E]
+        self.switch_post = [0x00, 0x0C]
+        self.port = mido.open_input(mido.get_input_names()[0], callback=self.listening)
+
+    def listening(self, msg):
+
+        if msg.type == 'sysex':
+            data = tuple(msg.data)
+
+            if data[:5] == tuple(header) and data[5] == Command_ID_Set:
+                canale = f"0x0{data[6]}, 0x0{data[7]}"
+                type =""
+                valore = 0
+                if data[8:10] == tuple(self.switch_post):
+                    type = "switch"
+                    valore = MidiListener.convert_switch(data[10])
+                elif data[8:10] == tuple(self.fader_post):
+                    valore = MidiListener.convert_value(data[10], data[11])
+                    type = "fader"
+
+                asyncio.run_coroutine_threadsafe(
+                    self.send_back(type, canale, valore),
+                    self.loop
+                )

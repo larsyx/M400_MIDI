@@ -11,6 +11,6 @@ class Canale(Base):
     id = Column(Integer, primary_key=True)
     nome = Column(String, nullable=False)
     descrizione = Column(String, nullable = True)
-    indirizzoMidi = Column(String, nullable=False)
+    indirizzoMidi = Column(String, nullable=False, unique=True)
 
     layoutCanale = relationship("LayoutCanale", back_populates="canale")

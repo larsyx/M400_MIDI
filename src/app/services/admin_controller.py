@@ -1,35 +1,63 @@
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from Models.utente import RuoloUtente
+from app.DAO.scene_dao import SceneDAO
 from app.DAO.user_dao import UserDAO
-
+import os
 
 class AdminController:
     def __init__(self):
         self.userDAO = UserDAO()
+        self.sceneDAO = SceneDAO()
+        self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "View", "administration"))
 
-    def create_user(self, adminUser, username, nome, ruolo):
+    def loadManageUser(self, request, adminUser):
+        users = self.get_all_users(adminUser)
+
+        return self.templates.TemplateResponse(request, "manage_user.html", {"users": users})
+
+    
+
+    def create_user(self, request, adminUser, username, nome, ruolo):
         try:
             if self.userDAO.isAdmin(adminUser):
-                new_user = self.userDAO.createUser(username=username, nome=nome, ruolo=ruolo)
-                return new_user != None
+                message=""
+                users = self.get_all_users(adminUser)
+                if username != None and username != "" and nome != None and nome != "" and ruolo != None and RuoloUtente.__contains__(ruolo):
+                    if not self.userDAO.getUserByUsername(username):
+                        new_user = self.userDAO.createUser(username=username, nome=nome, ruolo=ruolo)
+                        users.append(new_user)
+                        message = "Utente inserito con successo"
+                    else: 
+                        message = "Errore utente già presente"
+                else:
+                    message = "Errore inserimento parametri"
+                
+                return self.templates.TemplateResponse(request, "manage_user.html", {"users": users, "message": message})
             else:
                 return HTMLResponse(status_code=403, content="Non hai i permessi per accedere a questa risorsa")
         except Exception as e:
             print(f"Error creating user: {e}")
-            return False
+            return self.templates.TemplateResponse(request, "manage_user.html", {"users": users, "message": f"Errore durante l'inserimento {e}"})
         
-    def delete_user(self, adminUser, username):
+    def delete_user(self, request, adminUser, username):
+        users = self.get_all_users(adminUser)
         try:
             if self.userDAO.isAdmin(adminUser):
-                user = self.userDAO.deleteUser(username)
-
-                return user != None
+                message = ""
+                if self.userDAO.getUserByUsername(username) != None:
+                    user = self.userDAO.deleteUser(username)
+                    message = f"utente {user.nome} rimosso correttamente"
+                    users.remove(user)
+                else:
+                    message = f"utente {username} inesistente"
+                return self.templates.TemplateResponse(request, "manage_user.html", {"users": users, "message": message})
             else:
-                return False
+                return HTMLResponse(status_code=403, content="Non hai i permessi per accedere a questa risorsa")
         except Exception as e:
             print(f"Error deleting user: {e}")
-            return False
+            return self.templates.TemplateResponse(request, "manage_user.html", {"users": users, "message": f"Errore durante la cancellazione {e}"})
         
-    
     def update_user(self, adminUser, username, nome, ruolo):
         try:
             if self.userDAO.isAdmin(adminUser):

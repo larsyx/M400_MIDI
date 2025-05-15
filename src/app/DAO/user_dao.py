@@ -86,3 +86,12 @@ class UserDAO:
         except Exception as e:
             print(f"Error retrieving all users: {e}")
             return None
+        
+
+    def getOnlyUser(self):
+        try:
+            users = self.db.query(Utente).filter(Utente.ruolo == RuoloUtente.utente)
+            return users
+        except Exception as e:
+            print(f"Error retrieving users: {e}")
+            return None

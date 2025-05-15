@@ -27,3 +27,10 @@ class ChannelDAO:
 
         return channel.indirizzoMidi if channel else None
     
+
+    def get_channel_by_address(self, address):
+        channel = self.db.query(Canale).filter(Canale.indirizzoMidi == address)[0]
+        if channel:
+            return channel
+        else:
+            return None

@@ -7,7 +7,7 @@ from app.DAO.partecipazione_scena_dao import PartecipazioneScenaDAO
 from app.DAO.user_dao import UserDAO
 import os
 
-from midi.midiController import MidiController, MidiListener
+from midi.midiController import MidiController, MidiListener, call_type
 
 class UserController:
     def __init__(self):
@@ -37,7 +37,7 @@ class UserController:
             listenAddress.append(channelAddress + auxAddress)
 
         listenAddress.append(auxAddressMain)
-        listen = MidiListener(listenAddress)
+        listen = MidiListener(listenAddress, call_type.CHANNEL)
 
         start = time.time()
 
