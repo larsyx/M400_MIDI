@@ -22,6 +22,7 @@ class UserController:
         
         canali = self.layoutCanaleDAO.getLayoutCanale(userID, scenaID)
         aux = self.partecipazioneScenaDAO.getAuxUser(userID, scenaID)
+        hasBatteria = False
             
         # get value canali
         midiController = MidiController("pedal")
@@ -33,7 +34,9 @@ class UserController:
         for canale in canali:
             channelMidi = self.channelDAO.get_channel_address(channel_id= canale.canaleId)
             channelAddress = [int(x,16) for x in channelMidi.split(",")] 
-            
+            if not hasBatteria and canale.isBatteria:
+                hasBatteria = True
+                
             listenAddress.append(channelAddress + auxAddress)
 
         listenAddress.append(auxAddressMain)
@@ -77,8 +80,9 @@ class UserController:
         print(resultsValueSet)
 
         coppieCanali = list(zip(canali, resultsValueSet))
+
         
-        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "indirizzoaux": aux.indirizzoMidi, "indirizzoauxMain": aux.indirizzoMidiMain, "valueMain": valueMain })
+        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "indirizzoaux": aux.indirizzoMidi, "indirizzoauxMain": aux.indirizzoMidiMain, "valueMain": valueMain, "hasBatteria" : hasBatteria })
         
     def set_layout(self, userID, scenaID, request):
         

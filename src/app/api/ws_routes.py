@@ -1,37 +1,51 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.auth.security import get_current_user_token, verify_mixer
-from midi.midiController import MidiController, MidiMixerSync
+from midi.midiController import MidiMixerSync, MidiUserSync
 from app.DAO.channel_dao import ChannelDAO
 router = APIRouter()
 
-@router.websocket("/ws/liveControl")
+@router.websocket("/ws/liveSync")
 async def websocket(websocket: WebSocket):
-    channelDAO = ChannelDAO()
-    midiController = MidiController("pedal")
+    cookies = websocket.cookies
+    session_id = cookies.get("access_token")
+    user_id = get_current_user_token(session_id)
+
     await websocket.accept()
-    while True:
-        data = await websocket.receive_json()
 
-        canaleId = data.get("canaleId")
-        value = data.get("value")
-        indirizzoAux = data.get("aux")
+    is_active=True
 
-        canaleAddress = channelDAO.get_channel_address(canaleId)
+    async def send_back(channel_address, value):
+        # try:
+        if is_active:
+            channelDAO = ChannelDAO()
 
-        if(canaleAddress != None):
-            addressAuxhex = [int(x,16) for x in indirizzoAux.split(",")]
-            channelAddresshex = [int(x,16) for x in canaleAddress.split(",")]
-
-            indirizzo = channelAddresshex + addressAuxhex
+            channel = channelDAO.get_channel_by_address(channel_address)
             
-            midiController.send_command(indirizzo, MidiController.convertValue(value))
-        response = {
-            "canaleId" : 1,
-            "value" : 50
-        }
+            response = {
+                "channel" : channel.id,
+                "value" : value
+            }
 
-        await websocket.send_json(response)
+            await websocket.send_json(response)
+        # except Exception as e:
+        #     print(f"errore sync {e}")
+
+    try:
+        while True:
+            id = await websocket.receive_text()
+            address = [int(val,0) for val in id.split(",")]
+            if address:
+                sync = MidiUserSync(sendback=send_back, address=address)
+                address = None
+
+
+            
+    except WebSocketDisconnect:
+        print("Il client ha chiuso la connessione.")
+        sync.stop()
+    finally:
+        is_active = False      
 
 
 @router.websocket("/ws/liveSyncMixer")
@@ -54,15 +68,16 @@ async def websocket(websocket: WebSocket):
                 #controllare tipi
                 channel = channelDAO.get_channel_by_address(channel_address)
                 
-                response = {
-                    "type" : type,
-                    "channel" : channel.id,
-                    "value" : value
-                }
+                if channel:
+                    response = {
+                        "type" : type,
+                        "channel" : channel.id,
+                        "value" : value
+                    }
 
-                await websocket.send_json(response)
+                    await websocket.send_json(response)
         except Exception as e:
-            print(f"errore {e}")
+            print(f"errore liveSyncMixer {e}")
             
 
     sync = MidiMixerSync(send_back=send_back)
@@ -73,7 +88,8 @@ async def websocket(websocket: WebSocket):
             
     except WebSocketDisconnect:
         print("Il client ha chiuso la connessione.")
-        sync.port.close()
+        sync.stop()
     finally:
         is_active = False  
+
 

@@ -30,6 +30,10 @@
                 flex: 1; /* prende tutto lo spazio disponibile */
             }
 
+            button{
+                margin-inline : 1rem;
+            }
+
             @media (max-width: 900px) {
                 .canale-container {
                     flex-direction: column;
@@ -46,6 +50,10 @@
 
                 .inputRange {
                     height: 150px; /* slider ancora più alto su mobile */
+                }
+
+                button {
+                    touch-action: manipulation;
                 }
             }
         </style>

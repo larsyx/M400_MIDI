@@ -30,6 +30,21 @@
                 flex: 1; /* prende tutto lo spazio disponibile */
             }
 
+            button{
+                margin-inline : 1rem;
+            }
+
+            .drumButtons{
+                display: inline-flex;
+                justify-content: center;
+            }
+
+            .drumButtons Button{
+                text-align: center;
+                width: 50px;
+                height: 30px;
+                font-size: 1.2rem;
+            }
             @media (max-width: 900px) {
                 .canale-container {
                     flex-direction: column;
@@ -47,6 +62,10 @@
                 .inputRange {
                     height: 150px; /* slider ancora più alto su mobile */
                 }
+
+                button {
+                    touch-action: manipulation;
+                }
             }
         </style>
     </head>
@@ -58,11 +77,20 @@
                     <span class="descrizione">{{ canale.descrizione}}</span>
                     <div style="display: inline-flex;">
                     <button type="button"  onclick="changeValue({{ canale.canaleId }}, 'minus')" >-</button>
-                    <input class="inputRange"type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.canaleId }}" onchange="sendMessage( {{canale.canaleId}} , this.value);", oninput="sendMessage({{canale.canaleId}} , this.value);">
+                    <input class="inputRange {%if canale.isBatteria%}batteria{%endif%}"type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.canaleId }}" onchange="sendMessage( {{canale.canaleId}} , this.value);", oninput="sendMessage({{canale.canaleId}} , this.value);">
                     <button type="button" onclick="changeValue({{ canale.canaleId }}, 'plus')">+</button>
                     </div>
                 </div>
             {% endfor %}
+            {% if hasBatteria == true %}
+                <div class="canale-container">
+                    <span class="descrizione">Main Batteria</span>
+                    <div class="drumButtons">
+                        <button type="button"  onclick="changeDrum('minus')" >-</button>
+                        <button type="button" onclick="changeDrum('plus')">+</button>
+                    </div>
+                </div>
+            {% endif %}
             <div class="canale-container">
                 <span class="descrizione">Main</span>
                 <div style="display: inline-flex;">
@@ -74,38 +102,16 @@
        </div>
 
        <div>
+            <button  onclick="window.location.href='../getScenes'">Indietro</button>
+
             <button  onclick="window.location.href='./layout'">Modifica Layout</button>
         </div>
+
 
 
        <script>
              let aux = {{ indirizzoaux | tojson}};
              let auxMain = {{ indirizzoauxMain | tojson}};
-            // let socket = new WebSocket("wss://localhost:8000/ws/liveControl");
-
-            // socket.onopen = function(event) {
-            //     console.log("connessione aperta");
-            // }
-
-            // socket.onmessage = function(event){
-            //     const data = JSON.parse(event.data);
-            //     let doc = document.getElementById("canale_"+data.canaleId);
-            //     doc.value = data.value;
-            // }
-
-            // socket.onclose = function(event) {
-            //     console.log("connessione chiusa");
-            // }
-
-            // function sendMessage(canaleId, value) {
-            //     console.log("sendMessage", canaleId, value);
-            //     const message = {
-            //         canaleId: canaleId,
-            //         value: value,
-            //         aux: aux
-            //     };
-            //     socket.send(JSON.stringify(message));
-            // }
 
             function sendMessage(canaleId, value) {
                 const xhttp = new XMLHttpRequest();
@@ -149,6 +155,55 @@
                 else
                     sendMessage(canaleId, value);
             }
+
+            function changeDrum(action){
+                inputsRange = document.getElementsByClassName("batteria");
+
+                for(const input of inputsRange){
+                    let value = parseInt(input.value, 10);
+                    if(action == "plus")
+                        value = Math.min(value + 2, 100);
+                    else if(action == "minus")
+                        value = Math.max(value -2, 0);
+                    input.value = value;
+
+
+                    id = input.id.split("_")
+                    canaleId = id[1]
+                    console.log(canaleId)
+                    sendMessage(canaleId, value);
+                }
+
+
+            }
+
+
+            const socket = new WebSocket('wss://192.168.50.200:8000/ws/liveSync'); 
+
+            socket.onopen = function(){
+                socket.send(aux)
+            };
+
+            socket.onmessage = function(event){
+                console.log(event.data);
+                const response = JSON.parse(event.data);
+                if(response != null){
+                    let element = null;
+                    element = document.getElementById("canale_"+response.channel);
+                        if(element != null)
+                            element.value = response.value;
+
+                }
+            };
+
+            socket.onerror = function(error){
+                console.log("Errore sincronizzazione:", error);
+                
+            };
+
+            socket.onclose = function(e){
+                console.log("soket chiusa");
+            };
        </script>
     </body>
 </html>

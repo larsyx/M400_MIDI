@@ -19,7 +19,7 @@ class ChannelDAO:
             channel = self.db.query(Canale).filter(Canale.id == channel_id).first()
             return channel
         except Exception as e:
-            print(f"Error retrieving all channels: {e}")
+            print(f"Error retrieving channels: {e}")
             return None
 
     def get_channel_address(self, channel_id):

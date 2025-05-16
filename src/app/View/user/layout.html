@@ -25,7 +25,7 @@
     <body>
         <div id ="addbuttons">
             {% for canale in canali %}
-            <div id= "Add_{{canale.id}}"" style="display: inline-block;">
+            <div id= "Add_{{canale.id}}" style="display: inline-block;">
                 <button type="button" onclick="addChannelLayout({{canale.id}}, '{{ canale.nome}}{% if canale.descrizione is not none %}: {{ canale.descrizione }}{% endif %}')">{{canale.nome}}
                     {% if canale.descrizione is not none %}
                         : {{ canale.descrizione }}
@@ -44,7 +44,7 @@
                     <div style="display: inline-block;">
                         <button type="button" onclick="removeChannelLayout({{layoutcanale.canaleId}})">Elimina</button>
                     </div>
-                    <input type="checkbox">
+                    <input type="checkbox" {% if layoutcanale.isBatteria%}checked{%endif%}>
                 </li>                
             {% endfor %}
             </ul>

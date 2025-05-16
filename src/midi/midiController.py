@@ -101,7 +101,9 @@ class MidiListener:
         elif calltype == call_type.SWITCH:
             callfn = self.callbackSwitch
 
-        self.port = mido.open_input(mido.get_input_names()[0], callback=callfn)
+        self.callback = callfn
+
+        get_midi_multiplexer().register(self.callback)
 
     def callbackChannel(self, msg):
         if not self.running:
@@ -125,7 +127,7 @@ class MidiListener:
 
     def stop(self):
         self.running = False
-        self.port.close()
+        get_midi_multiplexer().unregister(self.callback)
 
     def has_received_all(self):
         with self.lock:
@@ -170,13 +172,17 @@ class MidiListener:
         return False if value == 0x01 else True
     
 
-class MidiMixerSync():
-    def __init__(self, send_back):
-        self.loop =  asyncio.get_event_loop()
-        self.send_back = send_back
-        self.fader_post = [0x00, 0x0E]
-        self.switch_post = [0x00, 0x0C]
-        self.port = mido.open_input(mido.get_input_names()[0], callback=self.listening)
+class MidiUserSync():
+    def __init__(self, sendback, address):
+        self.loop = asyncio.get_event_loop()
+        self.send_back = sendback
+        self.post_address = address
+
+        get_midi_multiplexer().register(self.listening)
+
+    def stop(self):
+        get_midi_multiplexer().unregister(self.listening)
+
 
     def listening(self, msg):
 
@@ -184,7 +190,38 @@ class MidiMixerSync():
             data = tuple(msg.data)
 
             if data[:5] == tuple(header) and data[5] == Command_ID_Set:
-                canale = f"0x0{data[6]}, 0x0{data[7]}"
+                canale = f"0x{data[6]:02X}, 0x{data[7]:02X}"
+                valore = 0
+                if data[8:10] == tuple(self.post_address):
+                    valore = MidiListener.convert_value(data[10], data[11])
+
+                asyncio.run_coroutine_threadsafe(
+                    self.send_back(canale, valore),
+                    self.loop
+                )
+
+
+
+class MidiMixerSync():
+    def __init__(self, send_back):
+        self.loop =  asyncio.get_event_loop()
+        self.send_back = send_back
+        self.fader_post = [0x00, 0x0E]
+        self.switch_post = [0x00, 0x0C]
+        
+        get_midi_multiplexer().register(self.listening)
+
+    def stop(self):
+        get_midi_multiplexer().unregister(self.listening)
+
+
+    def listening(self, msg):
+
+        if msg.type == 'sysex':
+            data = tuple(msg.data)
+
+            if data[:5] == tuple(header) and data[5] == Command_ID_Set:
+                canale = f"0x{data[6]:02X}, 0x{data[7]:02X}"
                 type =""
                 valore = 0
                 if data[8:10] == tuple(self.switch_post):
@@ -198,3 +235,36 @@ class MidiMixerSync():
                     self.send_back(type, canale, valore),
                     self.loop
                 )
+
+class MidiMultiplexer:
+    def __init__(self):
+        self.callbacks = []
+        self.lock = threading.Lock()
+        port_name = mido.get_input_names()[0]
+        self.port = mido.open_input(port_name, callback=self._dispatch)
+
+    def _dispatch(self, msg):
+        with self.lock:
+            for cb in self.callbacks:
+                cb(msg)
+            
+    def register(self, callback):
+        with self.lock:
+            self.callbacks.append(callback)
+
+    def unregister(self, callback):
+        with self.lock:
+            self.callbacks.remove(callback)
+
+    def close(self):
+        self.port.close()
+
+
+
+_multiplexer_instance = None
+
+def get_midi_multiplexer():
+    global _multiplexer_instance
+    if _multiplexer_instance is None:
+        _multiplexer_instance = MidiMultiplexer()
+    return _multiplexer_instance
