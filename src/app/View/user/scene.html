@@ -26,7 +26,6 @@
         
             input[type="range"] {
                 height: fit-content;
-                width: 90%;
                 flex: 1; /* prende tutto lo spazio disponibile */
             }
 
@@ -71,6 +70,10 @@
     </head>
 
     <body>
+
+        <div class="message" hidden>
+            <p></p>
+        </div>
        <div class="slider">
             {% for canale, value in canali %}
                 <div class="canale-container">
@@ -178,7 +181,7 @@
             }
 
 
-            const socket = new WebSocket('wss://192.168.50.200:8000/ws/liveSync'); 
+            const socket = new WebSocket('wss://192.168.1.198:8000/ws/liveSync'); 
 
             socket.onopen = function(){
                 socket.send(aux)
@@ -198,11 +201,18 @@
 
             socket.onerror = function(error){
                 console.log("Errore sincronizzazione:", error);
-                
+                message = document.querySelector(".message");
+                message.hidden = false;
+                message.getElementsByTagName("p")[0].innerHTML = "Errore sincronizzazione: " + error;
+
             };
 
             socket.onclose = function(e){
                 console.log("soket chiusa");
+                message = document.querySelector(".message");
+                message.hidden = false;
+                message.getElementsByTagName("p")[0].innerHTML = "Disconnesso, nessuna sincronizzazione con il mixer ricarica la pagina";
+
             };
        </script>
     </body>

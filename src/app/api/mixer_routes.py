@@ -36,3 +36,21 @@ async def setSwitchChannel(request : Request):
 
     mixerController.setSwitchChannel(canaleId=canaleId, switch=switch)
 
+
+@router.post("/mixer/set/main")
+async def setFaderMain(request: Request):
+    user_data = get_current_user(request)
+
+    data = await request.json()
+    value = data.get("value")
+
+    mixerController.setMainFaderValue(value)
+
+@router.post("/mixer/switch/main")
+async def setFaderMain(request: Request):
+    user_data = get_current_user(request)
+
+    data = await request.json()
+    switch = data.get("switch")
+
+    mixerController.setMainSwitchChannel(switch)

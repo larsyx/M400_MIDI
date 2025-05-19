@@ -38,8 +38,6 @@ async def websocket(websocket: WebSocket):
             if address:
                 sync = MidiUserSync(sendback=send_back, address=address)
                 address = None
-
-
             
     except WebSocketDisconnect:
         print("Il client ha chiuso la connessione.")
@@ -63,15 +61,18 @@ async def websocket(websocket: WebSocket):
     async def send_back(type, channel_address, value):
         try:
             if is_active:
-                channelDAO = ChannelDAO()
 
-                #controllare tipi
-                channel = channelDAO.get_channel_by_address(channel_address)
+                if channel_address == 'main':
+                    channel = channel_address
+                else:
+                    channelDAO = ChannelDAO()
+                    channel = channelDAO.get_channel_by_address(channel_address)
+                    channel = channel.id
                 
                 if channel:
                     response = {
                         "type" : type,
-                        "channel" : channel.id,
+                        "channel" : channel,
                         "value" : value
                     }
 

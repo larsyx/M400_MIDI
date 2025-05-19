@@ -12,6 +12,7 @@ class MixerController:
         load_dotenv()
         self.postMainFader = [int(val,16) for val in os.getenv("Main_Post_Fix_Fader").split(",")]
         self.postSwitch = [int(val,16) for val in os.getenv("Main_Post_Fix_Switch").split(",")]
+        self.preMain = [int(val,16) for val in os.getenv("Main_Pre_Fix").split(",")]
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "View", "mixer"))
 
 
@@ -31,6 +32,9 @@ class MixerController:
             listenAddressFader.append(channelAddress + self.postMainFader)
             listenAddressSwitch.append(channelAddress + self.postSwitch)
 
+
+        listenAddressFader.append(self.preMain + self.postMainFader)
+        listenAddressSwitch.append(self.preMain + self.postSwitch)
 
         listen = MidiListener(listenAddressFader, call_type.CHANNEL)
 
@@ -60,8 +64,11 @@ class MixerController:
                 print("errore chiave ", k)
                 resultsValueSet.append(0)
 
-        print(resultsValueSet)
-
+        try:
+            valueMain = resultsValue[tuple(self.preMain + self.postMainFader)]
+        except KeyError as e:
+            print(f"error key {e}")
+            valueMain = 0
 
         # Channel switch sync
 
@@ -70,17 +77,15 @@ class MixerController:
         start = time.time()
 
         for address in listenAddressSwitch:
-            # print(f"indirizzo: {address}")
             midiController.request_value(address)
 
         while time.time() - start < 10:
             time.sleep(0.5)
             if listenSwitch.has_received_all():
-                # print("Tutti ricevuti.")
                 break
 
         listenSwitch.stop()
-        # print("thread terminato")
+
         resultsValueSwitch = listenSwitch.get_results()
         
         resultsValueSetSwitch = []
@@ -93,14 +98,18 @@ class MixerController:
                 print("errore chiave ", k)
                 resultsValueSetSwitch.append(0)
 
-        print(resultsValueSetSwitch)
+        try:
+            switchMain = resultsValueSwitch[tuple(self.preMain + self.postSwitch)]
+        except KeyError as e:
+            print(f"error key {e}")
+            switchMain = False
 
         coppieCanali = list(zip(canali, resultsValueSet, resultsValueSetSwitch))
         
 
         #DCA
 
-        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali})
+        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "valueMain" : valueMain, "switchMain" : switchMain})
         
 
     def setFaderValue(self, canaleId, value):
@@ -126,3 +135,16 @@ class MixerController:
             indirizzo = channelAddresshex + self.postSwitch
             midiController.send_command(indirizzo, MidiController.convertSwitch(switch))
 
+    def setMainFaderValue(self, value):
+
+        midiController = MidiController("pedal")
+
+        indirizzo = self.preMain + self.postMainFader
+        
+        midiController.send_command(indirizzo, MidiController.convertValue(int(value)))
+
+    def setMainSwitchChannel(self, switch):
+        midiController = MidiController("pedal")
+    
+        indirizzo = self.preMain + self.postSwitch
+        midiController.send_command(indirizzo, MidiController.convertSwitch(switch))

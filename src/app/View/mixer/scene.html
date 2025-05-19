@@ -4,6 +4,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>M-400 remote control</title>
 
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	
         <style>
             .slider {
                 display: flex;
@@ -26,7 +28,6 @@
         
             input[type="range"] {
                 height: fit-content;
-                width: 90%;
                 flex: 1; /* prende tutto lo spazio disponibile */
             }
 
@@ -60,6 +61,21 @@
     </head>
 
     <body>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+        <div class="alert alert-warning alert-dismissible fade show" role="alert" hidden>
+            <p></p>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+
+        <div class="message" hidden>
+            <p></p>
+        </div>
+
        <div class="slider">
             {% for canale, value, switch in canali %}
                 <div class="canale-container">
@@ -70,12 +86,21 @@
                     </span>
                     <div style="display: inline-flex;">
                     <button type="button"  onclick="changeValue({{ canale.id }}, 'minus')" >-</button>
-                    <input class="inputRange"type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.id }}" onchange="sendMessage( {{canale.id}} , this.value);" oninput="sendMessage({{canale.id}} , this.value);">
+                    <input class="inputRange"  type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.id }}" onchange="sendMessage( {{canale.id}} , this.value);" oninput="sendMessage({{canale.id}} , this.value);">
                     <button type="button" onclick="changeValue({{ canale.id }}, 'plus')">+</button>
                     <input id="switch_{{canale.id}}" onchange="checkSwitch({{canale.id}}, this.checked)" type="checkbox"  {% if switch %} checked {% endif %}>
                     </div>
                 </div>
             {% endfor %}
+                <div class="canale-container">
+                    <span class="descrizione">Main</span>
+                    <div style="display: inline-flex;">
+                    <button type="button"  onclick="changeValue('main', 'minus')" >-</button>
+                    <input class="inputRange"  type="range" min="0" max="100" value="{{valueMain}}" id="canale_main" onchange="sendMessageMain(this.value);" oninput="sendMessageMain(this.value);">
+                    <button type="button" onclick="changeValue('main', 'plus')">+</button>
+                    <input id="switch_main" onchange="checkSwitchMain(this.checked)" type="checkbox"  {% if switchMain %} checked {% endif %}>
+                    </div>
+                </div>
        </div>
        
        <script>
@@ -93,6 +118,18 @@
                 xhttp.send(JSON.stringify(message));
             }
 
+            function sendMessageMain(value){
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("POST", "./set/main", true)
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+                const message = {
+                        value: value,
+                };
+
+                xhttp.send(JSON.stringify(message));
+            }
+
             function changeValue(canaleId, action){
                 inputRange = document.getElementById("canale_"+canaleId);
                 let value = parseInt(inputRange.value, 10);
@@ -103,7 +140,10 @@
                     value = Math.max(value -1, 0);
                 inputRange.value = value;
 
-                sendMessage(canaleId, value);
+                if(canaleId == "main")
+                    sendMessageMain(value);
+                else
+                    sendMessage(canaleId, value);
             }
 
             function checkSwitch(canaleId, switchValue){
@@ -118,8 +158,20 @@
 
                 xhttp.send(JSON.stringify(message));
             }
+
+            function checkSwitchMain(switchValue){
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("POST", "./switch/main", true)
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+                const message = {
+                    switch: switchValue
+                };
+
+                xhttp.send(JSON.stringify(message));
+            }
        
-            const socket = new WebSocket('wss://192.168.50.200:8000/ws/liveSyncMixer'); 
+            const socket = new WebSocket('wss://192.168.1.198:8000/ws/liveSyncMixer'); 
 
             socket.onopen = function(){
 
@@ -143,12 +195,15 @@
             };
 
             socket.onerror = function(error){
-                console.log("Errore sincronizzazione:", error);
-                
+                message = document.querySelector(".alert");
+                message.hidden = false;
+                message.getElementsByTagName("p")[0].innerHTML = "Errore sincronizzazione: " + error.message;
             };
 
             socket.onclose = function(e){
-                console.log("soket chiusa");
+                message = document.querySelector(".alert");
+                message.hidden = false;
+                message.getElementsByTagName("p")[0].innerHTML = "Disconnesso, nessuna sincronizzazione con il mixer <a href='./home'>ricarica la pagina</a>";
             };
             
        </script>

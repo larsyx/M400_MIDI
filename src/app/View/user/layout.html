@@ -2,24 +2,51 @@
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
         <title>M-400 remote control</title>
 
         <style>
             ul {
               list-style: none;
               padding: 0;
-              width: 300px;
+              width: 100%;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
             }
             li {
-              padding: 10px;
-              margin: 5px 0;
-              background-color: #f0f0f0;
-              cursor: move;
-              border: 1px solid #ccc;
+                width: 80%;
+                padding: 10px;
+                margin: 5px 0;
+                background-color: #f0f0f0;
+                border: 1px solid #ccc;
+                border-radius: 10px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            #addbuttons {
+                width: 100%;
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                justify-content: center;
+                margin-bottom: 20px;
+            }
+
+            #addbuttons button {
+                margin: 3px;
+                padding: 5px;
+                width: 95%;
+                height: 95%;
+                border-radius: 5px;
+                cursor: pointer;
             }
         </style>
 
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+        <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     </head>
 
     <body>
@@ -39,16 +66,19 @@
             <span>Canali layout</span>
             <ul id="sortable element">
             {% for layoutcanale in layout %}
-                <li id ="Remove_{{layoutcanale.canaleId}}" class="channelLayout" draggable="true" style="display: inline-block;">{{layoutcanale.canaleId}} 
+                <li id ="Remove_{{layoutcanale.canaleId}}" class="channelLayout" draggable="true">{{layoutcanale.canaleId}} 
                     <input value="{{layoutcanale.descrizione}}"> 
                     <div style="display: inline-block;">
                         <button type="button" onclick="removeChannelLayout({{layoutcanale.canaleId}})">Elimina</button>
                     </div>
                     <input type="checkbox" {% if layoutcanale.isBatteria%}checked{%endif%}>
+                    <i class="fas fa-arrows-alt drag"></i>
                 </li>                
             {% endfor %}
             </ul>
         </div>
+
+                
 
         <div>
             <button type = "button" onclick='window.location.href = "./";'>Torna a Live Control</button>
@@ -57,35 +87,13 @@
 
         <script>
             new Sortable(document.getElementById("sortable element"), {
-                animation: 150
+                animation: 150,
+                handle: ".drag"
             });
             const list = document.getElementById("sortable element")
 
             let draggedItem = null;
 
-            list.addEventListener('dragstart', e => {
-                draggedItem = e.target;
-                setTimeout(() => {
-                    e.target.style.display = 'none';
-                }, 0);
-                });
-
-            list.addEventListener('dragend', e => {
-                setTimeout(() => {
-                    draggedItem.style.display = 'block';
-                    draggedItem = null;
-                }, 0);
-            });
-
-            list.addEventListener('dragover', e => {
-                e.preventDefault();
-                const afterElement = getDragAfterElement(list, e.clientY);
-                if (afterElement == null) {
-                    list.appendChild(draggedItem);
-                } else {
-                    list.insertBefore(draggedItem, afterElement);
-                }
-            });
 
             function getDragAfterElement(container, y) {
                 const draggableElements = [...container.querySelectorAll('li:not(.dragging)')];
@@ -119,9 +127,8 @@
 
                     let li = document.createElement("li");
                     li.id = `Remove_${canaleId}`
-                    li.className = "ChannelLayout";
+                    li.className = "channelLayout";
                     li.setAttribute("draggable", "true");
-                    li.style.display = "inline-block";
                     li.innerHTML = `
                         ${canaleId}
                         <input value="${descrizione}">
@@ -129,6 +136,7 @@
                             <button type="button" onclick="removeChannelLayout(${canaleId})">Elimina</button>
                         </div>
                         <input type="checkbox">
+                        <i class="fas fa-arrows-alt drag"></i>
                     `;
                     list.appendChild(li);
                 }
@@ -139,9 +147,16 @@
             }
 
             function removeChannelLayout(canaleId){
+                
+                let li = document.getElementById(`Remove_${canaleId}`);
+                if(li)
+                    li.getElementsByTagName("button")[0].disabled = true
+                
+                
                 const xhttp = new XMLHttpRequest();
                 xhttp.open("POST", "./layout/removeChannelLayout");
                 xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
 
                 xhttp.onload = function(){
                     const name = xhttp.responseText.slice(1, -1)

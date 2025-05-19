@@ -1,7 +1,6 @@
 import asyncio
 import math
 import threading
-import time
 import mido
 from dotenv import load_dotenv
 import os
@@ -14,8 +13,13 @@ Device_ID = int(os.getenv("DEVICE_ID"), 0)
 Model_ID = [int(val,0) for val in os.getenv("MODEL_ID").split(",")]
 Command_ID_Set = int(os.getenv("Command_ID_Data_Set"), 0)
 Command_ID_Request = int(os.getenv("Command_ID_Data_Request"), 0)
+fader_post = [int(val,0) for val in os.getenv("Main_Post_Fix_Fader").split(",")]
+switch_post = [int(val,0) for val in os.getenv("Main_Post_Fix_Switch").split(",")]
+preMain = os.getenv("Main_Pre_Fix")
+
 
 header = [int(Manufacturer_ID), int(Device_ID)] + [int(a) for a in Model_ID] 
+
 
 
 
@@ -195,10 +199,10 @@ class MidiUserSync():
                 if data[8:10] == tuple(self.post_address):
                     valore = MidiListener.convert_value(data[10], data[11])
 
-                asyncio.run_coroutine_threadsafe(
-                    self.send_back(canale, valore),
-                    self.loop
-                )
+                    asyncio.run_coroutine_threadsafe(
+                        self.send_back(canale, valore),
+                        self.loop
+                    )
 
 
 
@@ -208,7 +212,8 @@ class MidiMixerSync():
         self.send_back = send_back
         self.fader_post = [0x00, 0x0E]
         self.switch_post = [0x00, 0x0C]
-        
+        self.preMain = [0x06, 0x00]
+
         get_midi_multiplexer().register(self.listening)
 
     def stop(self):
@@ -222,6 +227,9 @@ class MidiMixerSync():
 
             if data[:5] == tuple(header) and data[5] == Command_ID_Set:
                 canale = f"0x{data[6]:02X}, 0x{data[7]:02X}"
+                
+                if canale == preMain:
+                    canale = "main"
                 type =""
                 valore = 0
                 if data[8:10] == tuple(self.switch_post):

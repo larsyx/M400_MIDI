@@ -32,8 +32,9 @@ class UserController:
         auxAddressMain = [int(x,16) for x in aux.indirizzoMidiMain.split(",")]
 
         for canale in canali:
-            channelMidi = self.channelDAO.get_channel_address(channel_id= canale.canaleId)
+            channelMidi = self.channelDAO.get_channel_address(channel_id = canale.canaleId)
             channelAddress = [int(x,16) for x in channelMidi.split(",")] 
+
             if not hasBatteria and canale.isBatteria:
                 hasBatteria = True
                 
@@ -50,11 +51,9 @@ class UserController:
         while time.time() - start < 10:
             time.sleep(0.5)
             if listen.has_received_all():
-                print("Tutti ricevuti.")
                 break
 
         listen.stop()
-        print("thread terminato")
         resultsValue = listen.get_results()
         
         resultsValueSet = []
@@ -74,10 +73,6 @@ class UserController:
         except KeyError as e:
             print(f"error key {e}")
             valueMain = 0
-
-        print(f"auxaddress {tuple(auxAddress)}")
-
-        print(resultsValueSet)
 
         coppieCanali = list(zip(canali, resultsValueSet))
 
