@@ -17,6 +17,9 @@ fader_post = [int(val,0) for val in os.getenv("Main_Post_Fix_Fader").split(",")]
 switch_post = [int(val,0) for val in os.getenv("Main_Post_Fix_Switch").split(",")]
 preMain = os.getenv("Main_Pre_Fix")
 
+preDca = [0x09]
+dca_fader_post = [0x00, 0x0A]
+dca_switch_post = [0x00, 0x08]
 
 header = [int(Manufacturer_ID), int(Device_ID)] + [int(a) for a in Model_ID] 
 
@@ -210,9 +213,6 @@ class MidiMixerSync():
     def __init__(self, send_back):
         self.loop =  asyncio.get_event_loop()
         self.send_back = send_back
-        self.fader_post = [0x00, 0x0E]
-        self.switch_post = [0x00, 0x0C]
-        self.preMain = [0x06, 0x00]
 
         get_midi_multiplexer().register(self.listening)
 
@@ -230,17 +230,26 @@ class MidiMixerSync():
                 
                 if canale == preMain:
                     canale = "main"
-                type =""
+                typeCmd =""
                 valore = 0
-                if data[8:10] == tuple(self.switch_post):
-                    type = "switch"
+                if data[8:10] == tuple(switch_post):
+                    typeCmd = "switch"
                     valore = MidiListener.convert_switch(data[10])
-                elif data[8:10] == tuple(self.fader_post):
+                elif data[8:10] == tuple(fader_post):
                     valore = MidiListener.convert_value(data[10], data[11])
-                    type = "fader"
+                    typeCmd = "fader"
 
+                if data[6] == preDca[0]:
+                    canale = f"0x{data[6]:02X}, 0x{data[7]:02X}, 0x{data[8]:02X}, 0x{data[9]:02X}"
+                    if data[8:10] == tuple(dca_fader_post):
+                        valore = MidiListener.convert_value(data[10], data[11])
+                        typeCmd = "fader"
+                    elif data[8:10] == tuple(dca_switch_post):
+                        typeCmd = "switch"
+                        valore = MidiListener.convert_switch(data[10])
+                    
                 asyncio.run_coroutine_threadsafe(
-                    self.send_back(type, canale, valore),
+                    self.send_back(typeCmd, canale, valore),
                     self.loop
                 )
 

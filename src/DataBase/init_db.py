@@ -3,6 +3,8 @@ from sqlalchemy.orm import sessionmaker
 import os
 import sys
 
+from Models.dca import DCA
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from Models.base import Base
@@ -80,61 +82,113 @@ canali[30].descrizione = "Floor Tom"
 canali[31].descrizione = "OH L"
 canali[32].descrizione = "OH R"
 
+dca = [
+    DCA(id=1, nome="DCA 1", descrizione="DCA 1", indirizzoMidiFader="0x09, 0x00, 0x00, 0x0A", indirizzoMidiSwitch="0x09, 0x00, 0x00, 0x08"),
+    DCA(id=2, nome="DCA 2", descrizione="DCA 2", indirizzoMidiFader="0x09, 0x01, 0x00, 0x0A", indirizzoMidiSwitch="0x09, 0x01, 0x00, 0x08"),
+    DCA(id=3, nome="DCA 3", descrizione="DCA 3", indirizzoMidiFader="0x09, 0x02, 0x00, 0x0A", indirizzoMidiSwitch="0x09, 0x02, 0x00, 0x08"),
+    DCA(id=4, nome="DCA 4", descrizione="DCA 4", indirizzoMidiFader="0x09, 0x03, 0x00, 0x0A", indirizzoMidiSwitch="0x09, 0x03, 0x00, 0x08"),
+    DCA(id=5, nome="DCA 5", descrizione="DCA 5", indirizzoMidiFader="0x09, 0x04, 0x00, 0x0A", indirizzoMidiSwitch="0x09, 0x04, 0x00, 0x08"),
+    DCA(id=6, nome="DCA 6", descrizione="DCA 6", indirizzoMidiFader="0x09, 0x05, 0x00, 0x0A", indirizzoMidiSwitch="0x09, 0x05, 0x00, 0x08"),
+    DCA(id=7, nome="DCA 7", descrizione="DCA 7", indirizzoMidiFader="0x09, 0x06, 0x00, 0x0A", indirizzoMidiSwitch="0x09, 0x06, 0x00, 0x08"),
+    DCA(id=8, nome="DCA 8", descrizione="DCA 8", indirizzoMidiFader="0x09, 0x07, 0x00, 0x0A", indirizzoMidiSwitch="0x09, 0x07, 0x00, 0x08")
+]
+
 utente = Utente(username="admin", nome="admin", ruolo="amministratore")
-utente3 = Utente(username="Thomas", nome="Thomas", ruolo="mixerista")
-utente1 = Utente(username="Gabri", nome="Gabriele", ruolo="utente")
-utente2 = Utente(username="Gionathan", nome="Gionathan", ruolo="utente")
+utente1 = Utente(username="Thomas", nome="Thomas", ruolo="mixerista")
+
+musicisti_giovani = [
+    Utente(username="Gabri", nome="Gabriele", ruolo="utente"),
+    Utente(username="Gionathan", nome="Gionathan", ruolo="utente"),
+    Utente(username="Donato", nome = "Donato", ruolo="utente"),
+    Utente(username="Irene", nome="Irene", ruolo="utente"),
+    Utente(username="Samuel", nome="Samuel", ruolo="utente"),
+    Utente(username="Lucrezia", nome="Lucrezia", ruolo="utente"),
+    Utente(username="Christian", nome="Christian", ruolo="utente"),
+    Utente(username="Andrea", nome="Andrea", ruolo="utente")
+]
+
+cantanti_giovani = [
+    Utente(username="Denise", nome = "Denise", ruolo="utente"),
+    Utente(username="Maria", nome = "Maria", ruolo="utente"),
+    Utente(username="Manuel", nome = "Manuel", ruolo="utente"),
+    Utente(username="Martina", nome = "Martina", ruolo="utente"),
+    Utente(username="Giusy", nome = "Giusy", ruolo="utente"),
+    Utente(username="Vanessa", nome = "Vanessa", ruolo="utente")
+]
 
 scena = Scena(id = 0, nome="Domenica", descrizione="scena della domenica")
 
+partecipazione_dom = []
+
+partecipazione_dom.append(PartecipazioneScena(
+        scenaId=scena.id,
+        utenteUsername=musicisti_giovani[0].username,
+        aux_id=aux[13].id,
+    ))
+
+partecipazione_dom.append(PartecipazioneScena(
+        scenaId=scena.id,
+        utenteUsername=musicisti_giovani[1].username,
+        aux_id=aux[0].id,
+    ))
+
+partecipazione_dom.append(PartecipazioneScena(
+        scenaId=scena.id,
+        utenteUsername=musicisti_giovani[2].username,
+        aux_id=aux[0].id,
+    ))
+
+scena2 = Scena(id=1, nome="Giovani", descrizione="Scena gruppo Giovani Fiamme" )
 
 
-partecipazione = PartecipazioneScena(
-    scenaId=scena.id,
-    utenteUsername=utente1.username,
-    aux_id=aux[13].id,
-)
+partecipazione_musicisti = []
 
-partecipazione2 = PartecipazioneScena(
-    scenaId=scena.id,
-    utenteUsername=utente2.username,
-    aux_id=aux[0].id,
-)
+for user in musicisti_giovani:
+    partecipazione_musicisti.append(PartecipazioneScena(
+        scenaId=scena2.id,
+        utenteUsername=user.username,
+        aux_id=aux[1].id,
+    ))
 
-# layoutCanale = [
-#     LayoutCanale(
-#         scenaId=scena.id,
-#         canaleId=canali[i].id,
-#         user=utente1.username,
-#         posizione=i,
-#         descrizione=f"CH {i + 1}",
-#     )
-#     for i in range(len(canali))
-# ]
+partecipazione_musicisti[0].aux_id=aux[13].id  #gab
+partecipazione_musicisti[1].aux_id=aux[1].id   #gion
+partecipazione_musicisti[2].aux_id=aux[5].id  #don
+partecipazione_musicisti[3].aux_id=aux[10].id  #irene
+partecipazione_musicisti[4].aux_id=aux[11].id  #samu
+partecipazione_musicisti[5].aux_id=aux[12].id  #luc
+partecipazione_musicisti[6].aux_id=aux[6].id  #christian
+partecipazione_musicisti[7].aux_id=aux[0].id  #andrea
 
 
-# layoutCanale2 = [
-#     LayoutCanale(
-#         scenaId=scena.id,
-#         canaleId=canali[i].id,
-#         user=utente2.username,
-#         posizione=i,
-#         descrizione=f"CH {i + 1}",
-#     )
-#     for i in range(40)
-# ]
+partecipazione_cantanti = []
+
+for user in cantanti_giovani:
+    partecipazione_cantanti.append(PartecipazioneScena(
+        scenaId=scena2.id,
+        utenteUsername=user.username,
+        aux_id=aux[1].id,
+    ))
+
+partecipazione_cantanti[0].aux_id=aux[3].id  #Deni
+partecipazione_cantanti[1].aux_id=aux[2].id  #Maria
+partecipazione_cantanti[2].aux_id=aux[2].id  #Manu
+partecipazione_cantanti[3].aux_id=aux[2].id  #Martina
+partecipazione_cantanti[4].aux_id=aux[3].id  #Giusy
+partecipazione_cantanti[5].aux_id=aux[3].id  #Vane
+
 
 session.add_all(aux)
 session.add_all(canali)
 session.add(utente)
 session.add(utente1)
-session.add(utente2)
-session.add(utente3)
+session.add_all(musicisti_giovani)
+session.add_all(cantanti_giovani)
 session.add(scena)
-session.add(partecipazione)
-session.add(partecipazione2)
-#session.add_all(layoutCanale)
-#session.add_all(layoutCanale2)
+session.add_all(partecipazione_dom)
+session.add(scena2)
+session.add_all(partecipazione_musicisti)
+session.add_all(partecipazione_cantanti)
+session.add_all(dca)
 session.commit()
 
 session.close()

@@ -54,3 +54,24 @@ async def setFaderMain(request: Request):
     switch = data.get("switch")
 
     mixerController.setMainSwitchChannel(switch)
+
+
+@router.post("/mixer/set/dca")
+async def setFaderMain(request: Request):
+    user_data = get_current_user(request)
+
+    data = await request.json()
+    dca = data.get("dca_id")
+    value = data.get("value")
+
+    mixerController.setDcaFaderValue(dca, value)
+
+@router.post("/mixer/switch/dca")
+async def setFaderMain(request: Request):
+    user_data = get_current_user(request)
+
+    data = await request.json()
+    dca = data.get("dca_id")
+    switch = data.get("switch")
+
+    mixerController.setDcaSwitchChannel(dca,  switch)

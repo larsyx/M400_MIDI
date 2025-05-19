@@ -1,5 +1,6 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from app.DAO.dca_dao import DCA_DAO
 from app.auth.security import get_current_user_token, verify_mixer
 from midi.midiController import MidiMixerSync, MidiUserSync
 from app.DAO.channel_dao import ChannelDAO
@@ -61,9 +62,19 @@ async def websocket(websocket: WebSocket):
     async def send_back(type, channel_address, value):
         try:
             if is_active:
-
+                dca = False
                 if channel_address == 'main':
                     channel = channel_address
+                elif channel_address.count(',') == 3:
+                    dcaDAO = DCA_DAO()
+                    if(type == "fader"):
+                        channel = dcaDAO.get_dca_by_address(channel_address)
+                    elif(type == "switch"):
+                        channel = dcaDAO.get_dca_by_address_switch(channel_address)
+                    
+                    channel = channel.id
+                    dca = True
+
                 else:
                     channelDAO = ChannelDAO()
                     channel = channelDAO.get_channel_by_address(channel_address)
@@ -71,6 +82,7 @@ async def websocket(websocket: WebSocket):
                 
                 if channel:
                     response = {
+                        "dca" : dca,
                         "type" : type,
                         "channel" : channel,
                         "value" : value
@@ -78,7 +90,7 @@ async def websocket(websocket: WebSocket):
 
                     await websocket.send_json(response)
         except Exception as e:
-            print(f"errore liveSyncMixer {e}")
+                print(f"errore liveSyncMixer {e}")
             
 
     sync = MidiMixerSync(send_back=send_back)

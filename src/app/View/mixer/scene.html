@@ -72,9 +72,6 @@
             </button>
         </div>
 
-        <div class="message" hidden>
-            <p></p>
-        </div>
 
        <div class="slider">
             {% for canale, value, switch in canali %}
@@ -102,8 +99,41 @@
                     </div>
                 </div>
        </div>
+
+        <div class="slider dca">
+            {% for dca, value, switch in dcas%}
+                <div class="canale-container">
+                    <span class="descrizione">{{dca.nome}}
+                        {% if dca.descrizione is not none %}
+                            : {{ dca.descrizione }}
+                        {% endif %}
+                    </span>
+                    <div style="display: inline-flex;">
+                        <button type="button"  onclick="changeValue({{ dca.id }}, 'minus', 'dca')" >-</button>
+                        <input class="inputRange"  type="range" min="0" max="100" value="{{value}}" id="dca_canale_{{ dca.id }}" onchange="sendMessageDca( {{dca.id}} , this.value);" oninput="sendMessageDca({{dca.id}} , this.value);">
+                        <button type="button" onclick="changeValue({{ dca.id }}, 'plus', 'dca')">+</button>
+                        <input id="dca_switch_{{dca.id}}" onchange="checkSwitchDca({{dca.id}}, this.checked)" type="checkbox"{% if switch %} checked {% endif %}>
+                    </div>
+                </div>
+            {% endfor %}
+       </div>
+
        
        <script>
+
+            function sendMessageDca(dca_id, value){
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("POST", "./set/dca", true)
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+                const message = {
+                        dca_id: dca_id,
+                        value: value
+                };
+
+                xhttp.send(JSON.stringify(message));
+            }
+            
 
             function sendMessage(canaleId, value) {
                 const xhttp = new XMLHttpRequest();
@@ -130,8 +160,11 @@
                 xhttp.send(JSON.stringify(message));
             }
 
-            function changeValue(canaleId, action){
-                inputRange = document.getElementById("canale_"+canaleId);
+            function changeValue(canaleId, action, type){
+                if(type == "dca")
+                    inputRange = document.getElementById("dca_canale_"+canaleId);
+                else
+                    inputRange = document.getElementById("canale_"+canaleId);
                 let value = parseInt(inputRange.value, 10);
 
                 if(action == "plus")
@@ -140,10 +173,13 @@
                     value = Math.max(value -1, 0);
                 inputRange.value = value;
 
-                if(canaleId == "main")
+                if(type == "dca")
+                    sendMessageDca(canaleId, value);
+                else if(canaleId == "main")
                     sendMessageMain(value);
                 else
                     sendMessage(canaleId, value);
+
             }
 
             function checkSwitch(canaleId, switchValue){
@@ -153,6 +189,20 @@
 
                 const message = {
                     canaleId: canaleId,
+                    switch: switchValue
+                };
+
+                xhttp.send(JSON.stringify(message));
+            }
+
+            
+            function checkSwitchDca(dca_id, switchValue){
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("POST", "./switch/dca", true)
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+                const message = {
+                    dca_id: dca_id,
                     switch: switchValue
                 };
 
@@ -171,7 +221,7 @@
                 xhttp.send(JSON.stringify(message));
             }
        
-            const socket = new WebSocket('wss://192.168.1.198:8000/ws/liveSyncMixer'); 
+            const socket = new WebSocket('wss://192.168.50.200:8000/ws/liveSyncMixer'); 
 
             socket.onopen = function(){
 
@@ -181,13 +231,17 @@
                 console.log(event.data);
                 const response = JSON.parse(event.data);
                 if(response != null){
+                    let elname = "";
+                    if(response.dca)
+                        elname = "dca_";
+
                     let element = null;
                     if(response.type === "switch")
-                        element = document.getElementById("switch_"+response.channel);
+                        element = document.getElementById(elname+"switch_"+response.channel);
                         if(element != null)
                             element.checked = response.value;
                     else if(response.type === "fader")
-                        element = document.getElementById("canale_"+response.channel);
+                        element = document.getElementById(elname+"canale_"+response.channel);
                         if(element != null)
                             element.value = response.value;
 
