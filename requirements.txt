@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+wsproto
 sqlalchemy
 mido
 python-rtmidi
