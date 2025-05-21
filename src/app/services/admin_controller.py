@@ -1,14 +1,18 @@
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from Models.utente import RuoloUtente
+from app.DAO.channel_dao import ChannelDAO
 from app.DAO.scene_dao import SceneDAO
 from app.DAO.user_dao import UserDAO
+from app.DAO.dca_dao import DCA_DAO
 import os
 
 class AdminController:
     def __init__(self):
         self.userDAO = UserDAO()
         self.sceneDAO = SceneDAO()
+        self.channelDAO = ChannelDAO()
+        self.dcaDAO = DCA_DAO()
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "View", "administration"))
 
     def loadManageUser(self, request, adminUser):
@@ -78,4 +82,34 @@ class AdminController:
                 return HTMLResponse(status_code=403, content="Non hai i permessi per accedere a questa risorsa")
         except Exception as e:
             print(f"Error retrieving all users: {e}")
+            return None
+        
+
+    def loadManageChannels(self, request, user):
+        try:
+            if self.userDAO.isAdmin(user):
+                channels = self.channelDAO.get_all_channels()
+                dcas = self.dcaDAO.get_dca()
+                return self.templates.TemplateResponse(request, "manage_channels.html", {"channels": channels, "dcas": dcas})
+            else:
+                return HTMLResponse(status_code=403, content="Non hai i permessi per accedere a questa risorsa")
+        except Exception as e:
+            print(f"Error loading manage channels: {e}")
+            return None
+        
+
+
+    def changeDescription(self, user, type, id, value):
+        try:
+            if self.userDAO.isAdmin(user):
+                if value == "":
+                    value = None
+                if type == "channel":
+                    self.channelDAO.update_channel_description(id, value)
+                    return True
+                elif type == "dca":
+                    self.dcaDAO.update_dca_description(id, value)
+                    return True
+        except Exception as e:
+            print(f"Error loading manage channels: {e}")
             return None

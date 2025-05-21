@@ -17,27 +17,33 @@ async def websocket(websocket: WebSocket):
     is_active=True
 
     async def send_back(channel_address, value):
-        # try:
-        if is_active:
-            channelDAO = ChannelDAO()
+        try:
+            if is_active:
+                channelDAO = ChannelDAO()
 
-            channel = channelDAO.get_channel_by_address(channel_address)
-            
-            response = {
-                "channel" : channel.id,
-                "value" : value
-            }
+                if(channel_address == 'main'):
+                    channel = channel_address
+                else:
+                    channel = channelDAO.get_channel_by_address(channel_address).id
+                
+                response = {
+                    "channel" : channel,
+                    "value" : value
+                }
 
-            await websocket.send_json(response)
-        # except Exception as e:
-        #     print(f"errore sync {e}")
+                await websocket.send_json(response)
+        except Exception as e:
+            print(f"errore sync {e}")
 
     try:
         while True:
-            id = await websocket.receive_text()
-            address = [int(val,0) for val in id.split(",")]
+            data = await websocket.receive_json()
+            add = data.get("address")
+            addMain = data.get("addressMain")
+            address = [int(val,0) for val in add.split(",")]
+            addressMain = [int(val,0) for val in addMain.split(",")]
             if address:
-                sync = MidiUserSync(sendback=send_back, address=address)
+                sync = MidiUserSync(sendback=send_back, address=address, addressMain=addressMain)
                 address = None
             
     except WebSocketDisconnect:

@@ -180,10 +180,11 @@ class MidiListener:
     
 
 class MidiUserSync():
-    def __init__(self, sendback, address):
+    def __init__(self, sendback, address, addressMain):
         self.loop = asyncio.get_event_loop()
         self.send_back = sendback
         self.post_address = address
+        self.addressMain = addressMain
 
         get_midi_multiplexer().register(self.listening)
 
@@ -200,6 +201,14 @@ class MidiUserSync():
                 canale = f"0x{data[6]:02X}, 0x{data[7]:02X}"
                 valore = 0
                 if data[8:10] == tuple(self.post_address):
+                    valore = MidiListener.convert_value(data[10], data[11])
+
+                    asyncio.run_coroutine_threadsafe(
+                        self.send_back(canale, valore),
+                        self.loop
+                    )
+                elif data[6:10] == tuple(self.addressMain):
+                    canale = "main"
                     valore = MidiListener.convert_value(data[10], data[11])
 
                     asyncio.run_coroutine_threadsafe(

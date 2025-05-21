@@ -16,6 +16,7 @@ class MixerController:
         self.postMainFader = [int(val,16) for val in os.getenv("Main_Post_Fix_Fader").split(",")]
         self.postSwitch = [int(val,16) for val in os.getenv("Main_Post_Fix_Switch").split(",")]
         self.preMain = [int(val,16) for val in os.getenv("Main_Pre_Fix").split(",")]
+        self.webSocketIp = os.getenv("WEBSOCKET_IP")
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "View", "mixer"))
 
 
@@ -143,7 +144,7 @@ class MixerController:
         #DCA
         coppieDca = list(zip(dca, resultDcaValueSet, resultDcaValueSetSwitch))
 
-        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "dcas": coppieDca, "valueMain" : valueMain, "switchMain" : switchMain})
+        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "dcas": coppieDca, "valueMain" : valueMain, "switchMain" : switchMain, "ipSocket" : self.webSocketIp})
         
 
     def setFaderValue(self, canaleId, value):

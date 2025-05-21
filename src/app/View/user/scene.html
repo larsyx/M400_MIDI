@@ -3,110 +3,149 @@
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>M-400 remote control</title>
-
+        <link rel="icon" type="image/png" href="/static/resource/mixer_icon.png" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	
         <style>
-            .slider {
+            .container{
+                margin-top: 5%;
+                display: grid;
+                grid-template-columns: 5fr 1fr;
+            }
+
+            .sliders-main{
                 display: flex;
                 flex-direction: column;
-                gap: 10px;
-                padding: 50px;
+                width: 100%;
+                gap: 15px;
             }
-        
-            .canale-container {
+
+            .range-horizontal{
                 display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-        
-            .descrizione {
-                min-width: 150px; /* larghezza fissa per il nome del canale */
-                text-align: left;
-                font-weight: bold;
-            }
-        
-            input[type="range"] {
-                height: fit-content;
-                flex: 1; /* prende tutto lo spazio disponibile */
-            }
-
-            button{
-                margin-inline : 1rem;
-            }
-
-            .drumButtons{
-                display: inline-flex;
                 justify-content: center;
+                width: 90%;
+                padding: 5px;
+                gap: 15px
+            }
+            .range-horizontal input[type=range]{
+                flex: 1;
+                width: 70%;
+                
             }
 
-            .drumButtons Button{
+            .canale-container{
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .lateral{
+                display: flex;
+                flex-direction: column;
+                gap: 30px;
+            }
+
+            .sticky{
+                position: sticky;
+                top: 10%;
+                z-index: 10;
+                background-color: white;
+            }
+
+            .main-fader{
+
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                padding: 10px;
+                gap: 5px;
+            }
+            .main-fader input[type=range]{
+                writing-mode: vertical-lr;
+                direction: rtl;
+                height: 50%;             
+            }
+
+            .menu{
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                margin: 30px;
+            }
+
+            .drum{
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
                 text-align: center;
-                width: 50px;
-                height: 30px;
-                font-size: 1.2rem;
+                padding-top: 5px;
+                padding-bottom: 5px;
+                gap: 5px
             }
-            @media (max-width: 900px) {
-                .canale-container {
-                    flex-direction: column;
-                    align-items: stretch;
-                }
 
-                .descrizione {
-                    min-width: unset;
-                    width: 100%;
-                    text-align: center;
-                    margin-bottom: 10px;
-                    font-size: 1rem; /* ancora più grande su mobile */
-                }
+            
 
-                .inputRange {
-                    height: 150px; /* slider ancora più alto su mobile */
-                }
-
-                button {
-                    touch-action: manipulation;
-                }
+            button {
+                touch-action: manipulation;
             }
         </style>
     </head>
 
     <body>
 
-        <div class="message" hidden>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+        <div class="alert alert-warning alert-dismissible fade show" role="alert" hidden>
             <p></p>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
         </div>
-       <div class="slider">
-            {% for canale, value in canali %}
+
+
+        <div class="container">
+            <div class="slider-main">
+                {% for canale, value in canali %}
                 <div class="canale-container">
                     <span class="descrizione">{{ canale.descrizione}}</span>
-                    <div style="display: inline-flex;">
-                    <button type="button"  onclick="changeValue({{ canale.canaleId }}, 'minus')" >-</button>
-                    <input class="inputRange {%if canale.isBatteria%}batteria{%endif%}"type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.canaleId }}" onchange="sendMessage( {{canale.canaleId}} , this.value);", oninput="sendMessage({{canale.canaleId}} , this.value);">
-                    <button type="button" onclick="changeValue({{ canale.canaleId }}, 'plus')">+</button>
+                    <div class="range-horizontal">
+                        <button type="button"  onclick="changeValue({{ canale.canaleId }}, 'minus')" >-</button>
+                        <input class="inputRange {%if canale.isBatteria%}batteria{%endif%}"type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.canaleId }}" onchange="sendMessage( {{canale.canaleId}} , this.value);", oninput="sendMessage({{canale.canaleId}} , this.value);">
+                        <button type="button" onclick="changeValue({{ canale.canaleId }}, 'plus')">+</button>
                     </div>
                 </div>
-            {% endfor %}
-            {% if hasBatteria == true %}
-                <div class="canale-container">
-                    <span class="descrizione">Main Batteria</span>
-                    <div class="drumButtons">
-                        <button type="button"  onclick="changeDrum('minus')" >-</button>
-                        <button type="button" onclick="changeDrum('plus')">+</button>
+                {% endfor %}
+            </div>
+
+            <div class="lateral">
+                <div class="sticky">
+                    <div class="main-fader">
+                        <span class="descrizione">Main</span>
+                        <button type="button" onclick="changeValue('main', 'plus')">+</button>
+                        <input class="inputRange" type="range" min="0" max="100" value="{{valueMain}}" id="canale_main" onchange="sendMessageMain(this.value);", oninput="sendMessageMain(this.value);">       
+                        <button type="button" onclick="changeValue('main', 'minus')">-</button>
                     </div>
-                </div>
-            {% endif %}
-            <div class="canale-container">
-                <span class="descrizione">Main</span>
-                <div style="display: inline-flex;">
-                    <button type="button" onclick="changeValue('main', 'minus')">-</button>
-                    <input class="inputRange" type="range" min="0" max="100" value="{{valueMain}}" id="canale_main" onchange="sendMessageMain(this.value);", oninput="sendMessageMain(this.value);">       
-                    <button type="button" onclick="changeValue('main', 'plus')">+</button>
+                    {% if hasBatteria == true %}
+                    <div class="drum">
+                        <span class="descrizione">Main Batteria</span>
+                        <div class="drumButtons">
+                            <button type="button"  onclick="changeDrum('minus')" >-</button>
+                            <button type="button" onclick="changeDrum('plus')">+</button>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
-       </div>
+        </div>
 
-       <div>
+        <div class="menu">
             <button  onclick="window.location.href='../getScenes'">Indietro</button>
-
             <button  onclick="window.location.href='./layout'">Modifica Layout</button>
         </div>
 
@@ -181,10 +220,14 @@
             }
 
 
-            const socket = new WebSocket('wss://192.168.1.198:8000/ws/liveSync'); 
+            const socket = new WebSocket('wss://{{ipSocket}}:8000/ws/liveSync'); 
 
             socket.onopen = function(){
-                socket.send(aux)
+                message = {
+                    "address":aux,
+                    "addressMain": auxMain
+                }
+                socket.send(JSON.stringify(message));
             };
 
             socket.onmessage = function(event){
@@ -200,19 +243,16 @@
             };
 
             socket.onerror = function(error){
-                console.log("Errore sincronizzazione:", error);
-                message = document.querySelector(".message");
+                message = document.querySelector(".alert");
                 message.hidden = false;
-                message.getElementsByTagName("p")[0].innerHTML = "Errore sincronizzazione: " + error;
-
+                message.getElementsByTagName("p")[0].innerHTML = "Errore sincronizzazione: " + error.message;
+            
             };
 
             socket.onclose = function(e){
-                console.log("soket chiusa");
-                message = document.querySelector(".message");
+                message = document.querySelector(".alert");
                 message.hidden = false;
-                message.getElementsByTagName("p")[0].innerHTML = "Disconnesso, nessuna sincronizzazione con il mixer ricarica la pagina";
-
+                message.getElementsByTagName("p")[0].innerHTML = "Disconnesso, nessuna sincronizzazione con il mixer <a href='./'>ricarica la pagina</a>";
             };
        </script>
     </body>

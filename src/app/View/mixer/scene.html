@@ -3,58 +3,136 @@
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>M-400 remote control</title>
-
+        <link rel="icon" type="image/png" href="/static/resource/mixer_icon.png" />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 	
+
         <style>
-            .slider {
+            .slider, .slider_dca{
                 display: flex;
-                flex-direction: column;
-                gap: 10px;
+                flex-wrap: wrap;
+                gap: 50px;
+                column-gap: 10px;
                 padding: 50px;
+                justify-content: center;
             }
         
             .canale-container {
                 display: flex;
+                flex-direction: column;
                 align-items: center;
-                gap: 10px;
+                gap: 15px;
             }
         
             .descrizione {
-                min-width: 150px; /* larghezza fissa per il nome del canale */
-                text-align: left;
-                font-weight: bold;
+                width: 150px;
+                text-align: center;
             }
-        
+
+
             input[type="range"] {
+                -webkit-appearance: none;
+                appearance: none;
+                writing-mode: vertical-lr;
+                direction: rtl;
                 height: fit-content;
-                flex: 1; /* prende tutto lo spazio disponibile */
+                width: 15px;;
+                border: 1.5px solid black;
+                border-radius: 10px;
+                padding: -2px 0;
+                
+                background: white;
+                outline: none;
+                opacity: 0.7;
+                -webkit-transition: .2s;
+                transition: opacity .2s;
+
+                overflow: visible;
+            }
+
+            input[type="range"]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 30px;
+                height: 30px;
+                border-radius: 30%; 
+                background: #000000;
+                cursor: pointer;
+            }
+
+            input[type="range"]::-moz-range-thumb {
+                width: 30px;
+                height: 30px;
+                border-radius: 30%;
+                background: #000000;
+                cursor: pointer;
+                
+                margin-top: -5px;
+                margin-bottom: -5px;
+                position: relative;
+                z-index: 2;
+            }
+
+            .mute {
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                background-color: red;
+                border-radius: 30%;
+                cursor: pointer;
+            }
+
+            input[type="checkbox"]:checked + .mute {
+                background-color: #4CAF50;
+            }
+
+            button[type="button"]{
+                -webkit-appearance: none;
+                appearance: none;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 20px;
+                height: 20px;
+                border : 1px solid black;
+                text-align: center;
+                border-radius: 30%;
+                background-color: #f5f0f0;
+                font-size: auto;
+                color: black;
             }
 
             button{
                 margin-inline : 1rem;
             }
 
-            @media (max-width: 900px) {
-                .canale-container {
+            button {
+                touch-action: manipulation;
+            }
+
+            @media screen and (max-width: 450px) {
+                .slider, .slider_dca{
+                    
                     flex-direction: column;
-                    align-items: stretch;
+                    padding: 5px;
+                }
+
+                .canale-container {
+                    display: flex;
+                    flex-direction: row-reverse;
+                    align-items: center;
+                }
+
+
+                input[type="range"] {
+                    width: auto;
+                    height: 15px;
+                    writing-mode: horizontal-tb;
+                    direction: ltr;
                 }
 
                 .descrizione {
-                    min-width: unset;
-                    width: 100%;
-                    text-align: center;
-                    margin-bottom: 10px;
-                    font-size: 1rem; /* ancora più grande su mobile */
-                }
-
-                .inputRange {
-                    height: 150px; /* slider ancora più alto su mobile */
-                }
-
-                button {
-                    touch-action: manipulation;
+                    width: 80px;
                 }
             }
         </style>
@@ -76,44 +154,43 @@
        <div class="slider">
             {% for canale, value, switch in canali %}
                 <div class="canale-container">
-                    <span class="descrizione">{{canale.nome}}
-                        {% if canale.descrizione is not none %}
-                            : {{ canale.descrizione }}
-                        {% endif %}
-                    </span>
-                    <div style="display: inline-flex;">
-                    <button type="button"  onclick="changeValue({{ canale.id }}, 'minus')" >-</button>
-                    <input class="inputRange"  type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.id }}" onchange="sendMessage( {{canale.id}} , this.value);" oninput="sendMessage({{canale.id}} , this.value);">
+                    <span class="descrizione">{{canale.nome}}</span>
+                    <input id="switch_{{canale.id}}" onchange="checkSwitch({{canale.id}}, this.checked)" type="checkbox"  {% if switch %} checked {% endif %} hidden>
+                    <label for="switch_{{canale.id}}" class="mute"></label>
+
                     <button type="button" onclick="changeValue({{ canale.id }}, 'plus')">+</button>
-                    <input id="switch_{{canale.id}}" onchange="checkSwitch({{canale.id}}, this.checked)" type="checkbox"  {% if switch %} checked {% endif %}>
-                    </div>
+                    <input class="inputRange"  type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.id }}" onchange="sendMessage( {{canale.id}} , this.value);" oninput="sendMessage({{canale.id}} , this.value);">
+                    <button type="button"  onclick="changeValue({{ canale.id }}, 'minus')" >-</button>
+
+                    <span class="descrizione">{% if canale.descrizione is not none %} <strong>{{ canale.descrizione }}</strong> {% endif %}</span>
                 </div>
             {% endfor %}
+
+
                 <div class="canale-container">
                     <span class="descrizione">Main</span>
-                    <div style="display: inline-flex;">
-                    <button type="button"  onclick="changeValue('main', 'minus')" >-</button>
-                    <input class="inputRange"  type="range" min="0" max="100" value="{{valueMain}}" id="canale_main" onchange="sendMessageMain(this.value);" oninput="sendMessageMain(this.value);">
+                    <input id="switch_main" onchange="checkSwitchMain(this.checked)" type="checkbox"  {% if switchMain %} checked {% endif %} hidden>
+                    <label for="switch_main" class="mute"></label>
                     <button type="button" onclick="changeValue('main', 'plus')">+</button>
-                    <input id="switch_main" onchange="checkSwitchMain(this.checked)" type="checkbox"  {% if switchMain %} checked {% endif %}>
-                    </div>
+                    <input class="inputRange"  type="range" min="0" max="100" value="{{valueMain}}" id="canale_main" onchange="sendMessageMain(this.value);" oninput="sendMessageMain(this.value);">
+                    <button type="button"  onclick="changeValue('main', 'minus')" >-</button>
+
                 </div>
        </div>
 
-        <div class="slider dca">
+        <div class="slider_dca">
             {% for dca, value, switch in dcas%}
                 <div class="canale-container">
-                    <span class="descrizione">{{dca.nome}}
-                        {% if dca.descrizione is not none %}
-                            : {{ dca.descrizione }}
-                        {% endif %}
-                    </span>
-                    <div style="display: inline-flex;">
-                        <button type="button"  onclick="changeValue({{ dca.id }}, 'minus', 'dca')" >-</button>
-                        <input class="inputRange"  type="range" min="0" max="100" value="{{value}}" id="dca_canale_{{ dca.id }}" onchange="sendMessageDca( {{dca.id}} , this.value);" oninput="sendMessageDca({{dca.id}} , this.value);">
-                        <button type="button" onclick="changeValue({{ dca.id }}, 'plus', 'dca')">+</button>
-                        <input id="dca_switch_{{dca.id}}" onchange="checkSwitchDca({{dca.id}}, this.checked)" type="checkbox"{% if switch %} checked {% endif %}>
-                    </div>
+
+                    <span class="descrizione">{{dca.nome}}</span>
+                    <input id="dca_switch_{{dca.id}}" onchange="checkSwitchDca({{dca.id}}, this.checked)" type="checkbox"{% if switch %} checked {% endif %} hidden>
+                     <label for="dca_switch_{{dca.id}}" class="mute"></label>
+
+                    <button type="button" onclick="changeValue({{ dca.id }}, 'plus', 'dca')">+</button>
+                    <input class="inputRange"  type="range" min="0" max="100" value="{{value}}" id="dca_canale_{{ dca.id }}" onchange="sendMessageDca( {{dca.id}} , this.value);" oninput="sendMessageDca({{dca.id}} , this.value);">
+                    <button type="button"  onclick="changeValue({{ dca.id }}, 'minus', 'dca')" >-</button>
+
+                    <span class="descrizione">{% if dca.descrizione is not none %} <strong>{{ dca.descrizione }}</strong> {% endif %}</span>
                 </div>
             {% endfor %}
        </div>
@@ -221,7 +298,7 @@
                 xhttp.send(JSON.stringify(message));
             }
        
-            const socket = new WebSocket('wss://192.168.50.200:8000/ws/liveSyncMixer'); 
+            const socket = new WebSocket('wss://{{ipSocket}}:8000/ws/liveSyncMixer'); 
 
             socket.onopen = function(){
 

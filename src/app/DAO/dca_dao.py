@@ -27,3 +27,13 @@ class DCA_DAO:
     
     def get_dca_by_address_switch(self, address):
         return self.db.query(DCA).filter(DCA.indirizzoMidiSwitch == address).first()
+    
+
+    def update_dca_description(self, id, value):
+        try:
+            self.db.query(DCA).filter(DCA.id == id).update({DCA.descrizione: value})
+            self.db.commit()
+            return True
+        except Exception as e:
+            print(f"Error updating dca: {e}")
+            return False

@@ -1,5 +1,6 @@
 
 import time
+from dotenv import load_dotenv
 from fastapi.templating import Jinja2Templates
 from app.DAO.channel_dao import ChannelDAO
 from app.DAO.layout_canale_dao import LayoutCanaleDAO
@@ -11,12 +12,14 @@ from midi.midiController import MidiController, MidiListener, call_type
 
 class UserController:
     def __init__(self):
+        load_dotenv()
         self.userDAO = UserDAO()
         self.partecipazioneScenaDAO = PartecipazioneScenaDAO()
         self.layoutCanaleDAO = LayoutCanaleDAO()
         self.channelDAO = ChannelDAO()
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "View", "user"))
         self.midiController = MidiController("pedal")
+        self.webSocketIp = os.getenv("WEBSOCKET_IP")
 
     def load_scene(self, scenaID, userID, request):
         
@@ -53,6 +56,7 @@ class UserController:
             if listen.has_received_all():
                 break
 
+        
         listen.stop()
         resultsValue = listen.get_results()
         
@@ -77,7 +81,7 @@ class UserController:
         coppieCanali = list(zip(canali, resultsValueSet))
 
         
-        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "indirizzoaux": aux.indirizzoMidi, "indirizzoauxMain": aux.indirizzoMidiMain, "valueMain": valueMain, "hasBatteria" : hasBatteria })
+        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "indirizzoaux": aux.indirizzoMidi, "indirizzoauxMain": aux.indirizzoMidiMain, "valueMain": valueMain, "hasBatteria" : hasBatteria, "ipSocket" : self.webSocketIp})
         
     def set_layout(self, userID, scenaID, request):
         

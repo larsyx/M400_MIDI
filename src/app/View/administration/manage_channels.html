@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>M-400 remote control</title>
+        <link rel="icon" type="image/png" href="/static/resource/mixer_icon.png" />
+
+        <style>
+            .container{
+                width: 100%;
+            }
+            td{
+                padding: 10px;
+            }
+        </style>
+
+    </head>
+
+    <body>
+        <div class="container">
+            <h3>Gestione canali</h3>
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Descrizione</th>
+                </tr>
+
+                {% for canale in channels %}
+                <tr>
+                    <td><strong>{{ canale.id }}</strong></td>
+                    <td> {{ canale.nome }}</td>
+                    <td><input type="text" id="channel_{{canale.id}}" value="{{canale.descrizione}}" onchange="changeDescription('channel', '{{canale.id}}')"</td>
+                </tr>
+                {% endfor %}
+
+                {% for dca in dcas %}
+                <tr>
+                    <td><strong>{{ dca.id }}</strong></td>
+                    <td> {{ dca.nome }}</td>
+                    <td><input type="text" id="dca_{{dca.id}}" value="{{dca.descrizione}}" onchange="changeDescription('dca', '{{dca.id}}')"</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+
+            <script>
+                function changeDescription(type, id){
+
+                    const el = document.getElementById(type + "_" + id).value;
+                    if(el != null){
+                        const xhttp = new XMLHttpRequest();
+                        xhttp.open("POST", "/admin/manageChannels/changeDescription", true);
+                        xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+                        const message = {
+                            type: type,
+                            id: id,
+                            value: el
+                        };
+
+                        xhttp.send(JSON.stringify(message));
+                            
+                    }
+                }
+            </script>
+        </div>
+    </body>
+</html>
