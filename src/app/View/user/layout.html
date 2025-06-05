@@ -44,6 +44,20 @@
                 border-radius: 5px;
                 cursor: pointer;
             }
+
+            @media screen and (max-width: 400px) {
+                input[type="text"] {
+                    width: 100px;
+                }
+                
+            }
+
+            @media screen and (max-width: 300px) {
+                input[type="text"] {
+                    width: 60px;
+                }
+                
+            }
         </style>
 
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
@@ -68,7 +82,7 @@
             <ul id="sortable element">
             {% for layoutcanale in layout %}
                 <li id ="Remove_{{layoutcanale.canaleId}}" class="channelLayout" draggable="true">{{layoutcanale.canaleId}} 
-                    <input value="{{layoutcanale.descrizione}}"> 
+                    <input type="text" value="{{layoutcanale.descrizione}}"> 
                     <div style="display: inline-block;">
                         <button type="button" onclick="removeChannelLayout({{layoutcanale.canaleId}})">Elimina</button>
                     </div>

@@ -1,5 +1,7 @@
+import json
 import os
 import time
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.DAO.channel_dao import ChannelDAO
 from app.DAO.dca_dao import DCA_DAO
@@ -144,7 +146,15 @@ class MixerController:
         #DCA
         coppieDca = list(zip(dca, resultDcaValueSet, resultDcaValueSetSwitch))
 
-        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "dcas": coppieDca, "valueMain" : valueMain, "switchMain" : switchMain, "ipSocket" : self.webSocketIp})
+
+        # get scene for recall
+        with open(os.path.join(os.path.dirname(__file__), "..", "..", "Database", "scenes.json"), "r") as file:
+            scene = json.load(file)
+
+        scenes = scene.get('scenes', [])
+
+
+        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "dcas": coppieDca, "valueMain" : valueMain, "switchMain" : switchMain, "ipSocket" : self.webSocketIp, "scenes" : scenes})
         
 
     def setFaderValue(self, canaleId, value):
@@ -199,3 +209,11 @@ class MixerController:
         if dca:
             address = [int(x, 16) for x in dca.indirizzoMidiSwitch.split(",")]
             midiController.send_command(address, MidiController.convertSwitch(switch))
+
+    def loadScene(self, scene_id):
+        midiController = MidiController("pedal")
+
+        
+        midiController.loadScene(scene_id)
+
+        return RedirectResponse(url="/mixer/home", status_code=303)

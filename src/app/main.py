@@ -33,10 +33,10 @@ def shutdown_event():
 
 
 #exception handler
-@app.exception_handler(StarletteHTTPException)
-async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
-    if exc.status_code == 401:
-        return templates.TemplateResponse("unauthorized.html", {"request": request})
-    if exc.status_code == 404:
-        return templates.TemplateResponse("notfound.html", {"request": request})
-    return await http_exception_handler(request, exc)
+# @app.exception_handler(StarletteHTTPException)
+# async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+#     if exc.status_code == 401:
+#         return templates.TemplateResponse("unauthorized.html", {"request": request})
+#     if exc.status_code == 404:
+#         return templates.TemplateResponse("notfound.html", {"request": request})
+#     return await http_exception_handler(request, exc)

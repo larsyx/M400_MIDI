@@ -80,6 +80,32 @@ class MidiController:
             outport.send(msg)
 
 
+    def loadScene(self, scene_number):
+
+        channel, program_number = MidiController.convertValueScene(scene_number=scene_number)
+        msg = mido.Message('program_change', program=program_number, channel=channel)
+        with mido.open_output(self.ped) as outport:
+            print(f"mando: {msg}")
+            outport.send(msg)
+
+    def convertValueScene(scene_number):
+        if not 0 <= scene_number <= 299:
+            return None
+
+        if scene_number <= 127:
+            channel = 0x0  
+            program_number = scene_number
+        elif scene_number <= 255:
+            channel = 0x1  
+            program_number = scene_number - 128
+        else:
+            channel = 0x2  
+            program_number = scene_number - 256
+
+
+        return channel, program_number
+
+
 def roland_checksum(address_bytes, data_bytes):
     total = sum(address_bytes) + sum(data_bytes)
     checksum = (128 - (total % 128)) % 128
@@ -256,11 +282,12 @@ class MidiMixerSync():
                     elif data[8:10] == tuple(dca_switch_post):
                         typeCmd = "switch"
                         valore = MidiListener.convert_switch(data[10])
-                    
-                asyncio.run_coroutine_threadsafe(
-                    self.send_back(typeCmd, canale, valore),
-                    self.loop
-                )
+
+                if typeCmd != "":
+                    asyncio.run_coroutine_threadsafe(
+                        self.send_back(typeCmd, canale, valore),
+                        self.loop
+                    )
 
 class MidiMultiplexer:
     def __init__(self):

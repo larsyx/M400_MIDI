@@ -75,3 +75,11 @@ async def setFaderMain(request: Request):
     switch = data.get("switch")
 
     mixerController.setDcaSwitchChannel(dca,  switch)
+
+
+@router.get("/mixer/loadScene/{scene_id}")
+async def loadScene(request: Request, scene_id: int):
+    user = get_current_user(request)
+    verify_mixer(user["sub"])   
+
+    return mixerController.loadScene(scene_id)
