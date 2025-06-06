@@ -9,6 +9,7 @@
         <link rel="stylesheet" href="/static/style/mixer/scene-list.css">
         <link rel="stylesheet" href="/static/style/common/range.css">
         <link rel="stylesheet" href="/static/style/mixer/scene.css">
+        <link rel="stylesheet" href="/static/style/mixer/eq.css">
 
         <link id="layout-style" rel="stylesheet" href="/static/style/mixer/horizontal-layout.css">
         <style>
@@ -16,7 +17,12 @@
                 padding-top: 10px;
                 padding-bottom: 10px;
             }
-            
+
+            .alert{
+                position: fixed;
+                z-index: 1000;
+            }
+
         </style>
     </head>
 
@@ -63,6 +69,7 @@
             {% for canale, value, switch in canali %}
                 <div class="canale-container">
                     <span class="descrizione">{{canale.nome}}</span>
+                    <button class="eq-button" type="button" onclick="document.getElementsByClassName('eq-container')[0].style.display='block'; update();" style="font-size: 12px;">EQ</button>
                     <input id="switch_{{canale.id}}" onchange="checkSwitch({{canale.id}}, this.checked)" type="checkbox"  {% if switch %} checked {% endif %} hidden>
                     <label for="switch_{{canale.id}}" class="mute"></label>
 
@@ -99,10 +106,80 @@
 
         <div id="layout-button"><button onclick="switchLayout()">Layout</button></div>
 
+        <div class="eq-container" >
+            <span class="eq-close" onclick="this.parentElement.style.display='none'">&times;</span>
+            <div class="first-line">
+                <label for="gain">Gain</label>
+                <input type="number" id="gain" min="0" max="100">
+
+                <label for="switch">Switch EQ</label>
+                <input type="checkbox" id="switch">
+            </div>
+            <div class="graph-container">
+                <svg id="eqChart" width="800" height="400"></svg>
+            </div>
+            <div class="parameter-container">
+                <div class="band">
+                    <h6>Low</h6>
+                    <label>
+                        Frequenza (Hz)
+                        <input type="number" min="20" max="20000" step="1" class="freq">
+                    </label>
+                    <label>
+                        Gain (dB)
+                        <input type="number" min="-15" max="15" step="1" class="gain">
+                    </label>
+                </div>
+                <div class="band">
+                    <h6>Low-Mid</h6>
+                    <label>
+                        Frequenza (Hz)
+                        <input type="number" min="20" max="20000" step="1" class="freq">
+                    </label>
+                    <label>
+                        Gain (dB)
+                        <input type="number" min="-15" max="15" step="1" class="gain">
+                    </label>
+                    <label>
+                        Q 
+                        <input type="number" min="0.36" max="16" step="0.1" class="q">
+                    </label>
+                </div>
+                <div class="band">
+                    <h6>Mid-Hi</h6>
+                    <label>
+                        Frequenza (Hz)
+                        <input type="number" min="20" max="20000" step="1" class="freq">
+                    </label>
+                    <label>
+                        Gain (dB)
+                        <input type="number" min="-15" max="15" step="1" class="gain">
+                    </label>
+                    <label>
+                        Q 
+                        <input type="number" min="0.36" max="16" step="0.1" class="q">
+                    </label>
+                </div>
+                <div class="band">
+                    <h6>High</h6>
+                    <label>
+                        Frequenza (Hz)
+                        <input type="number" min="20" max="20000" step="1" class="freq">
+                    </label>
+                    <label>
+                        Gain (dB)
+                        <input type="number" min="-15" max="15" step="1" class="gain">
+                    </label>
+                </div>
+            </div>
+        </div>
+
         <script>
             const socket = new WebSocket('wss://{{ipSocket}}:8000/ws/liveSyncMixer'); 
         </script>
         <script src="/static/script/mixer/scene.js"></script>
 
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+        <script src="/static/script/mixer/eq.js"></script>
     </body>
 </html>

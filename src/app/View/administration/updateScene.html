@@ -39,7 +39,12 @@
         </div>
 
         {% for partecipante in partecipanti%}
-        <li style="display: flex; align-items: center; gap: 0.5rem;">{{partecipante.utenteUsername}} {{partecipante.aux_id}} 
+        <li style="display: flex; align-items: center; gap: 0.5rem;">{{partecipante.utenteUsername}} 
+            <select onchange="changeAux('{{partecipante.utenteUsername}}', this.value);" name="aux" id="aux">
+                {% for aux in auxs%}
+                <option value="{{aux.id}}" {% if aux.id|string == partecipante.aux_id|string %}selected{% endif %}>{{aux.nome}}</option>
+                {% endfor %}
+            </select>
             <form action="./removePartecipazione" method="post"> 
                 <input type="hidden" name="username" value="{{partecipante.utenteUsername}}">
                 <input type="hidden" name="aux" value="{{partecipante.aux_id}}">
@@ -54,5 +59,25 @@
             </form>
         </div>
         {% endif %}
+
+        <script>
+            function changeAux(user, aux){
+
+                console.log(user, aux);
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("POST", "./changeAux", true)
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+                const message = {
+                        user: user,
+                        aux: aux
+                };
+
+                xhttp.send(JSON.stringify(message));
+
+            }
+            
+            
+        </script>
     </body>
 </html>

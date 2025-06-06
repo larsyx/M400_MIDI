@@ -1,36 +1,20 @@
 {
-    "scenes" : [
+    "scenes": [
         {
-            "id" : 1,
-            "name" : "Scene 1"
+            "id": 1,
+            "name": "Scene 1"
         },
         {
-            "id" : 2,
-            "name" : "Adolescenti definitivo"
+            "id": 2,
+            "name": "Gioved\u00ec"
         },
         {
-            "id" : 3,
-            "name" : "Scene 3"
+            "id": 3,
+            "name": "Scene 3"
         },
         {
-            "id" : 4,
-            "name" : "Scene 4"
-        },
-        {
-            "id" : 5,
-            "name" : "Scene 5"
-        },
-        {
-            "id" : 6,
-            "name" : "Scene 6"
-        },
-        {
-            "id" : 7,
-            "name" : "Scene 7"
-        },
-        {
-            "id" : 8,
-            "name" : "Scene 8"
+            "id": 4,
+            "name": "Scene 4"
         }
     ]
 }

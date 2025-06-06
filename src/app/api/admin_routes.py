@@ -90,7 +90,16 @@ async def add_partecipanti_scena(request : Request, scene_id : int, username : s
 
     return sceneController.remove_partecipante(request, user["sub"], scene_id, username, aux)
 
+@router.post("/admin/scene_{scene_id}/changeAux")
+async def changeAux(request: Request, scene_id : int):
+    user = get_current_user(request)
+    verify_admin(user["sub"])
 
+    data = await request.json()
+    user = data.get("user")
+    aux = data.get("aux")
+
+    adminController.changeAuxUser(user, aux, scene_id)
 
 # manage channel
 @router.get("/admin/manageChannels", response_class=HTMLResponse)
@@ -111,3 +120,27 @@ async def changeDescription(request: Request):
     value = data.get("value")
 
     return adminController.changeDescription(user["sub"], typeReq, id, value)
+
+
+# manage mixer scene
+@router.get("/admin/manageSceneMixer")
+async def manageSceneMixer(request: Request):
+    user = get_current_user(request)
+    verify_admin(user["sub"])
+
+    return adminController.loadMixerScene(request)
+
+@router.post("/admin/addMixerScene")
+async def addMixerScene(request: Request, idScene: int = Form(...), name: str = Form(...)):
+    user = get_current_user(request)
+    verify_admin(user["sub"])
+
+    return adminController.addMixerScene(request, idScene, name)
+
+@router.post("/admin/removeMixerScene")
+async def removeMixerScene(request: Request, idScene: int = Form(...)):
+    user = get_current_user(request)
+    verify_admin(user["sub"])
+
+    return adminController.removeMixerScene(request, idScene)
+

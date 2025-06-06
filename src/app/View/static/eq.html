@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>EQ Interface</title>
+
+        <style>
+            .eq{
+                width: 100%;
+                height: 400px;
+                background-color: #f0f0f0;
+                border: 1px solid #ccc;
+                border-radius: 20px;
+            }
+
+
+            .graphics {
+                width: 100%;
+                height: 70%;
+                background-color: #030000;
+                border-bottom: 1px solid #ccc;
+                border-radius: 20px 20px 0 0;
+            }
+
+            #eq-svg {
+                width: 100%;
+                height: 100%;
+            }
+
+            .grid-line {
+                stroke: #fffbfb;
+                stroke-width: 0.2;
+            }
+
+            .eq-line {
+                fill: none;
+                stroke: #00ff88;
+                stroke-width: 2;
+            }
+
+            .parameter {
+                width: 100%;
+                display: flex;
+                flex-direction: row;
+                flex: 1 1 auto;
+            }
+
+
+
+            .parameter-item {
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+                padding: 10px;
+                text-align: center;
+                border-right: 1px solid #ccc;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h1>Equalizer Settings</h1>
+
+        <div class="eqContainer">
+            <div class="eq">
+                <div class="graphics">
+                    <svg id="eq-svg" viewBox="0 0 600 300" preserveAspectRatio="none"></svg>
+                </div>
+
+                <div class="parameter">
+                    <div class="parameter-item">
+                        <text><strong>Lo</strong></text>
+                        <text>Gain</text>
+                        <text>Freq</text>
+                    </div>
+                    <div class="parameter-item">
+                        <text><strong>Lo-Mid</strong></text>
+                        <text>Gain</text>
+                        <text>Freq</text>
+                        <text>Q</text> 
+                    </div>
+                    <div class="parameter-item">
+                        <text><strong>Mid-Hi</strong></text>
+                        <text>Gain</text>
+                        <text>Freq</text>
+                        <text>Q</text>
+                    </div>
+                    <div class="parameter-item">
+                        <text><strong>High</strong></text>
+                        <text>Gain</text>
+                        <text>Freq</text>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            window.addEventListener("DOMContentLoaded", () => {
+                const svg = document.getElementById("eq-svg");
+                const width = svg.viewBox.baseVal.width;
+                const height = svg.viewBox.baseVal.height;
+
+                function drawEqLine(bands) {
+                    // Rimuovi curva precedente
+                    const oldLine = document.getElementById("eq-line");
+                    if (oldLine) svg.removeChild(oldLine);
+
+                    const oldFill = document.getElementById("eq-fill");
+                    if (oldFill) svg.removeChild(oldFill);
+
+                    const points = [];
+                    for (let i = 20; i <= 20000; i += 50) {
+                        let gain = 0;
+                        for (const b of bands) {
+                            const dist = Math.log10(i / b.freq);
+                            gain += b.gain * Math.exp(-dist * dist / b.q);
+                        }
+                        const x = Math.log10(i / 20) / Math.log10(1000) * width;
+                        const y = ((-gain + 24) / 48) * height;
+                        points.push([x, y]);
+                    }
+
+                    // 0 dB Y position
+                    const zeroY = ((-0 + 24) / 48) * height;
+
+                    // Area fill path
+                    const fillPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    let fillD = `M ${points[0][0]} ${zeroY}`;
+                    fillD += ` L ${points.map(p => `${p[0]} ${p[1]}`).join(" ")}`;
+                    fillD += ` L ${points[points.length - 1][0]} ${zeroY} Z`;
+                    fillPath.setAttribute("d", fillD);
+                    fillPath.setAttribute("id", "eq-fill");
+                    fillPath.setAttribute("fill", "rgba(0, 255, 136, 0.3)");
+                    svg.appendChild(fillPath);
+
+                    // Line path
+                    const linePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    const lineD = points.map((p, i) => (i === 0 ? `M ${p[0]} ${p[1]}` : `L ${p[0]} ${p[1]}`)).join(" ");
+                    linePath.setAttribute("d", lineD);
+                    linePath.setAttribute("id", "eq-line");
+                    linePath.setAttribute("class", "eq-line");
+                    svg.appendChild(linePath);
+                }
+
+                const bands = [
+                    { freq: 100, gain: 6, q: 2 },
+                    { freq: 500, gain: -4, q: 1 },
+                    { freq: 2000, gain: 3, q: 1.5 },
+                    { freq: 8000, gain: -2, q: 0.8 }
+                ];
+
+                drawEqLine(bands);
+
+                function drawGrid() {
+                    const freqs = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
+                    const dbSteps = [24, 18, 12, 6, 0, -6, -12, -18, -24];
+
+                    for (const f of freqs) {
+                        const x = Math.log10(f / 20) / Math.log10(1000) * width;
+                        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                        line.setAttribute("x1", x);
+                        line.setAttribute("y1", 0);
+                        line.setAttribute("x2", x);
+                        line.setAttribute("y2", height);
+                        line.setAttribute("class", "grid-line");
+                        svg.appendChild(line);
+                    }
+
+                    for (const db of dbSteps) {
+                        const y = ((-db + 24) / 48) * height;
+                        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                        line.setAttribute("x1", 0);
+                        line.setAttribute("y1", y);
+                        line.setAttribute("x2", width);
+                        line.setAttribute("y2", y);
+                        line.setAttribute("class", "grid-line");
+                        svg.appendChild(line);
+                    }
+                }
+
+                drawGrid();
+            });
+
+
+
+        </script>
+
+    </body>
+</html>

@@ -5,7 +5,10 @@ from app.DAO.channel_dao import ChannelDAO
 from app.DAO.scene_dao import SceneDAO
 from app.DAO.user_dao import UserDAO
 from app.DAO.dca_dao import DCA_DAO
+from app.DAO.partecipazione_scena_dao import PartecipazioneScenaDAO
+from fastapi.responses import RedirectResponse
 import os
+import json
 
 class AdminController:
     def __init__(self):
@@ -13,11 +16,12 @@ class AdminController:
         self.sceneDAO = SceneDAO()
         self.channelDAO = ChannelDAO()
         self.dcaDAO = DCA_DAO()
+        self.partecipazioneScenaDAO = PartecipazioneScenaDAO()
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "View", "administration"))
 
     def loadManageUser(self, request, adminUser):
         users = self.get_all_users(adminUser)
-
+        users.sort(key=lambda u: u.nome.lower())
         return self.templates.TemplateResponse(request, "manage_user.html", {"users": users})
 
     
@@ -113,3 +117,58 @@ class AdminController:
         except Exception as e:
             print(f"Error loading manage channels: {e}")
             return None
+
+
+
+    #mixer scene
+
+    def loadMixerScene(self, request):
+        file_path = os.path.join(os.path.dirname(__file__), "..", "..", "Database", "scenes.json")
+        with open(file_path, "r") as json_data:
+            scene = json.load(json_data)
+
+            scenes = scene.get('scenes', [])
+
+            return self.templates.TemplateResponse(request, "manage_mixer_scene.html", {"scenes" : scenes})
+
+    def addMixerScene(self, request, idScene, name):
+        file_path = os.path.join(os.path.dirname(__file__), "..", "..", "Database", "scenes.json")
+        with open(file_path, "r") as json_data:
+            scene = json.load(json_data)
+
+            scenes = scene.get('scenes', [])
+
+            if any(s["id"] == idScene for s in scenes):
+                print("Scena con questo ID già esistente.")
+            else:
+                scena = {
+                    "id" : idScene,
+                    "name" : name
+                }
+
+                scenes.append(scena)
+
+                scenes.sort(key=lambda s: s["id"])
+
+                with open(file_path, "w") as f:
+                    json.dump({"scenes": scenes}, f, indent=4)
+
+
+            return RedirectResponse(url="/admin/manageSceneMixer", status_code=303)
+
+    def removeMixerScene(self, request, idScene):
+        file_path = os.path.join(os.path.dirname(__file__), "..", "..", "Database", "scenes.json")
+        with open(file_path, "r") as json_data:
+            data = json.load(json_data)
+
+            data["scenes"] = [scene for scene in data["scenes"] if scene.get("id") != idScene]
+
+            # Sovrascrivi il file con i dati aggiornati
+            with open(file_path, "w") as f:
+                json.dump(data, f, indent=4)
+
+
+            return RedirectResponse(url="/admin/manageSceneMixer", status_code=303)
+
+    def changeAuxUser(self, user, aux, scene):
+        self.partecipazioneScenaDAO.changeAuxUser(scene, user, aux)

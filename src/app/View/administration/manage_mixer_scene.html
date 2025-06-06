@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>M-400 remote control</title>
+        <link rel="icon" type="image/png" href="/static/resource/mixer_icon.png" />
+
+        <style>
+            tr, th,td{
+                border: 1px solid black;
+                padding: 5px;
+            }
+
+            .scene-form{
+                padding: 30px;
+            }
+
+        </style>
+    </head>
+
+    <body>
+        <h1>Scene Mixer</h1>
+        <p>Gestione scene per il recall del mixer</p>
+
+        <div class="scene-form">
+            <form action="./addMixerScene" method="post">
+                <label for="id-scene">Numero scena</label>
+                <input id="id-scene" name="idScene" type="number" min="0" max="299">
+                
+                <label for ="name">Nome</label>
+                <input type="text" name="name" id="name">
+
+                <button type="submit">Inserisci Scena</button>
+            </form>
+        </div>
+        <div class="scene-container">
+            <table>
+                <tr>
+                    <th>Numero Scena</th>
+                    <th>Nome Scena</th>
+                    <th></th>
+                </tr>
+                {% for scena in scenes %}
+                <tr>
+                    <td>{{scena.id}}</td>
+                    <td>{{scena.name}}</td>
+                    <td><form action="./removeMixerScene" method="post">
+                        <input type="hidden" name="idScene" value="{{scena.id}}">
+                        <button type="submit">Elimina</button>
+                    </form> </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </body>
+</html>

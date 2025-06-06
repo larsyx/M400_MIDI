@@ -48,7 +48,7 @@ class PartecipazioneScenaDAO:
     def getUserNotInScene(self, scenaID):
         try:
             subquery = self.db.query(PartecipazioneScena.utenteUsername).filter(PartecipazioneScena.scenaId == scenaID)
-            users = self.db.query(Utente).filter(Utente.username.not_in(subquery), Utente.ruolo == RuoloUtente.utente)
+            users = self.db.query(Utente).filter(Utente.username.not_in(subquery), Utente.ruolo == RuoloUtente.utente).order_by(Utente.nome.asc())
             return users
         except Exception as e:
             print(f"Error get partecipant for user: {e}")
@@ -66,7 +66,7 @@ class PartecipazioneScenaDAO:
         
     def removePartecipazione(self, sceneId, user, aux):
         try:
-            partecipazione = self.db.query(PartecipazioneScena).filter(PartecipazioneScena.scenaId == sceneId, PartecipazioneScena.aux_id == aux, PartecipazioneScena.utenteUsername == user)[0]
+            partecipazione = self.db.query(PartecipazioneScena).filter(PartecipazioneScena.scenaId == sceneId, PartecipazioneScena.aux_id == aux, PartecipazioneScena.utenteUsername == user).first()
 
             self.db.delete(partecipazione)
             self.db.commit()
@@ -74,3 +74,20 @@ class PartecipazioneScenaDAO:
         except Exception as e:
             print(f"Error add for user: {e}")
             return None
+
+    def changeAuxUser(self, sceneId, user, aux):
+
+
+        partecipante = self.db.query(PartecipazioneScena).filter(
+            PartecipazioneScena.utenteUsername == user,
+            PartecipazioneScena.scenaId == int(sceneId)
+        ).first()
+
+        auxObj = self.db.query(Aux).filter(
+            Aux.id == aux
+        ).first()
+
+        if partecipante and aux:
+            partecipante.aux_id = aux
+
+            self.db.commit()

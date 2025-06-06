@@ -46,6 +46,7 @@ class SceneController:
             auxs = self.auxDAO.getAllAux()
             partecipazioni = self.partecipazioneScenaDAO.getPartecipantiScene(id)
             utenti = self.partecipazioneScenaDAO.getUserNotInScene(id)
+
             return self.templates.TemplateResponse(request, "updateScene.html", {"scene" : scene, "partecipanti" : partecipazioni, "users" : utenti, "auxs" : auxs })
         except Exception as e:
             print(f"Error retrieving scenes: {e}")
