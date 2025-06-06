@@ -21,7 +21,6 @@ class AdminController:
 
     def loadManageUser(self, request, adminUser):
         users = self.get_all_users(adminUser)
-        users.sort(key=lambda u: u.nome.lower())
         return self.templates.TemplateResponse(request, "manage_user.html", {"users": users})
 
     

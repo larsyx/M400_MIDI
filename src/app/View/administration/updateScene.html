@@ -4,6 +4,15 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>M-400 remote control</title>
         <link rel="icon" type="image/png" href="/static/resource/mixer_icon.png" />
+
+        <style>
+              .back-button {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 1000;
+            }
+        </style>
     </head>
 
     <body>
@@ -60,6 +69,10 @@
         </div>
         {% endif %}
 
+        <div class="back-button">
+            <button onclick="window.location.href='/admin/manageScene'">Indietro</button>
+        </div>
+
         <script>
             function changeAux(user, aux){
 
@@ -76,8 +89,6 @@
                 xhttp.send(JSON.stringify(message));
 
             }
-            
-            
         </script>
     </body>
 </html>

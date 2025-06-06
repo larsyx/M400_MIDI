@@ -54,5 +54,13 @@
                 {% endfor %}
             </ul>
         </div>
+
+        <script>
+            history.pushState(null, '', location.href);
+            window.addEventListener('popstate', function () {
+                // Qui reindirizzi dove vuoi quando l'utente va indietro
+                window.location.href = '/admin';
+            });
+        </script>
     </body>
 </html>
