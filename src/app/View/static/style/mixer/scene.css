@@ -5,12 +5,13 @@
 
 .mute {
     display: inline-block;
-    width: 20px;
-    height: 20px;
+    width: auto;
+    height: 30px;
+    padding: 2px 5px 0 5px;
     min-height: 20px;
     min-width: 20px;
     background-color: red;
-    border-radius: 30%;
+    border-radius: 10px;
     cursor: pointer;
 }
 

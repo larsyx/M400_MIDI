@@ -21,10 +21,24 @@ preDca = [0x09]
 dca_fader_post = [0x00, 0x0A]
 dca_switch_post = [0x00, 0x08]
 
+
+
 header = [int(Manufacturer_ID), int(Device_ID)] + [int(a) for a in Model_ID] 
 
+# eq 
+eq_low_gain = [int(val,0) for val in os.getenv("EQ_Post_Lo_Gain").split(",")]
+eq_low_freq = [int(val,0) for val in os.getenv("EQ_Post_Lo_Freq").split(",")]
 
+eq_low_mid_gain = [int(val,0) for val in os.getenv("EQ_Post_Lo_Mid_Gain").split(",")]
+eq_low_mid_freq = [int(val,0) for val in os.getenv("EQ_Post_Lo_Mid_Freq").split(",")]
+eq_low_mid_q = [int(val,0) for val in os.getenv("EQ_Post_Lo_Mid_Q").split(",")]
 
+eq_mid_hi_gain = [int(val,0) for val in os.getenv("EQ_Post_Mid_HI_Gain").split(",")]
+eq_mid_hi_freq = [int(val,0) for val in os.getenv("EQ_Post_Mid_HI_Freq").split(",")]
+eq_mid_hi_q = [int(val,0) for val in os.getenv("EQ_Post_Mid_HI_Q").split(",")]
+
+eq_high_gain = [int(val,0) for val in os.getenv("EQ_Post_Hi_Gain").split(",")]
+eq_high_freq = [int(val,0) for val in os.getenv("EQ_Post_Hi_Freq").split(",")]
 
 class MidiController: 
     def __init__(self, name):
@@ -121,6 +135,10 @@ def build_sysex(address, command, data):
 class call_type(Enum):
     CHANNEL = "channel"
     SWITCH = "switch"
+    Q = "Q"
+    FREQ = "freq"
+    GAIN = "gain"
+    PREAMP = "preamp"
 
 class MidiListener:
     def __init__(self, midi_addresses, calltype):
@@ -129,10 +147,19 @@ class MidiListener:
         self.lock = threading.Lock()
         self.running = True
 
-        if calltype == call_type.CHANNEL:
-            callfn = self.callbackChannel
-        elif calltype == call_type.SWITCH:
-            callfn = self.callbackSwitch
+        match calltype:
+            case call_type.CHANNEL: 
+                callfn = self.callbackChannel
+            case call_type.SWITCH:
+                callfn = self.callbackSwitch
+            case call_type.Q:
+                callfn = self.callbackQ
+            case call_type.FREQ:
+                callfn = self.callbackFreq
+            case call_type.GAIN:
+                callfn = self.callbackGain
+            case call_type.PREAMP:
+                callfn = self.callbackPreamp
 
         self.callback = callfn
 
@@ -157,6 +184,46 @@ class MidiListener:
             with self.lock:
                 if key in self.midi_addresses and key not in self.received:
                     self.received[key] = MidiListener.convert_switch(data[10])
+
+    def callbackQ(self, msg):
+        if not self.running:
+            return 
+        if msg.type == 'sysex':
+            data = tuple(msg.data)
+            key = data[6:10]
+            with self.lock:
+                if key in self.midi_addresses and key not in self.received:
+                    self.received[key] = MidiListener.convert_hex_to_Q(data[10], data[11])
+
+    def callbackFreq(self, msg):
+        if not self.running:
+            return 
+        if msg.type == 'sysex':
+            data = tuple(msg.data)
+            key = data[6:10]
+            with self.lock:
+                if key in self.midi_addresses and key not in self.received:
+                    self.received[key] = MidiListener.convert_hex_to_freq(data[10], data[11], data[12])
+
+    def callbackGain(self, msg):
+        if not self.running:
+            return 
+        if msg.type == 'sysex':
+            data = tuple(msg.data)
+            key = data[6:10]
+            with self.lock:
+                if key in self.midi_addresses and key not in self.received:
+                    self.received[key] = MidiListener.convert_hex_to_gain(data[10], data[11])
+                    
+    def callbackPreamp(self, msg):
+        if not self.running:
+            return
+        if msg.type == 'sysex':
+            data = tuple(msg.data)
+            key = data[6:10]
+            with self.lock:
+                if key in self.midi_addresses and key not in self.received:
+                    self.received[key] = data[10]
 
     def stop(self):
         self.running = False
@@ -203,7 +270,48 @@ class MidiListener:
 
     def convert_switch(value):
         return False if value == 0x01 else True
-    
+
+    def convert_hex_to_Q(first_value, second_value):
+        if 0 <= first_value <= 12 and  0 <= second_value <= 127:
+            q_times_100 = first_value * 128 + second_value
+            q = q_times_100 / 100
+            if q > 16:
+                return 16
+            if q < 0.36:
+                return 0.36
+            return q
+
+    def convert_hex_to_freq(first_value, second_value, third_value):
+        if 0 <= first_value <= 1 and 0 <= second_value <= 127 and 0 <= third_value <= 127:
+            freq = (first_value << 14) | (second_value << 7) | third_value
+            if freq < 20:
+                return 20
+            if freq > 20000:
+                return 20000
+            return freq
+
+        return None
+        
+    def convert_hex_to_gain(first_value, second_value):
+        if 0 <= second_value <= 127:
+            if 0 <= first_value <=1:
+                gain = first_value * 128 + second_value
+                
+                gain /= 10 
+                
+                if gain > 15:
+                    return 15
+                return gain
+                
+            if 126 <= first_value <= 127:
+                high = 127 - first_value
+                low = 127 - second_value
+                int_gain = (high * 128) + low
+                gain = int_gain / -10
+                gain -= 0.1
+                return gain
+   
+        return None
 
 class MidiUserSync():
     def __init__(self, sendback, address, addressMain):
@@ -321,3 +429,99 @@ def get_midi_multiplexer():
     if _multiplexer_instance is None:
         _multiplexer_instance = MidiMultiplexer()
     return _multiplexer_instance
+
+
+
+def getEQAddressValue(typeFreq, typeEQ, value):
+    match typeFreq:
+        case 0:
+            match typeEQ:
+                case "gain":
+                    return eq_low_gain, convertGainToHex(value)
+                case "freq":
+                    return eq_low_freq, convertFreqToHex(int(value))
+        case 1:
+            match typeEQ:
+                case "gain":
+                    return eq_low_mid_gain, convertGainToHex(value)
+                case "freq":
+                    return eq_low_mid_freq, convertFreqToHex(int(value))
+                case "q":
+                    return eq_low_mid_q, convertQtoHex(value)
+        case 2:
+            match typeEQ:
+                case "gain":
+                    return eq_mid_hi_gain, convertGainToHex(value)
+                case "freq":
+                    return eq_mid_hi_freq, convertFreqToHex(int(value))
+                case "q":
+                    return eq_mid_hi_q, convertQtoHex(value)
+        case 3:
+            match typeEQ:
+                case "gain":
+                    return eq_high_gain, convertGainToHex(value)
+                case "freq":
+                    return eq_high_freq, convertFreqToHex(int(value))
+
+
+def convertQtoHex(q):
+    if 0.36 <= q <= 16:
+        q *= 100
+        first_value = int(q / 128)
+        second_value = int(q % 128)
+
+        return [first_value, second_value]
+    return None
+
+
+def convertGainToHex(gain):
+    if -15 <= gain <= 15:
+        if gain >= 0:
+            gain *= 10 
+            gain = int(gain)
+            first_value = int(gain / 128)
+            second_value = gain % 128
+
+            return [first_value, second_value]
+        else:
+            gain += 0.1
+            gain *= -10
+            gain = int(gain)
+            first_value = 127 - int((gain / 128))
+            second_value = 127 - (gain % 128)
+
+            return [first_value, second_value]
+    
+    return None
+
+
+def convertFreqToHex(freq):
+    if 20 <= freq <= 20000:
+        b1 = (freq >> 14) & 0x7F  
+        b2 = (freq >> 7) & 0x7F
+        b3 = freq & 0x7F   
+        return [b1, b2, b3]
+    
+    return None
+
+def getEQChannel(channel_address, typeEQ):
+    channels = dict()
+    
+    if typeEQ == call_type.Q: 
+        channels["eq_low_mid_q"] = channel_address + eq_low_mid_q
+        channels["eq_mid_hi_q"] = channel_address + eq_mid_hi_q
+
+    if typeEQ == call_type.FREQ: 
+        channels["eq_low_freq"] = channel_address + eq_low_freq 
+        channels["eq_low_mid_freq"] = channel_address + eq_low_mid_freq
+        channels["eq_mid_hi_freq"] = channel_address + eq_mid_hi_freq
+        channels["eq_high_freq"] = channel_address + eq_high_freq
+
+    if typeEQ == call_type.GAIN:
+        channels["eq_low_gain"] = channel_address + eq_low_gain 
+        channels["eq_low_mid_gain"] = channel_address + eq_low_mid_gain
+        channels["eq_mid_hi_gain"] = channel_address + eq_mid_hi_gain
+        channels["eq_high_gain"] = channel_address + eq_high_gain 
+
+    return channels
+

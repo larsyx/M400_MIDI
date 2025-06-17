@@ -18,6 +18,7 @@
     height: 80%;
     padding: 15px;
     display: none;
+    pointer-events: auto;
 }
 
 .eq-close{
@@ -32,9 +33,10 @@
 .first-line{
     display: flex;
     flex-direction: row;
+    justify-content: center;
+    align-items: center;
     padding: 5px;
-    gap: 15px;
-
+    gap: 20px;
 }
 
 
@@ -76,4 +78,33 @@ label { display: block; margin: 4px 0; }
 .parameter-container{
     display: flex;
     flex-direction: row;
+}
+
+
+#pre-amp{
+    writing-mode: horizontal-tb;
+    height: 15px !important;
+    width: auto; 
+    direction: ltr;
+}
+
+@media screen and (max-width: 470px), screen and (max-height:600px){
+    .graph-container{
+        display: none;
+    }
+}
+
+@media screen and (max-width: 470px){
+    .parameter-container{
+        flex-direction: column;
+    }
+
+    .eq-container{
+        overflow-y: scroll;
+    }
+
+    .first-line{
+        display: flex;
+        flex-direction: column;
+    }
 }

@@ -43,3 +43,12 @@ class ChannelDAO:
         except Exception as e:
             print(f"Error updating channel: {e}")
             return False
+
+    def get_preamp_by_channel(self, channel_id):
+        try:
+            channel = self.db.query(Canale).filter(Canale.id == channel_id).first()
+
+            return channel.indirizzoPreamp
+        except Exception as e:
+            print(f"Error retrieving channels: {e}")
+            return None

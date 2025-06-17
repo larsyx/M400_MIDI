@@ -143,6 +143,9 @@ let points = g.selectAll(".control-point")
       d.gain = Math.min(15, Math.max(-15, yScale.invert(event.y)));
       if (d.id === 0 || d.id === 3) d.q = 0.8;
       update();
+
+      setEQ(d.id, 'freq', d.freq.toFixed(2));
+      setEQ(d.id, 'gain', d.gain.toFixed(2));
     })
   );
 
@@ -248,7 +251,8 @@ function enableWheelAdjust(inputEl, bandIndex, key) {
 
     inputEl.value = key === "freq" ? val.toFixed(0) : val.toFixed(2);
     bands[bandIndex][key] = val;
-    // sendMessageEq(bandIndex, key, val.toFixed(2));
+
+    setEQ(bandIndex, key, val.toFixed(2));
     update();
   }, { passive: false });
 }
@@ -286,7 +290,9 @@ function enableTouchScrubbing(inputEl, bandIndex, key) {
     inputEl.value = key === "freq" ? newValue.toFixed(0) : newValue.toFixed(2);
     const parsed = parseFloat(inputEl.value);
     bands[bandIndex][key] = parsed;
-    // sendMessageEq(bandIndex, key, parsed.toFixed(2));
+    
+    setEQ(bandIndex, key, parsed.toFixed(2));
+
     update();
     e.preventDefault();
   });
@@ -311,3 +317,34 @@ d3.selectAll(".band").each(function(_, i) {
     enableTouchScrubbing(el.select(".q").node(), i, "q");
   }
 });
+
+
+function setEQ(banda, tipo, value){
+
+    const xhttp = new XMLHttpRequest();
+    xhttp.open("POST", "./EQset");
+    xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+    const message = {
+      channel : this.channel,
+      typeFreq : banda,
+      typeEq : tipo,
+      value : value
+    };
+
+    xhttp.send(JSON.stringify(message));
+}
+
+function setEQSwitch(value){
+
+    const xhttp = new XMLHttpRequest();
+    xhttp.open("POST", "./EQSwitch");
+    xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+    const message = {
+      channel : this.channel,
+      switch : value
+    };
+
+    xhttp.send(JSON.stringify(message));
+}

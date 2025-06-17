@@ -25,13 +25,28 @@ on macOs/Linux: source venv/bin/activate
 
     #Midi setting
     Manufacturer_ID = 0x41
-    Device_ID = 
-    Model_ID = 
+    Device_ID =
+    Model_ID = 0x00, 0x00, 0x24
     Command_ID_Data_Set = 0x12
     Command_ID_Data_Request = 0x11
+
+    #Main setting
     Main_Post_Fix_Fader = 0x00, 0x0E
     Main_Post_Fix_Switch = 0x00, 0x0C 
     Main_Pre_Fix = 0x06, 0x00
+
+    #EQ setting
+    EQ_Post_Switch = 0x00, 0x50
+    EQ_Post_Lo_Gain = 0x00, 0x53
+    EQ_Post_Lo_Freq = 0x00, 0x55
+    EQ_Post_Lo_Mid_Gain = 0x00, 0x58
+    EQ_Post_Lo_Mid_Freq = 0x00, 0x5A
+    EQ_Post_Lo_Mid_Q = 0x00, 0x5D
+    EQ_Post_Mid_HI_Gain = 0x00, 0x5F
+    EQ_Post_Mid_HI_Freq = 0x00, 0x61
+    EQ_Post_Mid_HI_Q = 0x00, 0x64
+    EQ_Post_Hi_Gain = 0x00, 0x66
+    EQ_Post_Hi_Freq = 0x00, 0x68
 
     #Ip setting
     WEBSOCKET_IP = ipServer

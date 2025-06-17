@@ -43,9 +43,8 @@
             {% for dca, value, switch in dcas%}
                 <div class="canale-container">
 
-                    <span class="descrizione">{{dca.nome}}</span>
                     <input id="dca_switch_{{dca.id}}" onchange="checkSwitchDca({{dca.id}}, this.checked)" type="checkbox"{% if switch %} checked {% endif %} hidden>
-                     <label for="dca_switch_{{dca.id}}" class="mute"></label>
+                    <label for="dca_switch_{{dca.id}}" class="mute">{{dca.nome}}</label>
 
                     <button type="button" onclick="changeValue({{ dca.id }}, 'plus', 'dca')">+</button>
                     <input class="inputRange"  type="range" min="0" max="100" value="{{value}}" id="dca_canale_{{ dca.id }}" onchange="sendMessageDca( {{dca.id}} , this.value);" oninput="sendMessageDca({{dca.id}} , this.value);">
@@ -57,9 +56,8 @@
        </div>
 
         <div id="main" class="canale-container">
-            <span class="descrizione">Main</span>
             <input id="switch_main" onchange="checkSwitchMain(this.checked)" type="checkbox"  {% if switchMain %} checked {% endif %} hidden>
-            <label for="switch_main" class="mute"></label>
+            <label for="switch_main" class="mute">Main</label>
             <button type="button"  onclick="changeValue('main', 'minus')" >-</button>
             <input class="inputRange"  type="range" min="0" max="100" value="{{valueMain}}" id="canale_main" onchange="sendMessageMain(this.value);" oninput="sendMessageMain(this.value);">
             <button type="button" onclick="changeValue('main', 'plus')">+</button>
@@ -68,10 +66,9 @@
        <div class="slider">
             {% for canale, value, switch in canali %}
                 <div class="canale-container">
-                    <span class="descrizione">{{canale.nome}}</span>
-                    <button class="eq-button" type="button" onclick="document.getElementsByClassName('eq-container')[0].style.display='block'; update();" style="font-size: 12px;">EQ</button>
                     <input id="switch_{{canale.id}}" onchange="checkSwitch({{canale.id}}, this.checked)" type="checkbox"  {% if switch %} checked {% endif %} hidden>
-                    <label for="switch_{{canale.id}}" class="mute"></label>
+                    <label for="switch_{{canale.id}}" class="mute">{{canale.nome}}</label>
+                    <button class="eq-button" type="button" onclick="openEq({{canale.id}})" style="font-size: 12px;">EQ</button>
 
                     <button type="button" onclick="changeValue({{ canale.id }}, 'plus')">+</button>
                     <input class="inputRange"  type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.id }}" onchange="sendMessage( {{canale.id}} , this.value);" oninput="sendMessage({{canale.id}} , this.value);">
@@ -109,11 +106,12 @@
         <div class="eq-container" >
             <span class="eq-close" onclick="this.parentElement.style.display='none'">&times;</span>
             <div class="first-line">
+                <h4 id="channel-name">Channel</h4>
                 <label for="gain">Gain</label>
-                <input type="number" id="gain" min="0" max="100">
+                <input id="pre-amp" type="range" min="0" max="55" onchange="setPreamp(this.value)" oninput="setPreamp(this.value)" >
 
-                <label for="switch">Switch EQ</label>
-                <input type="checkbox" id="switch">
+                <input type="checkbox" id="switchEQ" onchange="setEQSwitch(this.checked)" hidden>
+                <label for="switchEQ" class="mute">Switch EQ</label>
             </div>
             <div class="graph-container">
                 <svg id="eqChart" width="800" height="400"></svg>
@@ -123,63 +121,137 @@
                     <h6>Low</h6>
                     <label>
                         Frequenza (Hz)
-                        <input type="number" min="20" max="20000" step="1" class="freq">
+                        <input id="eq_low_freq" type="number" min="20" max="20000" step="1" class="freq">
                     </label>
                     <label>
                         Gain (dB)
-                        <input type="number" min="-15" max="15" step="1" class="gain">
+                        <input id="eq_low_gain" type="number" min="-15" max="15" step="1" class="gain">
                     </label>
                 </div>
                 <div class="band">
                     <h6>Low-Mid</h6>
                     <label>
                         Frequenza (Hz)
-                        <input type="number" min="20" max="20000" step="1" class="freq">
+                        <input id="eq_low_mid_freq" type="number" min="20" max="20000" step="1" class="freq">
                     </label>
                     <label>
                         Gain (dB)
-                        <input type="number" min="-15" max="15" step="1" class="gain">
+                        <input id="eq_low_mid_gain" type="number" min="-15" max="15" step="1" class="gain">
                     </label>
                     <label>
                         Q 
-                        <input type="number" min="0.36" max="16" step="0.1" class="q">
+                        <input id="eq_low_mid_q" type="number" min="0.36" max="16" step="0.1" class="q">
                     </label>
                 </div>
                 <div class="band">
                     <h6>Mid-Hi</h6>
                     <label>
                         Frequenza (Hz)
-                        <input type="number" min="20" max="20000" step="1" class="freq">
+                        <input id="eq_mid_hi_freq" type="number" min="20" max="20000" step="1" class="freq">
                     </label>
                     <label>
                         Gain (dB)
-                        <input type="number" min="-15" max="15" step="1" class="gain">
+                        <input id="eq_mid_hi_gain" type="number" min="-15" max="15" step="1" class="gain">
                     </label>
                     <label>
                         Q 
-                        <input type="number" min="0.36" max="16" step="0.1" class="q">
+                        <input id="eq_mid_hi_q" type="number" min="0.36" max="16" step="0.1" class="q">
                     </label>
                 </div>
                 <div class="band">
                     <h6>High</h6>
                     <label>
                         Frequenza (Hz)
-                        <input type="number" min="20" max="20000" step="1" class="freq">
+                        <input id="eq_high_freq" type="number" min="20" max="20000" step="1" class="freq">
                     </label>
                     <label>
                         Gain (dB)
-                        <input type="number" min="-15" max="15" step="1" class="gain">
+                        <input id="eq_high_gain" type="number" min="-15" max="15" step="1" class="gain">
                     </label>
                 </div>
             </div>
         </div>
 
         <script>
-            const socket = new WebSocket('wss://{{ipSocket}}:8000/ws/liveSyncMixer'); 
+            const socket = new WebSocket('wss://{{ipSocket}}/ws/liveSyncMixer'); 
         </script>
         <script src="/static/script/mixer/scene.js"></script>
 
         <script src="https://d3js.org/d3.v7.min.js"></script>
+        <script>
+            let channel = ""
+            function openEq(channel){
+                this.channel = channel
+                document.getElementsByClassName('eq-container')[0].style.display='block'; 
+                document.getElementById('channel-name').innerHTML=`Canale ${channel}`;
+                update();
+
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("GET", `/mixer/EQget/${channel}`);
+                xhttp.send();
+                //set loading
+
+                xhttp.onload = function(){
+                    const obj = JSON.parse(this.responseText);
+                    const result = JSON.parse(obj)
+
+                    for (const [index, band] of result.entries()) {        
+                        bands[index]["gain"] = band.gain;
+                        console.log(`Inserisco ${index} a gain ${band.gain}`);
+
+                        bands[index]["freq"] = band.freq; 
+                        console.log(`Inserisco ${index} a freq ${band.freq}`);
+
+                        if(band.q){
+                            bands[index]["q"] = band.q; 
+                            console.log(`Inserisco ${index} a q ${band.q}`);
+                        }
+                    }
+                    update();
+                }
+
+                const xhttp2 = new XMLHttpRequest();
+                xhttp2.open("GET", `/mixer/EQSwitch/${channel}`);
+                xhttp2.send();
+                //set loading
+
+                xhttp2.onload = function(){
+                    const obj = JSON.parse(this.responseText);
+                    switchEQ = document.getElementById("switchEQ");
+                    if(switchEQ)
+                        switchEQ.checked = obj;
+                    
+                }
+
+                const xhttp3 = new XMLHttpRequest();
+                xhttp3.open("GET", `/mixer/PreampGet/${channel}`);
+                xhttp3.send();
+                //set loading
+
+                xhttp3.onload = function(){
+                    const obj = JSON.parse(this.responseText);
+                    slider = document.getElementById("pre-amp");
+                    if(slider)
+                        slider.value=obj; 
+                }
+            }
+
+
+            function setPreamp(value){
+
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("POST", `/mixer/PreampSet`);
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+                request = {
+                    channel : this.channel,
+                    value : value
+                };
+
+                xhttp.send(JSON.stringify(request));
+
+            }
+        </script>
         <script src="/static/script/mixer/eq.js"></script>
     </body>
 </html>

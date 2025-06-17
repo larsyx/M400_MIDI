@@ -5,7 +5,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.DAO.channel_dao import ChannelDAO
 from app.DAO.dca_dao import DCA_DAO
-from midi.midiController import MidiController, MidiListener, call_type
+from midi.midiController import MidiController, MidiListener, call_type, getEQAddressValue, getEQChannel
 from dotenv import load_dotenv
 
 
@@ -18,16 +18,16 @@ class MixerController:
         self.postMainFader = [int(val,16) for val in os.getenv("Main_Post_Fix_Fader").split(",")]
         self.postSwitch = [int(val,16) for val in os.getenv("Main_Post_Fix_Switch").split(",")]
         self.preMain = [int(val,16) for val in os.getenv("Main_Pre_Fix").split(",")]
+        self.postEqSwitch = [int(val,16) for val in os.getenv("EQ_Post_Switch").split(",")]
         self.webSocketIp = os.getenv("WEBSOCKET_IP")
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "View", "mixer"))
-
+        self.midiController = MidiController("pedal")
 
     def loadFader(self, request):
         canali = self.channelDAO.get_all_channels()
         dca = self.dcaDAO.get_dca()
                     
         # get value canali
-        midiController = MidiController("pedal")
         
         listenAddressFader = []
         listenAddressSwitch = []
@@ -57,7 +57,7 @@ class MixerController:
         start = time.time()
 
         for address in listenAddressFader:
-            midiController.request_value(address)
+            self.midiController.request_value(address)
 
         while time.time() - start < 10:
             time.sleep(0.5)
@@ -103,7 +103,7 @@ class MixerController:
         start = time.time()
 
         for address in listenAddressSwitch:
-            midiController.request_value(address)
+            self.midiController.request_value(address)
 
         while time.time() - start < 10:
             time.sleep(0.5)
@@ -159,8 +159,6 @@ class MixerController:
 
     def setFaderValue(self, canaleId, value):
 
-        midiController = MidiController("pedal")
-
         canaleAddress = self.channelDAO.get_channel_address(canaleId)
         
         if(canaleAddress != None):
@@ -168,52 +166,231 @@ class MixerController:
 
             indirizzo = channelAddresshex + self.postMainFader
             
-            midiController.send_command(indirizzo, MidiController.convertValue(int(value)))
+            self.midiController.send_command(indirizzo, MidiController.convertValue(int(value)))
 
     def setSwitchChannel(self, canaleId, switch):
         canaleAddress = self.channelDAO.get_channel_address(canaleId)
-        midiController = MidiController("pedal")
         
         if(canaleAddress != None):
             channelAddresshex = [int(x,16) for x in canaleAddress.split(",")]
 
             indirizzo = channelAddresshex + self.postSwitch
-            midiController.send_command(indirizzo, MidiController.convertSwitch(switch))
+            self.midiController.send_command(indirizzo, MidiController.convertSwitch(switch))
 
     def setMainFaderValue(self, value):
 
-        midiController = MidiController("pedal")
-
         indirizzo = self.preMain + self.postMainFader
         
-        midiController.send_command(indirizzo, MidiController.convertValue(int(value)))
+        self.midiController.send_command(indirizzo, MidiController.convertValue(int(value)))
 
     def setMainSwitchChannel(self, switch):
-        midiController = MidiController("pedal")
     
         indirizzo = self.preMain + self.postSwitch
-        midiController.send_command(indirizzo, MidiController.convertSwitch(switch))
+        self.midiController.send_command(indirizzo, MidiController.convertSwitch(switch))
 
     def setDcaFaderValue(self, dca_id, value):
-        midiController = MidiController("pedal")
         dca = self.dcaDAO.get_dca_by_id(dca_id)
 
         if dca:
             address = [int(x, 16) for x in dca.indirizzoMidiFader.split(",")]
-            midiController.send_command(address, MidiController.convertValue(int(value)))
+            self.midiController.send_command(address, MidiController.convertValue(int(value)))
 
     def setDcaSwitchChannel(self, dca_id, switch):
-        midiController = MidiController("pedal")
         dca = self.dcaDAO.get_dca_by_id(dca_id)
 
         if dca:
             address = [int(x, 16) for x in dca.indirizzoMidiSwitch.split(",")]
-            midiController.send_command(address, MidiController.convertSwitch(switch))
+            self.midiController.send_command(address, MidiController.convertSwitch(switch))
 
     def loadScene(self, scene_id):
-        midiController = MidiController("pedal")
 
-        
-        midiController.loadScene(scene_id)
+        self.midiController.loadScene(scene_id)
 
         return RedirectResponse(url="/mixer/home", status_code=303)
+
+    def eqSet(self, channel, typeFreq, typeEQ, value):
+        if channel:
+            channel_address = self.channelDAO.get_channel_address(channel)
+            if channel_address:
+                address, data = getEQAddressValue(typeFreq, typeEQ, float(value))
+
+                channel_address = [int(x, 16) for x in channel_address.split(',')]
+                address = channel_address + address
+
+                self.midiController.send_command(address, data)
+        return None
+
+
+    def eqGet(self, channel):
+        if channel:
+            channel_address = self.channelDAO.get_channel_address(channel)
+
+            if channel_address:
+                channel_address = [int(x, 16) for x in channel_address.split(',')]
+
+                channelsQ = getEQChannel(channel_address, call_type.Q)
+                channelsFreq = getEQChannel(channel_address, call_type.FREQ)
+                channelsGain = getEQChannel(channel_address, call_type.GAIN)
+
+                #get Q values
+                listenQ = MidiListener(list(channelsQ.values()) , call_type.Q)
+
+                start = time.time()
+
+                for address in channelsQ.values():
+                    self.midiController.request_value(address)
+
+                while time.time() - start < 10:
+                    time.sleep(0.5)
+                    if listenQ.has_received_all():
+                        break
+
+                listenQ.stop()
+                resultsValueQ = listenQ.get_results()
+
+                for keychannel, channel in channelsQ.items():
+                    for key, ch in resultsValueQ.items():
+                        if tuple(channel) == key:
+                            channelsQ[keychannel] = resultsValueQ[key]
+
+                #get Freq values
+                listenFreq = MidiListener(list(channelsFreq.values()) , call_type.FREQ)
+
+                start = time.time()
+
+                for address in channelsFreq.values():
+                    self.midiController.request_value(address)
+
+                while time.time() - start < 10:
+                    time.sleep(0.5)
+                    if listenFreq.has_received_all():
+                        break
+
+                listenFreq.stop()
+                resultsValueFreq = listenFreq.get_results()
+
+                for keychannel, channel in channelsFreq.items():
+                    for key, ch in resultsValueFreq.items():
+                        if tuple(channel) == key:
+                            channelsFreq[keychannel] = resultsValueFreq[key]
+
+                #get gain values
+                listenGain = MidiListener(list(channelsGain.values()) , call_type.GAIN)
+
+                start = time.time()
+
+                for address in channelsGain.values():
+                    self.midiController.request_value(address)
+
+                while time.time() - start < 10:
+                    time.sleep(0.5)
+                    if listenGain.has_received_all():
+                        break
+
+                listenGain.stop()
+                resultsValueGain = listenGain.get_results()
+
+                for keychannel, channel in channelsGain.items():
+                    for key, ch in resultsValueGain.items():
+                        if tuple(channel) == key:
+                            channelsGain[keychannel] = resultsValueGain[key]
+
+
+                low = {}
+                low_mid = {}
+                mid_hi = {}
+                high = {}
+
+                low_mid["q"] = channelsQ["eq_low_mid_q"]
+                mid_hi["q"] = channelsQ["eq_mid_hi_q"]
+
+                low["freq"] = channelsFreq["eq_low_freq"]
+                low_mid["freq"] = channelsFreq["eq_low_mid_freq"]
+                mid_hi["freq"] = channelsFreq["eq_mid_hi_freq"]
+                high["freq"] = channelsFreq["eq_high_freq"]
+
+                low["gain"] = channelsGain["eq_low_gain"]
+                low_mid["gain"] = channelsGain["eq_low_mid_gain"]
+                mid_hi["gain"] = channelsGain["eq_mid_hi_gain"]
+                high["gain"] = channelsGain["eq_high_gain"]
+
+                combined = [low, low_mid, mid_hi, high]
+
+                return json.dumps(combined, indent=3)
+
+        return None
+
+
+    def eqSwitchSet(self, channel, switch):
+        if channel:
+            channel_address = self.channelDAO.get_channel_address(channel)
+            if channel_address:
+                
+                channel_address = [int(x, 16) for x in channel_address.split(',')]
+                address = channel_address + self.postEqSwitch
+
+                data = MidiController.convertSwitch(switch)
+
+                self.midiController.send_command(address, data)
+        return None
+    
+    def eqSwitchGet(self, channel):
+        if channel:
+            channel_address = self.channelDAO.get_channel_address(channel)
+            if channel_address:
+                
+                channel_address = [int(x, 16) for x in channel_address.split(',')]
+                address = channel_address + self.postEqSwitch
+                
+                # channel request and listen
+                listen = MidiListener([address], call_type.SWITCH)
+
+                start = time.time()
+
+                self.midiController.request_value(address)
+
+                while time.time() - start < 10:
+                    time.sleep(0.5)
+                    if listen.has_received_all():
+                        break
+
+                listen.stop()
+                resultsValue = listen.get_results()
+
+                value = next(iter(resultsValue.values()))
+                return value
+
+
+    def eqPreampSet(self, channel, value):
+        if channel and 0 <= value <= 55:
+            channel_address = self.channelDAO.get_preamp_by_channel(channel)
+            if channel_address:
+                channel_address = [int(x, 16) for x in channel_address.split(',')]
+                self.midiController.send_command(channel_address, [value])
+
+
+    #modificare call_type
+    def eqPreampGet(self, channel):
+        if channel:
+            channel_address = self.channelDAO.get_preamp_by_channel(channel)
+            if channel_address:
+
+                channel_address = [int(x, 16) for x in channel_address.split(',')]
+                
+                # channel request and listen
+                listen = MidiListener([channel_address], call_type.PREAMP)
+
+                start = time.time()
+
+                self.midiController.request_value(channel_address)
+
+                while time.time() - start < 10:
+                    time.sleep(0.5)
+                    if listen.has_received_all():
+                        break
+
+                listen.stop()
+                resultsValue = listen.get_results()
+
+                value = next(iter(resultsValue.values()))
+                return value
