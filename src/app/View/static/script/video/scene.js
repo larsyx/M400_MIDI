@@ -9,19 +9,6 @@ function switchLayout() {
     }
 }
 
-function sendMessageDca(dca_id, value){
-    const xhttp = new XMLHttpRequest();
-    xhttp.open("POST", "./set/dca", true)
-    xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-
-    const message = {
-            dca_id: dca_id,
-            value: value
-    };
-
-    xhttp.send(JSON.stringify(message));
-}
-
 
 function sendMessage(canaleId, value) {
     const xhttp = new XMLHttpRequest();
@@ -48,11 +35,8 @@ function sendMessageMain(value){
     xhttp.send(JSON.stringify(message));
 }
 
-function changeValue(canaleId, action, type){
-    if(type == "dca")
-        inputRange = document.getElementById("dca_canale_"+canaleId);
-    else
-        inputRange = document.getElementById("canale_"+canaleId);
+function changeValue(canaleId, action){
+    inputRange = document.getElementById("canale_"+canaleId);
     let value = parseInt(inputRange.value, 10);
 
     if(action == "plus")
@@ -61,13 +45,10 @@ function changeValue(canaleId, action, type){
         value = Math.max(value -1, 0);
     inputRange.value = value;
 
-    if(type == "dca")
-        sendMessageDca(canaleId, value);
-    else if(canaleId == "main")
+    if(canaleId == "main")
         sendMessageMain(value);
     else
         sendMessage(canaleId, value);
-
 }
 
 function checkSwitch(canaleId, switchValue){
@@ -84,19 +65,6 @@ function checkSwitch(canaleId, switchValue){
 }
 
 
-function checkSwitchDca(dca_id, switchValue){
-    const xhttp = new XMLHttpRequest();
-    xhttp.open("POST", "./switch/dca", true)
-    xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-
-    const message = {
-        dca_id: dca_id,
-        switch: switchValue
-    };
-
-    xhttp.send(JSON.stringify(message));
-}
-
 function checkSwitchMain(switchValue){
     const xhttp = new XMLHttpRequest();
     xhttp.open("POST", "./switch/main", true)
@@ -110,27 +78,25 @@ function checkSwitchMain(switchValue){
 }
 
 
-    
 
 socket.onopen = function(){};
 
 socket.onmessage = function(event){
-    // console.log(event.data);
     const response = JSON.parse(event.data);
     if(response != null){
         let elname = "";
-        if(response.dca)
-            elname = "dca_";
 
         let element = null;
-        if(response.type === "switch")
+        if(response.type === "switch"){
             element = document.getElementById(elname+"switch_"+response.channel);
-            if(element != null)
+            if(element != null){
                 element.checked = response.value;
-        else if(response.type === "fader")
+            }
+        }else if(response.type === "fader"){
             element = document.getElementById(elname+"canale_"+response.channel);
             if(element != null)
                 element.value = response.value;
+        }
 
     }
 };

@@ -11,6 +11,13 @@
             td{
                 padding: 10px;
             }
+
+            .back-button {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 1000;
+            }
         </style>
 
     </head>
@@ -41,35 +48,39 @@
                 </tr>
                 {% endfor %}
             </table>
-
-
-            <script>
-                function changeDescription(type, id){
-
-                    const el = document.getElementById(type + "_" + id).value;
-                    if(el != null){
-                        const xhttp = new XMLHttpRequest();
-                        xhttp.open("POST", "/admin/manageChannels/changeDescription", true);
-                        xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-
-                        const message = {
-                            type: type,
-                            id: id,
-                            value: el
-                        };
-
-                        xhttp.send(JSON.stringify(message));
-                            
-                    }
-                }
-
-
-                history.pushState(null, '', location.href);
-                window.addEventListener('popstate', function () {
-                    // Qui reindirizzi dove vuoi quando l'utente va indietro
-                    window.location.href = '/admin';
-                });
-            </script>
         </div>
+
+        <div class="back-button">
+            <button type="button" onclick="window.location.href='/admin'">Indietro</button>
+        </div>
+
+        <script>
+            function changeDescription(type, id){
+
+                const el = document.getElementById(type + "_" + id).value;
+                if(el != null){
+                    const xhttp = new XMLHttpRequest();
+                    xhttp.open("POST", "/admin/manageChannels/changeDescription", true);
+                    xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+                    const message = {
+                        type: type,
+                        id: id,
+                        value: el
+                    };
+
+                    xhttp.send(JSON.stringify(message));
+                        
+                }
+            }
+
+
+            history.pushState(null, '', location.href);
+            window.addEventListener('popstate', function () {
+                // Qui reindirizzi dove vuoi quando l'utente va indietro
+                window.location.href = '/admin';
+            });
+        </script>
+
     </body>
 </html>

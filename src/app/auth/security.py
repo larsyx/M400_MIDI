@@ -42,3 +42,7 @@ def verify_mixer(user):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="non sei autorizzato")
     return True
 
+def verify_video(user):
+    if not userDAO.isVideo(user):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="non sei autorizzato")
+    return True

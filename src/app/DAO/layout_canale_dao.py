@@ -2,6 +2,9 @@ from sqlalchemy import desc
 from Database.database import DBSession
 from Models.canale import Canale
 from Models.layoutCanale import LayoutCanale
+from app.DAO.channel_dao import ChannelDAO 
+import json
+import os
 
 
 class LayoutCanaleDAO:
@@ -49,7 +52,7 @@ class LayoutCanaleDAO:
             print(f"Error retrieving layout: {e}")
             return None
         
-    def addLayoutCanale(self, user, scene, canale, descrizione):
+    def addLayoutCanale(self, user, scene, canale, descrizione, isBatteria=False):
         try: 
             layout = self.db.query(LayoutCanale).filter(
                 LayoutCanale.user == user,
@@ -64,7 +67,8 @@ class LayoutCanaleDAO:
                 canaleId=canale,
                 user=user,
                 posizione=posizione,
-                descrizione=descrizione
+                descrizione=descrizione,
+                isBatteria=isBatteria
             )
 
             self.db.add(layout)
@@ -94,3 +98,29 @@ class LayoutCanaleDAO:
         except Exception as e:
             print(f"Error retrieving layout: {e}")
             return None
+
+    
+    def addDefaultLayoutCanale(self, user, scene):
+        file_path = os.path.join(os.path.dirname(__file__), "..", "..", "Database", "default_layout.json")
+        with open(file_path, "r") as json_data:
+            data = json.load(json_data)
+
+            channels = set(ch['id'] for ch in data.get('channels', []))
+            drums = set(d['id'] for d in data.get('drums', [])) - channels
+
+            if self.getLayoutCanale(user, scene) is not None and len(self.getLayoutCanale(user, scene)) > 0:
+                return True
+            
+            channelDAO = ChannelDAO()
+
+            for channel in channels:
+                channel_obj = channelDAO.get_channel_by_id(channel)
+                if channel_obj is not None:
+                    self.addLayoutCanale(user, scene, channel, channel_obj.descrizione, False)
+
+
+            for drum in drums:
+                channel_obj = channelDAO.get_channel_by_id(drum)
+                if channel_obj is not None:
+                    self.addLayoutCanale(user, scene, drum, channel_obj.descrizione, True)
+

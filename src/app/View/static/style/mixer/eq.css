@@ -19,6 +19,8 @@
     padding: 15px;
     display: none;
     pointer-events: auto;
+    
+    touch-action: none; 
 }
 
 .eq-close{
@@ -92,6 +94,10 @@ label { display: block; margin: 4px 0; }
     .graph-container{
         display: none;
     }
+
+    .eq-container{
+        touch-action: auto; 
+    }
 }
 
 @media screen and (max-width: 470px){
@@ -101,6 +107,7 @@ label { display: block; margin: 4px 0; }
 
     .eq-container{
         overflow-y: scroll;
+        touch-action: auto;
     }
 
     .first-line{

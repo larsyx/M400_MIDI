@@ -14,6 +14,13 @@
                 padding: 30px;
             }
 
+            .back-button {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 1000;
+            }
+
         </style>
     </head>
 
@@ -50,6 +57,10 @@
                 </tr>
                 {% endfor %}
             </table>
+
+            <div class="back-button">
+                <button type="button" onclick="window.location.href='/admin'">Indietro</button>
+            </div>
 
             <script>
                 history.pushState(null, '', location.href);

@@ -6,6 +6,7 @@ from app.DAO.aux_dao import AuxDAO
 from app.DAO.partecipazione_scena_dao import PartecipazioneScenaDAO
 from app.DAO.scene_dao import SceneDAO
 from app.DAO.user_dao import UserDAO
+from app.DAO.layout_canale_dao import LayoutCanaleDAO
 
 class SceneController:
     def __init__(self):
@@ -13,6 +14,7 @@ class SceneController:
         self.auxDAO = AuxDAO()
         self.utenteDAO = UserDAO()
         self.partecipazioneScenaDAO = PartecipazioneScenaDAO()
+        self.layoutCanaleDAO = LayoutCanaleDAO()
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "View", "administration"))
 
     def manageScene(self, request, adminUser):
@@ -69,6 +71,10 @@ class SceneController:
                 utenti = self.partecipazioneScenaDAO.getUserNotInScene(sceneId)
 
                 message = "utente assegnato con successo" 
+
+                # create default layout for the user
+                self.layoutCanaleDAO.addDefaultLayoutCanale(user, sceneId)
+
             else:
                 message ="utente ha già un aux assegnato"
 

@@ -18,6 +18,13 @@
             div {
                 padding: 10px;
             }
+
+            .back-button {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 1000;
+            }
         </style>
     </head>
 
@@ -34,6 +41,7 @@
                 <select name="ruolo" id="role">
                     <option value="utente" >Utente</option>
                     <option value="mixerista" >Mixerista</option>
+                    <option value="video" >Video</option>
                 </select><br><br>
                 <button type="submit">Aggiungi utente</button>
             </form>
@@ -49,10 +57,15 @@
                         <form action="/admin/deleteUser" method="POST">
                             <input type="hidden" name="username" value ="{{user.username}}">
                             <button type="submit">Elimina</button>
+                        </form>
                         {% endif %}
                     </li> 
                 {% endfor %}
             </ul>
+        </div>
+
+        <div class="back-button">
+            <button type="button" onclick="window.location.href='/admin'">Indietro</button>
         </div>
 
         <script>

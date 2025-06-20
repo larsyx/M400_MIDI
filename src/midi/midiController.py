@@ -5,7 +5,6 @@ import mido
 from dotenv import load_dotenv
 import os
 from enum import Enum
-#header = [0xF0, 0x41, 0x10, 0x00, 0x00, 0x24, 0x12]
 
 load_dotenv()
 Manufacturer_ID = int(os.getenv("MANUFACTURER_ID"), 0)
@@ -51,8 +50,9 @@ class MidiController:
         msg = mido.Message('sysex', data=sysex_msg)
 
         with mido.open_output(self.ped) as outport:
+            print("Sending MIDI message:", " ".join(hex(byte) for byte in sysex_msg))
             outport.send(msg)
-
+    
     def convertValue(value):
         if value == 0:
             return [0x78, 0x76]
@@ -73,14 +73,16 @@ class MidiController:
 
         if value < 10 and value >= 1:
             decibel = ((value-1)*(29.6/9))-89.6
+        
 
-
-        div = decibel/-12.8
-        first_value = 128 - math.ceil(div)
-        second_value = int((math.ceil(div) - div)*127)
+        decibel += 0.1
+        decibel *= -10
+        decibel = int(decibel)
+        first_value = 127 - int((decibel / 128))
+        second_value = 127 - (decibel % 128)
 
         return [first_value, second_value]
-    
+
     def convertSwitch(switch):
         return [0x00] if switch else [0x01] 
 
@@ -99,7 +101,6 @@ class MidiController:
         channel, program_number = MidiController.convertValueScene(scene_number=scene_number)
         msg = mido.Message('program_change', program=program_number, channel=channel)
         with mido.open_output(self.ped) as outport:
-            print(f"mando: {msg}")
             outport.send(msg)
 
     def convertValueScene(scene_number):
@@ -225,6 +226,7 @@ class MidiListener:
                 if key in self.midi_addresses and key not in self.received:
                     self.received[key] = data[10]
 
+
     def stop(self):
         self.running = False
         get_midi_multiplexer().unregister(self.callback)
@@ -266,6 +268,34 @@ class MidiListener:
             return 0
         except Exception as e:
             print(f"errore: {e}")
+
+    # def convert_value(first_value, second_value):
+    #     try:
+    #         if first_value == 0x00:
+    #             value = (second_value / 100) * 25 + 75
+    #             return round(value)
+    #         elif first_value == 0x78:
+    #             return 0
+    #         elif 121 <= first_value <= 127 and 0 <= second_value <= 127:
+    #             #get db
+    #             high = 127 - first_value
+        #         low = 127 - second_value
+        #         int_decibel = (high * 128) + low
+        #         decibel = int_decibel / -10
+        #         decibel -= 0.1
+                
+        #         #convert db in int range
+        #         if decibel >= -40:
+        #             value = decibel + 60
+        #         elif decibel >= -60:
+        #             value = (decibel + 60) / 2 + 10
+        #         elif decibel >= -89.6:
+        #             value = ((decibel + 89.6) * 9 / 29.6) + 1
+                
+        #         return int(value)
+
+        # except Exception as e:
+        #     print(f"errore: {e}")
         
 
     def convert_switch(value):
@@ -350,6 +380,52 @@ class MidiUserSync():
                         self.loop
                     )
 
+class MidiVideoSync():
+    def __init__(self, sendback, address, addressMain):
+        
+        self.loop = asyncio.get_event_loop()
+        self.send_back = sendback
+        self.post_address = address
+        self.addressMain = addressMain
+
+        get_midi_multiplexer().register(self.listening)
+
+    def stop(self):
+        get_midi_multiplexer().unregister(self.listening)
+
+
+    def listening(self, msg):
+
+        if msg.type == 'sysex':
+            data = tuple(msg.data)
+
+            if data[:5] == tuple(header) and data[5] == Command_ID_Set:
+                canale = f"0x{data[6]:02X}, 0x{data[7]:02X}"
+                
+                typeCmd =""
+                valore = 0
+                
+                if data[6:8] == tuple(self.addressMain):
+                    canale = "main"
+
+                    if data[8:10] == tuple(switch_post):
+                        typeCmd = "switch"
+                        valore = MidiListener.convert_switch(data[10])
+                    elif data[8:10] == tuple(fader_post):
+                        valore = MidiListener.convert_value(data[10], data[11])
+                        typeCmd = "fader"
+
+                elif data[8:10] == tuple(self.post_address):
+                    valore = MidiListener.convert_value(data[10], data[11])
+                    typeCmd ="fader"
+
+                print(f"canale: {canale}, valore: {valore}, typeCmd: {typeCmd}")
+                print(f"data: {data[8:10]} {self.post_address}")
+                if typeCmd != "":
+                    asyncio.run_coroutine_threadsafe(
+                        self.send_back(typeCmd, canale, valore),
+                        self.loop
+                    )
 
 
 class MidiMixerSync():

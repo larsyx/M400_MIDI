@@ -23,6 +23,25 @@
                 z-index: 1000;
             }
 
+            .hidden-important{
+                display: none !important;
+                align-items: center;
+            }
+
+            #spinner {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 100%;   /* larghezza contenitore */
+                height: 200px;  
+                border: 1px solid #ccc; 
+                            }
+
+            .spinner-border {
+                width: 100px;   
+                height: 100px;
+                border-width: 0.3em; 
+            }
         </style>
     </head>
 
@@ -110,9 +129,16 @@
                 <label for="gain">Gain</label>
                 <input id="pre-amp" type="range" min="0" max="55" onchange="setPreamp(this.value)" oninput="setPreamp(this.value)" >
 
-                <input type="checkbox" id="switchEQ" onchange="setEQSwitch(this.checked)" hidden>
+                <input type="checkbox" id="switchEQ" onchange="setEQSwitch(!this.checked)" hidden>
                 <label for="switchEQ" class="mute">Switch EQ</label>
             </div>
+
+            <div id="spinner" class="d-flex justify-content-center">
+                <div class="spinner-border" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+
             <div class="graph-container">
                 <svg id="eqChart" width="800" height="400"></svg>
             </div>
@@ -174,83 +200,13 @@
 
         <script>
             const socket = new WebSocket('wss://{{ipSocket}}/ws/liveSyncMixer'); 
+
         </script>
         <script src="/static/script/mixer/scene.js"></script>
 
         <script src="https://d3js.org/d3.v7.min.js"></script>
         <script>
             let channel = ""
-            function openEq(channel){
-                this.channel = channel
-                document.getElementsByClassName('eq-container')[0].style.display='block'; 
-                document.getElementById('channel-name').innerHTML=`Canale ${channel}`;
-                update();
-
-                const xhttp = new XMLHttpRequest();
-                xhttp.open("GET", `/mixer/EQget/${channel}`);
-                xhttp.send();
-                //set loading
-
-                xhttp.onload = function(){
-                    const obj = JSON.parse(this.responseText);
-                    const result = JSON.parse(obj)
-
-                    for (const [index, band] of result.entries()) {        
-                        bands[index]["gain"] = band.gain;
-                        console.log(`Inserisco ${index} a gain ${band.gain}`);
-
-                        bands[index]["freq"] = band.freq; 
-                        console.log(`Inserisco ${index} a freq ${band.freq}`);
-
-                        if(band.q){
-                            bands[index]["q"] = band.q; 
-                            console.log(`Inserisco ${index} a q ${band.q}`);
-                        }
-                    }
-                    update();
-                }
-
-                const xhttp2 = new XMLHttpRequest();
-                xhttp2.open("GET", `/mixer/EQSwitch/${channel}`);
-                xhttp2.send();
-                //set loading
-
-                xhttp2.onload = function(){
-                    const obj = JSON.parse(this.responseText);
-                    switchEQ = document.getElementById("switchEQ");
-                    if(switchEQ)
-                        switchEQ.checked = obj;
-                    
-                }
-
-                const xhttp3 = new XMLHttpRequest();
-                xhttp3.open("GET", `/mixer/PreampGet/${channel}`);
-                xhttp3.send();
-                //set loading
-
-                xhttp3.onload = function(){
-                    const obj = JSON.parse(this.responseText);
-                    slider = document.getElementById("pre-amp");
-                    if(slider)
-                        slider.value=obj; 
-                }
-            }
-
-
-            function setPreamp(value){
-
-                const xhttp = new XMLHttpRequest();
-                xhttp.open("POST", `/mixer/PreampSet`);
-                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-
-                request = {
-                    channel : this.channel,
-                    value : value
-                };
-
-                xhttp.send(JSON.stringify(request));
-
-            }
         </script>
         <script src="/static/script/mixer/eq.js"></script>
     </body>

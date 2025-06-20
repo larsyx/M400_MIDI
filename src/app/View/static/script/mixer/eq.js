@@ -348,3 +348,84 @@ function setEQSwitch(value){
 
     xhttp.send(JSON.stringify(message));
 }
+
+function openEq(channel){
+  this.channel = channel
+  document.getElementsByClassName('eq-container')[0].style.display='block'; 
+  document.getElementById('channel-name').innerHTML=`Canale ${channel}`;
+
+  const xhttp = new XMLHttpRequest();
+  xhttp.open("GET", `/mixer/EQget/${channel}`);
+  xhttp.send();
+  //set loading
+  spinner = document.getElementById("spinner");
+  spinner.classList.remove("hidden-important"); 
+  graph = document.getElementsByClassName("graph-container")[0];
+  if (getComputedStyle(graph).display == "none")
+      graph = "null"
+  else
+      graph.style.display ="None"
+
+
+  xhttp.onload = function(){
+      const obj = JSON.parse(this.responseText);
+      const result = JSON.parse(obj)
+
+      for (const [index, band] of result.entries()) {        
+          bands[index]["gain"] = band.gain;
+          console.log(`Inserisco ${index} a gain ${band.gain}`);
+
+          bands[index]["freq"] = band.freq; 
+          console.log(`Inserisco ${index} a freq ${band.freq}`);
+
+          if(band.q){
+              bands[index]["q"] = band.q; 
+              console.log(`Inserisco ${index} a q ${band.q}`);
+          }
+      }
+
+      spinner.classList.add("hidden-important"); 
+      if(graph)
+          graph.style.display ="block"
+      update();
+  }
+
+  const xhttp2 = new XMLHttpRequest();
+  xhttp2.open("GET", `/mixer/EQSwitch/${channel}`);
+  xhttp2.send();
+
+  xhttp2.onload = function(){
+      const obj = JSON.parse(this.responseText);
+      switchEQ = document.getElementById("switchEQ");
+      if(switchEQ)
+          switchEQ.checked = !obj;
+      
+  }
+
+  const xhttp3 = new XMLHttpRequest();
+  xhttp3.open("GET", `/mixer/PreampGet/${channel}`);
+  xhttp3.send();
+
+  xhttp3.onload = function(){
+      const obj = JSON.parse(this.responseText);
+      slider = document.getElementById("pre-amp");
+      if(slider)
+          slider.value=obj; 
+  }
+}
+
+
+function setPreamp(value){
+
+  const xhttp = new XMLHttpRequest();
+  xhttp.open("POST", `/mixer/PreampSet`);
+  xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+  request = {
+      channel : this.channel,
+      value : value
+  };
+
+  xhttp.send(JSON.stringify(request));
+
+}

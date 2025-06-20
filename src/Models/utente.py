@@ -10,6 +10,7 @@ class RuoloUtente(Enum):
     mixerista = "mixerista"
     utente = "utente"
     amministratore = "amministratore"
+    video = "video"
 
 class Utente(Base):
     __tablename__ = 'utente'

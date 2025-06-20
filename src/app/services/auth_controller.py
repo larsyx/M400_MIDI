@@ -30,5 +30,7 @@ class AuthController:
             return RedirectResponse(url = "/admin", status_code=302)
         elif(userDAO.isMixer(username)):
             return RedirectResponse(url="/mixer/home", status_code=302)
+        elif(userDAO.isVideo(username)):
+            return RedirectResponse(url="/video/home", status_code=302)
         else:
             return RedirectResponse(url = "/user/getScenes", status_code=302)
