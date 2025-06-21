@@ -398,7 +398,7 @@ function openEq(channel){
       const obj = JSON.parse(this.responseText);
       switchEQ = document.getElementById("switchEQ");
       if(switchEQ)
-          switchEQ.checked = !obj;
+          switchEQ.checked = obj;
       
   }
 

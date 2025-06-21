@@ -19,6 +19,8 @@ class MixerController:
         self.postSwitch = [int(val,16) for val in os.getenv("Main_Post_Fix_Switch").split(",")]
         self.preMain = [int(val,16) for val in os.getenv("Main_Pre_Fix").split(",")]
         self.postEqSwitch = [int(val,16) for val in os.getenv("EQ_Post_Switch").split(",")]
+        self.postName = [int(val,16) for val in os.getenv("Fader_Post_Name").split(",")]
+        self.postLink = [int(val,16) for val in os.getenv("Fader_Post_link").split(",")]
         self.webSocketIp = os.getenv("WEBSOCKET_IP")
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "View", "mixer"))
         self.midiController = MidiController("pedal")
@@ -31,6 +33,8 @@ class MixerController:
         
         listenAddressFader = []
         listenAddressSwitch = []
+        listenAddressName = []
+        listenAddressLink = []
 
         # initialize the list of addresses for request and listen
         for canale in canali:
@@ -38,6 +42,8 @@ class MixerController:
             
             listenAddressFader.append(channelAddress + self.postMainFader)
             listenAddressSwitch.append(channelAddress + self.postSwitch)
+            listenAddressName.append(channelAddress + self.postName)
+            listenAddressLink.append(channelAddress + self.postLink)
 
         for dcaChannel in dca:
             dcaFader = [int(x,16) for x in dcaChannel.indirizzoMidiFader.split(",")] 
@@ -140,8 +146,77 @@ class MixerController:
             print(f"error key {e}")
             switchMain = False
 
-        coppieCanali = list(zip(canali, resultsValueSet, resultsValueSetSwitch))
+
         
+        # get names channel
+        listen = MidiListener(listenAddressName, call_type.NAME)
+
+        start = time.time()
+
+        for address in listenAddressName:
+            self.midiController.request_value(address)
+
+        while time.time() - start < 10:
+            time.sleep(0.5)
+            if listen.has_received_all():
+                break
+
+        listen.stop()
+        resultsValueName = listen.get_results()
+        
+        resultsValueSetName = []
+
+        for canale in canali:
+            channelAddress = [int(x,16) for x in canale.indirizzoMidi.split(",")] 
+            try:
+                resultsValueSetName.append(resultsValueName[tuple(channelAddress + self.postName)])
+            except KeyError as k:
+                print("errore chiave ", k)
+                resultsValueSetName.append("")
+
+        print("resultsValueSetName", resultsValueSetName)
+
+        # get link channel
+        listen = MidiListener(listenAddressLink, call_type.SWITCH)
+
+        start = time.time()
+
+        for address in listenAddressLink:
+            self.midiController.request_value(address)
+
+        while time.time() - start < 10:
+            time.sleep(0.5)
+            if listen.has_received_all():
+                break
+
+        listen.stop()
+        resultsValueLink = listen.get_results()
+        
+        resultsValueSetLink = []
+
+        for canale in canali:
+            channelAddress = [int(x,16) for x in canale.indirizzoMidi.split(",")] 
+            try:
+                resultsValueSetLink.append(not resultsValueLink[tuple(channelAddress + self.postLink)])
+            except KeyError as k:
+                print("errore chiave ", k)
+                resultsValueSetLink.append(0)
+
+        # only the second link
+        skip = False
+        for i in range(len(resultsValueSetLink)-1):
+            if not skip:
+                if resultsValueSetLink[i] and resultsValueSetLink[i+1]:
+                    resultsValueSetLink[i] = False
+                    skip = True
+            else:
+                skip = False
+            
+        print("resultsValueSetLink", resultsValueSetLink)
+
+        
+
+        coppieCanali = list(zip(canali, resultsValueSet, resultsValueSetSwitch, resultsValueSetName, resultsValueSetLink))
 
         #DCA
         coppieDca = list(zip(dca, resultDcaValueSet, resultDcaValueSetSwitch))
@@ -153,6 +228,11 @@ class MixerController:
 
         scenes = scene.get('scenes', [])
 
+
+
+
+
+        #get link
 
         return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "dcas": coppieDca, "valueMain" : valueMain, "switchMain" : switchMain, "ipSocket" : self.webSocketIp, "scenes" : scenes})
         
@@ -329,7 +409,7 @@ class MixerController:
                 channel_address = [int(x, 16) for x in channel_address.split(',')]
                 address = channel_address + self.postEqSwitch
 
-                data = MidiController.convertSwitch(switch)
+                data = MidiController.convertSwitch(not switch)
 
                 self.midiController.send_command(address, data)
         return None
@@ -358,7 +438,7 @@ class MixerController:
                 resultsValue = listen.get_results()
 
                 value = next(iter(resultsValue.values()))
-                return value
+                return not value
 
 
     def eqPreampSet(self, channel, value):
@@ -369,7 +449,6 @@ class MixerController:
                 self.midiController.send_command(channel_address, [value])
 
 
-    #modificare call_type
     def eqPreampGet(self, channel):
         if channel:
             channel_address = self.channelDAO.get_preamp_by_channel(channel)

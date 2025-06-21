@@ -1,0 +1,73 @@
+.aux-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;    
+    flex-direction: column;  
+
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); 
+
+
+    z-index: 1000;           
+    background-color: white;
+    width: 90%;
+    border: 2px solid black;
+    border-radius: 10px;
+    height: 80%;
+    padding: 15px;
+    pointer-events: auto;
+
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+
+}
+
+.aux-container.visible{
+    opacity: 1;
+    visibility: visible;
+}
+
+.aux-inner-container {
+    padding : 20px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    gap: 20px; 
+    overflow: hidden; 
+}
+.aux-list{
+    display: flex;
+    flex-direction: row;
+    overflow-x: scroll;
+    width: 100%;
+}
+
+.aux-close{
+    position: absolute;
+    top: 0px;
+    right: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+
+.aux-channels{
+    display: flex;
+    flex-direction: row;
+    height: 80%;
+    overflow-x: scroll;
+}
+
+.aux-channels-container{
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+    align-items: center;
+    height: 95%;
+    gap : 15px
+}

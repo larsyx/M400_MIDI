@@ -10,6 +10,7 @@
         <link rel="stylesheet" href="/static/style/common/range.css">
         <link rel="stylesheet" href="/static/style/mixer/scene.css">
         <link rel="stylesheet" href="/static/style/mixer/eq.css">
+        <link rel="stylesheet" href="/static/style/mixer/aux_view.css">
 
         <link id="layout-style" rel="stylesheet" href="/static/style/mixer/horizontal-layout.css">
         <style>
@@ -83,26 +84,30 @@
         </div>
 
        <div class="slider">
-            {% for canale, value, switch in canali %}
+            {% for canale, value, switch, name, link in canali %}
+                {% if not link %}
                 <div class="canale-container">
                     <input id="switch_{{canale.id}}" onchange="checkSwitch({{canale.id}}, this.checked)" type="checkbox"  {% if switch %} checked {% endif %} hidden>
                     <label for="switch_{{canale.id}}" class="mute">{{canale.nome}}</label>
-                    <button class="eq-button" type="button" onclick="openEq({{canale.id}})" style="font-size: 12px;">EQ</button>
 
                     <button type="button" onclick="changeValue({{ canale.id }}, 'plus')">+</button>
-                    <input class="inputRange"  type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.id }}" onchange="sendMessage( {{canale.id}} , this.value);" oninput="sendMessage({{canale.id}} , this.value);">
+                    <input class="inputRange"  type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.id }}" onchange="sendMessage( {{ canale.id }}, this.value);" oninput="sendMessage({{ canale.id }}, this.value);">
                     <button type="button"  onclick="changeValue({{ canale.id }}, 'minus')" >-</button>
+                    <button class="eq-button" type="button" onclick="openEq({{canale.id}})" style="font-size: 12px;">EQ</button>
 
-                    <span class="descrizione">{% if canale.descrizione is not none %} <strong> {{ canale.descrizione }}</strong> {% endif %}</span>
+                    <span class="descrizione">{% if name is not none %} <strong> {{ name }}</strong> {% endif %}</span>
                 </div>
+                {% endif %}
             {% endfor %}
        </div>
         
+       <div class="menu-buttons">
+            <button type="menu" onclick="openScene()" >Scenes</button>
+            <button type= "menu" onclick="switchLayout()">Layout</button>
+            <button type="menu" onclick="openAuxs()">Aux</button>
+       </div>
 
-        <div id="scene-button">
-            <button type="menu">Scenes</button>
-        </div>
-       
+        
         <div class="scene-container-list" >
             <table>
                 <tr>
@@ -120,8 +125,6 @@
             </table>   
         </div>
 
-        <div id="layout-button"><button onclick="switchLayout()">Layout</button></div>
-
         <div class="eq-container" >
             <span class="eq-close" onclick="this.parentElement.style.display='none'">&times;</span>
             <div class="first-line">
@@ -129,7 +132,7 @@
                 <label for="gain">Gain</label>
                 <input id="pre-amp" type="range" min="0" max="55" onchange="setPreamp(this.value)" oninput="setPreamp(this.value)" >
 
-                <input type="checkbox" id="switchEQ" onchange="setEQSwitch(!this.checked)" hidden>
+                <input type="checkbox" id="switchEQ" onchange="setEQSwitch(this.checked)" hidden>
                 <label for="switchEQ" class="mute">Switch EQ</label>
             </div>
 
@@ -198,6 +201,33 @@
             </div>
         </div>
 
+
+        <div class="aux-container">
+            <span class="aux-close" onclick="openAuxs()">X</span>
+            <div class="aux-inner-container">
+                <div class="aux-list">
+                    {% for i in range(1,17) %}
+                    <button type="menu">{{i}} nome</button>
+                    {% endfor %}
+                </div>
+
+                <div class=aux-channels>
+                {% for canale, value, switch, name, link in canali %}
+                    {% if not link %}
+                    <div class="aux-channels-container">
+                        
+                        <p>{{canale.nome}}</p>
+                        <button type="button" onclick="changeValue({{ canale.id }}, 'plus')">+</button>
+                        <input class="inputRange"  type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.id }}" onchange="sendMessage( {{ canale.id }}, this.value);" oninput="sendMessage({{ canale.id }}, this.value);">
+                        <button type="button"  onclick="changeValue({{ canale.id }}, 'minus')" >-</button>
+                        <span class="descrizione">{% if name is not none %} <strong> {{ name }}</strong> {% endif %}</span>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+
         <script>
             const socket = new WebSocket('wss://{{ipSocket}}/ws/liveSyncMixer'); 
 
@@ -209,5 +239,8 @@
             let channel = ""
         </script>
         <script src="/static/script/mixer/eq.js"></script>
+
+        <script src="/static/script/mixer/aux_script.js"></script>
+
     </body>
 </html>

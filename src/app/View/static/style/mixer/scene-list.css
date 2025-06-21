@@ -1,10 +1,3 @@
-#scene-button {
-    position: fixed;
-    top: 20px;       /* distanza dal bordo superiore */
-    right: 20px;     /* distanza dal bordo destro */
-    z-index: 1000;   /* resta sopra agli altri elementi */            
-
-}
 
 .scene-container-list{
     display: flex;

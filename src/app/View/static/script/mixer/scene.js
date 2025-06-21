@@ -148,10 +148,7 @@ socket.onclose = function(e){
 
 };
 
-
-const buttonContainer = document.getElementById("scene-button");
-button = buttonContainer.querySelector("button[type='menu']");
-button.addEventListener("click", function() {
+function openScene(){
     const sceneContainer = document.querySelector(".scene-container-list");
     sceneContainer.classList.toggle("visible");
-});
+}

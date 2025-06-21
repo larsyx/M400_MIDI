@@ -87,7 +87,7 @@ class MidiController:
         return [0x00] if switch else [0x01] 
 
     def request_value(self, address):
-        data = [0x00, 0x00, 0x00, 0x04]
+        data = [0x00, 0x00, 0x00, 0x06]
         sysex_msg = build_sysex(address, Command_ID_Request, data)
 
         msg = mido.Message('sysex', data=sysex_msg)
@@ -140,6 +140,7 @@ class call_type(Enum):
     FREQ = "freq"
     GAIN = "gain"
     PREAMP = "preamp"
+    NAME = "name"
 
 class MidiListener:
     def __init__(self, midi_addresses, calltype):
@@ -161,6 +162,8 @@ class MidiListener:
                 callfn = self.callbackGain
             case call_type.PREAMP:
                 callfn = self.callbackPreamp
+            case call_type.NAME:
+                callfn = self.callbackName
 
         self.callback = callfn
 
@@ -226,6 +229,16 @@ class MidiListener:
                 if key in self.midi_addresses and key not in self.received:
                     self.received[key] = data[10]
 
+    def callbackName(self, msg):
+        if not self.running:
+            return
+        if msg.type == 'sysex':
+            data = tuple(msg.data)
+            key = data[6:10]
+            with self.lock:
+                if key in self.midi_addresses and key not in self.received:
+                    str_hex = ''.join(f'{byte:02X}' for byte in data[10:16])
+                    self.received[key] = MidiListener.convert_hex_to_str(str_hex)
 
     def stop(self):
         self.running = False
@@ -298,6 +311,7 @@ class MidiListener:
         #     print(f"errore: {e}")
         
 
+
     def convert_switch(value):
         return False if value == 0x01 else True
 
@@ -342,6 +356,9 @@ class MidiListener:
                 return gain
    
         return None
+
+    def convert_hex_to_str(str_hex):
+        return bytes.fromhex(str_hex).decode('ascii')
 
 class MidiUserSync():
     def __init__(self, sendback, address, addressMain):

@@ -65,10 +65,18 @@ button {
     width: auto;
 }
 
-#layout-button {
+.menu-buttons{
     position: fixed;
     top: 20px;       
-    right: 100px;    
-    z-index: 1000;             
+    right: 20px;     
+    z-index: 1000; 
+    
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+
+    width: 150px
+
 }
             
