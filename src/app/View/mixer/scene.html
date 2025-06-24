@@ -262,5 +262,29 @@
         <script src="/static/script/mixer/aux_script.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
 
+
+        <script>
+            const ranges = document.getElementsByClassName("inputRange");
+
+            Array.from(ranges).forEach(range => {
+                range.addEventListener("wheel", function(event) {
+                    event.preventDefault(); // Impedisce lo scroll della pagina
+
+                    const step = parseFloat(range.step) || 1;
+                    let currentValue = parseFloat(range.value);
+                    
+                    if (event.deltaY < 0) {
+                    // Scroll verso l'alto -> aumenta
+                    range.value = Math.min(currentValue + step, range.max);
+                    } else {
+                    // Scroll verso il basso -> diminuisce
+                    range.value = Math.max(currentValue - step, range.min);
+                    }
+
+                    // Se vuoi puoi scatenare un evento 'input' o 'change'
+                    range.dispatchEvent(new Event('input')); // utile se ci sono altri listener
+                });
+            });
+        </script>
     </body>
 </html>

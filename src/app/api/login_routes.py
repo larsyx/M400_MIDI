@@ -2,14 +2,19 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
 from app.auth.security import get_current_user
 from app.services.auth_controller import AuthController
+from fastapi.templating import Jinja2Templates
 import os
 
 router = APIRouter()
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TEMPLATE_DIR = os.path.join(BASE_DIR, "View")
+
+templates = Jinja2Templates(directory=TEMPLATE_DIR)
+
 @router.get("/", response_class=HTMLResponse)
-async def root():
-    index_path = os.path.join(os.path.dirname(__file__), ".." ,"View", "static", "index.html")  
-    return FileResponse(index_path)
+async def root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @router.post("/login")
 async def login(request : Request, username: str = Form(...)):
@@ -18,6 +23,9 @@ async def login(request : Request, username: str = Form(...)):
 
     result = auth_service.login(username)
 
+    if isinstance(result, str):
+        return templates.TemplateResponse("index.html", {"request": request, "error": result})
+        
     return result 
 
 

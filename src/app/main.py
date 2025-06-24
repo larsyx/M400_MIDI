@@ -11,13 +11,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "View", "static"))
 
 app = FastAPI()
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["*"],  # oppure specifica ["http://localhost:8080"]
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
+
 app.include_router(admin_routes.router)
 app.include_router(login_routes.router)
 app.include_router(ws_routes.router)

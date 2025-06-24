@@ -10,6 +10,8 @@ class AuthController:
 
     def login(self, username):
 
+        username = username.strip()
+
         user = self.db.query(Utente).filter(Utente.username == username).first()
 
         if user:
