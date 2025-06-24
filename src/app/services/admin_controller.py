@@ -171,3 +171,34 @@ class AdminController:
 
     def changeAuxUser(self, user, aux, scene):
         self.partecipazioneScenaDAO.changeAuxUser(scene, user, aux)
+
+    def loadDefaultUserLayout(self, request):
+        file_path = os.path.join(os.path.dirname(__file__), "..", "..", "Database", "default_layout.json")
+        with open(file_path, "r") as json_data:
+            data = json.load(json_data)
+
+
+            channels = self.channelDAO.get_all_channels()
+            
+            channel_ids = [ch["id"] for ch in data["channels"]]
+            channels_layout = [x for x in channels if x.id in channel_ids]
+            drums_ids = [ch["id"] for ch in data["drums"]]
+            drums_layout = [x for x in channels if x.id in drums_ids]
+
+            channels = [x for x in channels if x.id not in channel_ids and x.id not in drums_ids]
+
+        return self.templates.TemplateResponse(request, "default_layout.html", {"canali": channels, "channels_layout": channels_layout, "drums_layout": drums_layout})
+
+
+    def saveDefaultUserLayout(self, channels, drums):
+        file_path = os.path.join(os.path.dirname(__file__), "..", "..", "Database", "default_layout.json")
+        with open(file_path, "r") as json_data:
+            data = json.load(json_data)
+
+            data["channels"] = channels
+            data["drums"] = drums
+
+            with open(file_path, "w") as f:
+                json.dump(data, f, indent=4)
+
+        return "Layout salvato con successo"

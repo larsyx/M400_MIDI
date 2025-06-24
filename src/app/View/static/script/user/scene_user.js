@@ -30,9 +30,9 @@ function changeValue(canaleId, action){
     let value = parseInt(inputRange.value, 10);
 
     if(action == "plus")
-        value = Math.min(value + 2, 100);
+        value = Math.min(value + 1, 100);
     else if(action == "minus")
-        value = Math.max(value -2, 0);
+        value = Math.max(value -1, 0);
     inputRange.value = value;
 
     if(canaleId == "main")

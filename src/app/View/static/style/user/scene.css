@@ -17,7 +17,7 @@
     justify-content: center;
     width: 90%;
     padding: 5px;
-    gap: 15px
+    gap: 25px
 }
 .range-horizontal input[type=range]{
     flex: 1;
@@ -41,13 +41,12 @@
 
 .sticky{
     position: sticky;
-    top: 10%;
+    top: 20%;
     z-index: 10;
     background-color: white;
 }
 
 .main-fader{
-
     display: flex;
     flex-direction: column;
     justify-content: center;

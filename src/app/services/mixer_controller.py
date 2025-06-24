@@ -5,6 +5,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.DAO.channel_dao import ChannelDAO
 from app.DAO.dca_dao import DCA_DAO
+from app.DAO.aux_dao import AuxDAO
 from midi.midiController import MidiController, MidiListener, call_type, getEQAddressValue, getEQChannel
 from dotenv import load_dotenv
 
@@ -13,6 +14,7 @@ class MixerController:
     def __init__(self):
         self.channelDAO = ChannelDAO()
         self.dcaDAO = DCA_DAO()
+        self.auxDAO = AuxDAO()
 
         load_dotenv()
         self.postMainFader = [int(val,16) for val in os.getenv("Main_Post_Fix_Fader").split(",")]
@@ -21,7 +23,6 @@ class MixerController:
         self.postEqSwitch = [int(val,16) for val in os.getenv("EQ_Post_Switch").split(",")]
         self.postName = [int(val,16) for val in os.getenv("Fader_Post_Name").split(",")]
         self.postLink = [int(val,16) for val in os.getenv("Fader_Post_link").split(",")]
-        self.webSocketIp = os.getenv("WEBSOCKET_IP")
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "View", "mixer"))
         self.midiController = MidiController("pedal")
 
@@ -174,8 +175,6 @@ class MixerController:
                 print("errore chiave ", k)
                 resultsValueSetName.append("")
 
-        print("resultsValueSetName", resultsValueSetName)
-
         # get link channel
         listen = MidiListener(listenAddressLink, call_type.SWITCH)
 
@@ -211,9 +210,6 @@ class MixerController:
                     skip = True
             else:
                 skip = False
-            
-        print("resultsValueSetLink", resultsValueSetLink)
-
         
 
         coppieCanali = list(zip(canali, resultsValueSet, resultsValueSetSwitch, resultsValueSetName, resultsValueSetLink))
@@ -228,14 +224,83 @@ class MixerController:
 
         scenes = scene.get('scenes', [])
 
+        # auxs name
+        listenAddressAuxName = []
+        auxs = self.auxDAO.getAllAux()
+        for aux in auxs:
+            auxAddress = [int(x,16) for x in aux.indirizzoMidiMain.split(",")]
+            listenAddressAuxName.append(auxAddress + self.postName)
 
+        listen_aux_name = MidiListener(listenAddressAuxName, call_type.NAME)
 
+        start = time.time()
 
+        for address in listenAddressAuxName:
+            self.midiController.request_value(address)
 
-        #get link
+        while time.time() - start < 10:
+            time.sleep(0.5)
+            if listen_aux_name.has_received_all():
+                break
 
-        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "dcas": coppieDca, "valueMain" : valueMain, "switchMain" : switchMain, "ipSocket" : self.webSocketIp, "scenes" : scenes})
+        listen_aux_name.stop()
+        resultsValueAuxName = listen_aux_name.get_results()
         
+        
+        resultsValueAuxSetName = {}
+
+        for aux in auxs:
+            auxAddress = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] 
+            try:
+                resultsValueAuxSetName[aux.id] = resultsValueAuxName[tuple(auxAddress + self.postName)]
+            except KeyError as k:
+                print("errore chiave ", k)
+                resultsValueAuxSetName[aux.id] = ""
+
+        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "dcas": coppieDca, "valueMain" : valueMain, "switchMain" : switchMain, "scenes" : scenes, "auxs" : resultsValueAuxSetName})
+
+
+    def getAuxParameters(self, aux_id):
+        aux = self.auxDAO.getAuxById(aux_id)
+        channels = self.channelDAO.get_all_channels()
+        if aux and channels:
+            address_aux = [int(x, 16) for x in aux.indirizzoMidi.split(",")]
+
+            aux_addresses_fader = []
+            for channel in channels:
+                channel_address = [int(x, 16) for x in channel.indirizzoMidi.split(",")]
+                aux_addresses_fader.append(channel_address + address_aux)
+
+
+            listen = MidiListener(aux_addresses_fader, call_type.CHANNEL)
+
+            start = time.time()
+
+            for address in aux_addresses_fader:
+                self.midiController.request_value(address)
+
+            while time.time() - start < 10:
+                time.sleep(0.5)
+                if listen.has_received_all():
+                    break
+
+            listen.stop()
+            results_value = listen.get_results()
+            
+            results_value_set = {}
+            
+            # get channel value
+            for channel in channels:
+                channel_address = [int(x,16) for x in channel.indirizzoMidi.split(",")] 
+                try:
+                    results_value_set[channel.id] = results_value[tuple(channel_address + address_aux)]
+                except KeyError as k:
+                    print("errore chiave ", k)
+                    results_value_set[channel.id] = 0
+
+            return json.dumps(results_value_set, indent=3)
+
+        return None
 
     def setFaderValue(self, canaleId, value):
 
@@ -473,3 +538,15 @@ class MixerController:
 
                 value = next(iter(resultsValue.values()))
                 return value
+
+    def setFaderAuxValue(self, auxId, canaleId, value):
+        aux = self.auxDAO.getAuxById(auxId)
+        if aux:
+            address_aux = [int(x,16) for x in aux.indirizzoMidi.split(",")]
+            canaleAddress = self.channelDAO.get_channel_address(canaleId)
+            if canaleAddress:
+                channelAddresshex = [int(x,16) for x in canaleAddress.split(",")]
+
+                indirizzo = channelAddresshex + address_aux
+
+                self.midiController.send_command(indirizzo, MidiController.convertValue(int(value)))

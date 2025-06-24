@@ -373,14 +373,11 @@ function openEq(channel){
 
       for (const [index, band] of result.entries()) {        
           bands[index]["gain"] = band.gain;
-          console.log(`Inserisco ${index} a gain ${band.gain}`);
 
           bands[index]["freq"] = band.freq; 
-          console.log(`Inserisco ${index} a freq ${band.freq}`);
 
           if(band.q){
               bands[index]["q"] = band.q; 
-              console.log(`Inserisco ${index} a q ${band.q}`);
           }
       }
 
@@ -428,4 +425,23 @@ function setPreamp(value){
 
   xhttp.send(JSON.stringify(request));
 
+}
+
+function changeValueGain(type){
+  const slider = document.getElementById("pre-amp");
+
+  if(slider){
+      value = parseInt(slider.value);
+      switch(type){
+        case "plus":
+          value = Math.min(value + 1, 55);
+          break;
+        case "minus":
+          value = Math.max(value - 1, 0);
+          break;
+      }
+
+      slider.value = value;
+      setPreamp(value);
+  }
 }

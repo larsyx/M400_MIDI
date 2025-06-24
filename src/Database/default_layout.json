@@ -1,67 +1,90 @@
 {
     "channels": [
         {
-            "id": 1
+            "id": 1,
+            "descrizione": "Fisarmonica/basso"
         },
         {
-            "id": 2
+            "id": 2,
+            "descrizione": "Gtr Gab"
         },
         {
-            "id": 3
+            "id": 3,
+            "descrizione": "Gtr Gio"
         },
         {
-            "id": 5
+            "id": 4,
+            "descrizione": "Gtr Samu"
         },
         {
-            "id": 7
+            "id": 5,
+            "descrizione": "Piano L"
         },
         {
-            "id": 10
+            "id": 7,
+            "descrizione": "Piano Don"
         },
         {
-            "id": 11
+            "id": 10,
+            "descrizione": "Vox 1"
         },
         {
-            "id": 12
+            "id": 11,
+            "descrizione": "Vox 2"
         },
         {
-            "id": 13
+            "id": 12,
+            "descrizione": "Vox 3"
         },
         {
-            "id": 14
+            "id": 13,
+            "descrizione": "Vox 4"
         },
         {
-            "id": 15
+            "id": 14,
+            "descrizione": "Vox 5"
+        },
+        {
+            "id": 15,
+            "descrizione": "Vox 6"
         }
     ],
-
-    "drums" : [
+    "drums": [
         {
-            "id": 25
+            "id": 25,
+            "descrizione": "Kick"
         },
         {
-            "id": 26
+            "id": 26,
+            "descrizione": "SN up"
         },
         {
-            "id": 27
+            "id": 27,
+            "descrizione": "SN dw"
         },
         {
-            "id": 28
+            "id": 28,
+            "descrizione": "HitHat"
         },
         {
-            "id": 29
+            "id": 29,
+            "descrizione": "Tom"
         },
         {
-            "id": 30
+            "id": 30,
+            "descrizione": "Tom"
         },
         {
-            "id": 31
+            "id": 31,
+            "descrizione": "Floor Tom"
         },
         {
-            "id": 32
+            "id": 32,
+            "descrizione": "OH L"
         },
         {
-            "id": 33
+            "id": 33,
+            "descrizione": "OH R"
         }
     ]
 }

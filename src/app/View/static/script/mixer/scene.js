@@ -110,7 +110,7 @@ function checkSwitchMain(switchValue){
 }
 
 
-    
+const socket = new WebSocket(`wss://${window.location.host}/ws/liveSyncMixer`); 
 
 socket.onopen = function(){};
 

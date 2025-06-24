@@ -105,8 +105,10 @@ class LayoutCanaleDAO:
         with open(file_path, "r") as json_data:
             data = json.load(json_data)
 
-            channels = set(ch['id'] for ch in data.get('channels', []))
-            drums = set(d['id'] for d in data.get('drums', [])) - channels
+
+            channels = [ch for ch in data.get('channels', [])]
+            channels_ids = [ch['id'] for ch in channels]
+            drums = [d for d in data.get('drums', []) if d['id'] not in channels_ids]
 
             if self.getLayoutCanale(user, scene) is not None and len(self.getLayoutCanale(user, scene)) > 0:
                 return True
@@ -114,13 +116,13 @@ class LayoutCanaleDAO:
             channelDAO = ChannelDAO()
 
             for channel in channels:
-                channel_obj = channelDAO.get_channel_by_id(channel)
+                channel_obj = channelDAO.get_channel_by_id(channel['id'])
                 if channel_obj is not None:
-                    self.addLayoutCanale(user, scene, channel, channel_obj.descrizione, False)
+                    self.addLayoutCanale(user, scene, channel['id'], channel['descrizione'], False)
 
 
             for drum in drums:
-                channel_obj = channelDAO.get_channel_by_id(drum)
+                channel_obj = channelDAO.get_channel_by_id(drum['id'])
                 if channel_obj is not None:
-                    self.addLayoutCanale(user, scene, drum, channel_obj.descrizione, True)
+                    self.addLayoutCanale(user, scene, drum['id'], drum['descrizione'], True)
 

@@ -77,7 +77,7 @@ function checkSwitchMain(switchValue){
     xhttp.send(JSON.stringify(message));
 }
 
-
+const socket = new WebSocket(`wss://${window.location.host}/ws/liveSyncVideo`); 
 
 socket.onopen = function(){};
 

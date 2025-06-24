@@ -7,6 +7,9 @@ from app.DAO.partecipazione_scena_dao import PartecipazioneScenaDAO
 from app.DAO.scene_dao import SceneDAO
 from app.DAO.user_dao import UserDAO
 from app.DAO.layout_canale_dao import LayoutCanaleDAO
+from dotenv import load_dotenv
+from midi.midiController import MidiListener, call_type, MidiController
+import time
 
 class SceneController:
     def __init__(self):
@@ -16,6 +19,9 @@ class SceneController:
         self.partecipazioneScenaDAO = PartecipazioneScenaDAO()
         self.layoutCanaleDAO = LayoutCanaleDAO()
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "View", "administration"))
+        load_dotenv()
+        self.postName = [int(val,16) for val in os.getenv("Fader_Post_Name").split(",")]
+        self.midiController = MidiController("ped")
 
     def manageScene(self, request, adminUser):
         if self.utenteDAO.isAdmin(adminUser):
@@ -49,7 +55,42 @@ class SceneController:
             partecipazioni = self.partecipazioneScenaDAO.getPartecipantiScene(id)
             utenti = self.partecipazioneScenaDAO.getUserNotInScene(id)
 
+            # auxs name
+            listenAddressAuxName = []
+            for aux in auxs:
+                auxAddress = [int(x,16) for x in aux.indirizzoMidiMain.split(",")]
+
+                listenAddressAuxName.append(auxAddress + self.postName)
+            
+            listen = MidiListener(listenAddressAuxName, call_type.NAME)
+
+            start = time.time()
+
+            for address in listenAddressAuxName:
+                self.midiController.request_value(address)
+
+            while time.time() - start < 10:
+                time.sleep(0.5)
+                if listen.has_received_all():
+                    break
+
+            listen.stop()
+            resultsValueAuxName = listen.get_results()
+            
+            resultsValueAuxSetName = []
+
+            for aux in auxs:
+                auxAddress = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] 
+                try:
+                    resultsValueAuxSetName.append(resultsValueAuxName[tuple(auxAddress + self.postName)])
+                except KeyError as k:
+                    print("errore chiave ", k)
+                    resultsValueAuxSetName.append("")
+
+            auxs = list(zip(auxs, resultsValueAuxSetName))
+        
             return self.templates.TemplateResponse(request, "updateScene.html", {"scene" : scene, "partecipanti" : partecipazioni, "users" : utenti, "auxs" : auxs })
+        
         except Exception as e:
             print(f"Error retrieving scenes: {e}")
             return self.templates.TemplateResponse(request, "updateScene.html")
@@ -79,6 +120,40 @@ class SceneController:
                 message ="utente ha già un aux assegnato"
 
             partecipazioni = self.partecipazioneScenaDAO.getPartecipantiScene(sceneId)
+
+            # auxs name
+            listenAddressAuxName = []
+            for aux in auxs:
+                auxAddress = [int(x,16) for x in aux.indirizzoMidi.split(",")]
+
+                listenAddressAuxName.append(auxAddress + self.postName)
+            
+            listen = MidiListener(listenAddressAuxName, call_type.NAME)
+
+            start = time.time()
+
+            for address in listenAddressAuxName:
+                self.midiController.request_value(address)
+
+            while time.time() - start < 10:
+                time.sleep(0.5)
+                if listen.has_received_all():
+                    break
+
+            listen.stop()
+            resultsValueAuxName = listen.get_results()
+            
+            resultsValueAuxSetName = []
+
+            for aux in auxs:
+                auxAddress = [int(x,16) for x in aux.indirizzoMidi.split(",")] 
+                try:
+                    resultsValueAuxSetName.append(resultsValueAuxName[tuple(auxAddress + self.postName)])
+                except KeyError as k:
+                    print("errore chiave ", k)
+                    resultsValueAuxSetName.append("")
+
+            auxs = list(zip(auxs, resultsValueAuxSetName))
             
             return self.templates.TemplateResponse(request, "updateScene.html", {"scene" : scene, "partecipanti" : partecipazioni, "users" : utenti, "auxs" : auxs, "message" : message })
         except Exception as e:
@@ -108,6 +183,40 @@ class SceneController:
                 message ="utente non ha una precedente assegnazione"
 
             utenti = self.partecipazioneScenaDAO.getUserNotInScene(sceneId)
+
+            # auxs name
+            listenAddressAuxName = []
+            for aux in auxs:
+                auxAddress = [int(x,16) for x in aux.indirizzoMidi.split(",")]
+
+                listenAddressAuxName.append(auxAddress + self.postName)
+            
+            listen = MidiListener(listenAddressAuxName, call_type.NAME)
+
+            start = time.time()
+
+            for address in listenAddressAuxName:
+                self.midiController.request_value(address)
+
+            while time.time() - start < 10:
+                time.sleep(0.5)
+                if listen.has_received_all():
+                    break
+
+            listen.stop()
+            resultsValueAuxName = listen.get_results()
+            
+            resultsValueAuxSetName = []
+
+            for aux in auxs:
+                auxAddress = [int(x,16) for x in aux.indirizzoMidi.split(",")] 
+                try:
+                    resultsValueAuxSetName.append(resultsValueAuxName[tuple(auxAddress + self.postName)])
+                except KeyError as k:
+                    print("errore chiave ", k)
+                    resultsValueAuxSetName.append("")
+
+            auxs = list(zip(auxs, resultsValueAuxSetName))
             
             return self.templates.TemplateResponse(request, "updateScene.html", {"scene" : scene, "partecipanti" : partecipazioni, "users" : utenti, "auxs" : auxs, "message" : message })
         except Exception as e:

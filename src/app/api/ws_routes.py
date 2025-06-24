@@ -59,6 +59,7 @@ async def websocket(websocket: WebSocket):
         is_active = False      
 
 
+
 @router.websocket("/ws/liveSyncMixer")
 async def websocket(websocket: WebSocket):
 
@@ -117,6 +118,53 @@ async def websocket(websocket: WebSocket):
     finally:
         is_active = False  
 
+
+@router.websocket("/ws/liveMixerSync/aux/{aux_id}")
+async def websocket(websocket: WebSocket, aux_id: int):
+    cookies = websocket.cookies
+    session_id = cookies.get("access_token")
+    user_id = get_current_user_token(session_id)
+    verify_mixer(user_id["sub"])
+
+    await websocket.accept()
+
+    is_active=True
+
+    async def send_back(channel_address, value):
+        try:
+            if is_active:
+                channelDAO = ChannelDAO()
+
+                if(channel_address == 'main'):
+                    channel = channel_address
+                else:
+                    channel = channelDAO.get_channel_by_address(channel_address).id
+                
+                response = {
+                    "channel" : channel,
+                    "value" : value
+                }
+
+                await websocket.send_json(response)
+        except Exception as e:
+            print(f"errore sync {e}")
+
+    auxDAO = AuxDAO()
+    aux = auxDAO.getAuxById(aux_id)
+    address = [int(val,0) for val in aux.indirizzoMidi.split(",")]
+    addressMain = [int(val,0) for val in aux.indirizzoMidiMain.split(",")]
+    sync = MidiUserSync(sendback=send_back, address=address, addressMain=addressMain)
+                
+
+    try:
+        while True:
+            data = await websocket.receive_json()
+            
+    except WebSocketDisconnect:
+        print("Il client ha chiuso la connessione.")
+        sync.stop()
+    finally:
+        is_active = False      
 
 
 

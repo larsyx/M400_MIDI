@@ -20,7 +20,6 @@ class VideoController():
         self.auxId = os.getenv("VIDEO_AUX_ID") 
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "View", "video"))
         self.midiController = MidiController("pedal")
-        self.webSocketIp = os.getenv("WEBSOCKET_IP")
 
     def loadScene(self, request):
         canali = self.channelDAO.get_all_channels()
@@ -98,7 +97,7 @@ class VideoController():
 
         switchMain = list(resultsValueSwitch.items())[0]
 
-        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "valueMain" : valueMain, "switchMain": switchMain, "ipSocket" : self.webSocketIp})
+        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "valueMain" : valueMain, "switchMain": switchMain})
 
 
     def setFader(self, channel_id, value):

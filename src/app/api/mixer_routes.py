@@ -141,3 +141,24 @@ async def eqPreampGet(request: Request, channel : int):
     verify_mixer(user["sub"])
 
     return mixerController.eqPreampGet(channel)
+
+
+# aux 
+@router.get("/mixer/aux/get/{aux_id}")
+async def eqPreampGet(request: Request, aux_id : int):
+    user = get_current_user(request)
+    verify_mixer(user["sub"])
+
+    return mixerController.getAuxParameters(aux_id)
+
+@router.post("/mixer/aux/set")
+async def setFader(request: Request):
+    user = get_current_user(request)
+    verify_mixer(user["sub"])   
+    
+    data = await request.json()
+    auxId = data.get("auxId")
+    canaleId = data.get("canaleId")
+    value = data.get("value")
+
+    mixerController.setFaderAuxValue(auxId, canaleId, value)

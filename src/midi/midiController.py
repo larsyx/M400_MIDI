@@ -50,7 +50,6 @@ class MidiController:
         msg = mido.Message('sysex', data=sysex_msg)
 
         with mido.open_output(self.ped) as outport:
-            print("Sending MIDI message:", " ".join(hex(byte) for byte in sysex_msg))
             outport.send(msg)
     
     def convertValue(value):

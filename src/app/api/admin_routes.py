@@ -144,3 +144,26 @@ async def removeMixerScene(request: Request, idScene: int = Form(...)):
 
     return adminController.removeMixerScene(request, idScene)
 
+
+# default user layout
+@router.get("/admin/defaultUserLayout", response_class=HTMLResponse)
+async def defaultUserLayout(request: Request):
+    user = get_current_user(request)
+    verify_admin(user["sub"])
+
+    return adminController.loadDefaultUserLayout(request)
+
+@router.post("/admin/set/defaultUserLayout")
+async def defaultUserLayout(request: Request):
+    user = get_current_user(request)
+    verify_admin(user["sub"])
+
+    data = await request.json()
+    channels = data.get("channels", [])
+    drums = data.get("drums", [])
+
+    print("Channels:", channels)
+    print("Drums:", drums)
+
+
+    return adminController.saveDefaultUserLayout(channels, drums)

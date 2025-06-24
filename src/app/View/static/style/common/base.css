@@ -1,0 +1,9 @@
+.close-span{
+    position: absolute;
+    top: 0px;
+    right: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 24px;
+}
+

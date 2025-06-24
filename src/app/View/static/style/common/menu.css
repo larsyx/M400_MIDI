@@ -1,0 +1,11 @@
+
+.menu-buttons button[type="button"] {
+    width: auto;
+    height: auto;
+    border-radius: 10px;
+}
+
+#menu-dropdown{
+  position: absolute !important;
+  z-index: 2000 !important;
+}
