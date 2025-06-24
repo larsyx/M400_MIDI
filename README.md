@@ -35,6 +35,10 @@ on macOs/Linux: source venv/bin/activate
     Main_Post_Fix_Switch = 0x00, 0x0C 
     Main_Pre_Fix = 0x06, 0x00
 
+    #Fader setting
+    Fader_Post_Name = 0x00, 0x00
+    Fader_Post_link = 0x00, 0x08
+
     #EQ setting
     EQ_Post_Switch = 0x00, 0x50
     EQ_Post_Lo_Gain = 0x00, 0x53
@@ -48,11 +52,13 @@ on macOs/Linux: source venv/bin/activate
     EQ_Post_Hi_Gain = 0x00, 0x66
     EQ_Post_Hi_Freq = 0x00, 0x68
 
-    #Ip setting
-    WEBSOCKET_IP = ipServer
+    #Video Aux
+    VIDEO_AUX_ID = 9
 
     #authentication setting
     AUTH_KEY = "your key"
+
+    
 
 ### 4. Run the server
 from src directory
