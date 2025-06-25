@@ -1,6 +1,5 @@
 import json
 import os
-import time
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.dao.channel_dao import ChannelDAO
@@ -24,7 +23,7 @@ class MixerService:
         self.postName = [int(val,16) for val in os.getenv("Fader_Post_Name").split(",")]
         self.postLink = [int(val,16) for val in os.getenv("Fader_Post_link").split(",")]
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "view", "mixer"))
-        self.midiController = MidiController("pedal")
+        self.midiController = MidiController()
 
     def load_fader(self, request):
         canali = self.channelDAO.get_all_channels()
@@ -53,27 +52,11 @@ class MixerService:
             listenAddressFader.append(dcaFader)
             listenAddressSwitch.append(dcaSwitch)
 
-
         listenAddressFader.append(self.preMain + self.postMainFader)
         listenAddressSwitch.append(self.preMain + self.postSwitch)
 
-
         # channel request and listen
-        listen = MidiListener(listenAddressFader, call_type.CHANNEL)
-
-        start = time.time()
-
-        for address in listenAddressFader:
-            self.midiController.request_value(address)
-
-        while time.time() - start < 10:
-            time.sleep(0.5)
-            if listen.has_received_all():
-                break
-
-        listen.stop()
-        resultsValue = listen.get_results()
-        
+        resultsValue = MidiListener.init_and_listen(listenAddressFader, call_type.CHANNEL)
         resultsValueSet = []
         
         # get channel value
@@ -105,22 +88,7 @@ class MixerService:
 
 
         # Channel switch get value and listen
-        listenSwitch = MidiListener(listenAddressSwitch, call_type.SWITCH)
-
-        start = time.time()
-
-        for address in listenAddressSwitch:
-            self.midiController.request_value(address)
-
-        while time.time() - start < 10:
-            time.sleep(0.5)
-            if listenSwitch.has_received_all():
-                break
-
-        listenSwitch.stop()
-
-        resultsValueSwitch = listenSwitch.get_results()
-        
+        resultsValueSwitch = MidiListener.init_and_listen(listenAddressSwitch, call_type.SWITCH)     
         resultsValueSetSwitch = []
         
         for canale in canali:
@@ -148,58 +116,27 @@ class MixerService:
             switchMain = False
 
 
-        
         # get names channel
-        listen = MidiListener(listenAddressName, call_type.NAME)
-
-        start = time.time()
-
-        for address in listenAddressName:
-            self.midiController.request_value(address)
-
-        while time.time() - start < 10:
-            time.sleep(0.5)
-            if listen.has_received_all():
-                break
-
-        listen.stop()
-        resultsValueName = listen.get_results()
-        
+        resultsValueName = MidiListener.init_and_listen(listenAddressName, call_type.NAME)       
         resultsValueSetName = []
 
-        for canale in canali:
-            channelAddress = [int(x,16) for x in canale.indirizzoMidi.split(",")] 
+        for address in listenAddressName: 
             try:
-                resultsValueSetName.append(resultsValueName[tuple(channelAddress + self.postName)])
+                resultsValueSetName.append(resultsValueName[tuple(address)])
             except KeyError as k:
                 print("errore chiave ", k)
                 resultsValueSetName.append("")
 
         # get link channel
-        listen = MidiListener(listenAddressLink, call_type.SWITCH)
-
-        start = time.time()
-
-        for address in listenAddressLink:
-            self.midiController.request_value(address)
-
-        while time.time() - start < 10:
-            time.sleep(0.5)
-            if listen.has_received_all():
-                break
-
-        listen.stop()
-        resultsValueLink = listen.get_results()
-        
+        resultsValueLink = MidiListener.init_and_listen(listenAddressLink, call_type.SWITCH)    
         resultsValueSetLink = []
 
-        for canale in canali:
-            channelAddress = [int(x,16) for x in canale.indirizzoMidi.split(",")] 
+        for address in listenAddressLink:
             try:
-                resultsValueSetLink.append(not resultsValueLink[tuple(channelAddress + self.postLink)])
+                resultsValueSetLink.append(not resultsValueLink[tuple(address)])
             except KeyError as k:
                 print("errore chiave ", k)
-                resultsValueSetLink.append(0)
+                resultsValueSetLink.append(False)
 
         # only the second link
         skip = False
@@ -231,22 +168,7 @@ class MixerService:
             auxAddress = [int(x,16) for x in aux.indirizzoMidiMain.split(",")]
             listenAddressAuxName.append(auxAddress + self.postName)
 
-        listen_aux_name = MidiListener(listenAddressAuxName, call_type.NAME)
-
-        start = time.time()
-
-        for address in listenAddressAuxName:
-            self.midiController.request_value(address)
-
-        while time.time() - start < 10:
-            time.sleep(0.5)
-            if listen_aux_name.has_received_all():
-                break
-
-        listen_aux_name.stop()
-        resultsValueAuxName = listen_aux_name.get_results()
-        
-        
+        resultsValueAuxName = MidiListener.init_and_listen(listenAddressAuxName, call_type.NAME) 
         resultsValueAuxSetName = {}
 
         for aux in auxs:
@@ -270,22 +192,8 @@ class MixerService:
                 channel_address = [int(x, 16) for x in channel.indirizzoMidi.split(",")]
                 aux_addresses_fader.append(channel_address + address_aux)
 
-
-            listen = MidiListener(aux_addresses_fader, call_type.CHANNEL)
-
-            start = time.time()
-
-            for address in aux_addresses_fader:
-                self.midiController.request_value(address)
-
-            while time.time() - start < 10:
-                time.sleep(0.5)
-                if listen.has_received_all():
-                    break
-
-            listen.stop()
-            results_value = listen.get_results()
-            
+            results_value = MidiListener.init_and_listen(aux_addresses_fader, call_type.CHANNEL)
+           
             results_value_set = {}
             
             # get channel value
@@ -376,20 +284,7 @@ class MixerService:
                 channelsGain = get_eq_channel(channel_address, call_type.GAIN)
 
                 #get Q values
-                listenQ = MidiListener(list(channelsQ.values()) , call_type.Q)
-
-                start = time.time()
-
-                for address in channelsQ.values():
-                    self.midiController.request_value(address)
-
-                while time.time() - start < 10:
-                    time.sleep(0.5)
-                    if listenQ.has_received_all():
-                        break
-
-                listenQ.stop()
-                resultsValueQ = listenQ.get_results()
+                resultsValueQ = MidiListener.init_and_listen(list(channelsQ.values()) , call_type.Q)
 
                 for keychannel, channel in channelsQ.items():
                     for key, ch in resultsValueQ.items():
@@ -397,20 +292,7 @@ class MixerService:
                             channelsQ[keychannel] = resultsValueQ[key]
 
                 #get Freq values
-                listenFreq = MidiListener(list(channelsFreq.values()) , call_type.FREQ)
-
-                start = time.time()
-
-                for address in channelsFreq.values():
-                    self.midiController.request_value(address)
-
-                while time.time() - start < 10:
-                    time.sleep(0.5)
-                    if listenFreq.has_received_all():
-                        break
-
-                listenFreq.stop()
-                resultsValueFreq = listenFreq.get_results()
+                resultsValueFreq = MidiListener.init_and_listen(list(channelsFreq.values()) , call_type.FREQ)
 
                 for keychannel, channel in channelsFreq.items():
                     for key, ch in resultsValueFreq.items():
@@ -418,20 +300,7 @@ class MixerService:
                             channelsFreq[keychannel] = resultsValueFreq[key]
 
                 #get gain values
-                listenGain = MidiListener(list(channelsGain.values()) , call_type.GAIN)
-
-                start = time.time()
-
-                for address in channelsGain.values():
-                    self.midiController.request_value(address)
-
-                while time.time() - start < 10:
-                    time.sleep(0.5)
-                    if listenGain.has_received_all():
-                        break
-
-                listenGain.stop()
-                resultsValueGain = listenGain.get_results()
+                resultsValueGain = MidiListener.init_and_listen(list(channelsGain.values()) , call_type.GAIN)
 
                 for keychannel, channel in channelsGain.items():
                     for key, ch in resultsValueGain.items():
@@ -485,19 +354,7 @@ class MixerService:
                 address = channel_address + self.postEqSwitch
                 
                 # channel request and listen
-                listen = MidiListener([address], call_type.SWITCH)
-
-                start = time.time()
-
-                self.midiController.request_value(address)
-
-                while time.time() - start < 10:
-                    time.sleep(0.5)
-                    if listen.has_received_all():
-                        break
-
-                listen.stop()
-                resultsValue = listen.get_results()
+                resultsValue = MidiListener.init_and_listen([address], call_type.SWITCH)
 
                 value = next(iter(resultsValue.values()))
                 return not value
@@ -517,19 +374,7 @@ class MixerService:
                 channel_address = [int(x, 16) for x in channel_address.split(',')]
                 
                 # channel request and listen
-                listen = MidiListener([channel_address], call_type.PREAMP)
-
-                start = time.time()
-
-                self.midiController.request_value(channel_address)
-
-                while time.time() - start < 10:
-                    time.sleep(0.5)
-                    if listen.has_received_all():
-                        break
-
-                listen.stop()
-                resultsValue = listen.get_results()
+                resultsValue = MidiListener.init_and_listen([channel_address], call_type.PREAMP)
 
                 value = next(iter(resultsValue.values()))
                 return value

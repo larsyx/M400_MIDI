@@ -5,6 +5,7 @@ import mido
 from dotenv import load_dotenv
 import os
 from enum import Enum
+import time
 
 load_dotenv()
 Manufacturer_ID = int(os.getenv("MANUFACTURER_ID"), 0)
@@ -12,6 +13,8 @@ Device_ID = int(os.getenv("DEVICE_ID"), 0)
 Model_ID = [int(val,0) for val in os.getenv("MODEL_ID").split(",")]
 Command_ID_Set = int(os.getenv("Command_ID_Data_Set"), 0)
 Command_ID_Request = int(os.getenv("Command_ID_Data_Request"), 0)
+midi_name = os.getenv("Midi_Name")
+
 fader_post = [int(val,0) for val in os.getenv("Main_Post_Fix_Fader").split(",")]
 switch_post = [int(val,0) for val in os.getenv("Main_Post_Fix_Switch").split(",")]
 preMain = os.getenv("Main_Pre_Fix")
@@ -40,8 +43,16 @@ eq_high_gain = [int(val,0) for val in os.getenv("EQ_Post_Hi_Gain").split(",")]
 eq_high_freq = [int(val,0) for val in os.getenv("EQ_Post_Hi_Freq").split(",")]
 
 class MidiController: 
-    def __init__(self, name):
-        self.ped = mido.get_output_names()[1]
+    def __init__(self):
+        self.ped = None
+
+        for port in mido.get_output_names():
+            if midi_name in port:
+                self.ped = port
+                break
+
+        if not self.ped:
+            raise Exception("Nessuna porta midi trovata.\nConnetti il pc al mixer e riprova.")
 
     def send_command(self, address, data):
         sysex_msg = build_sysex(address, Command_ID_Set, data)
@@ -363,6 +374,25 @@ class MidiListener:
     def convert_hex_to_str(str_hex):
         return bytes.fromhex(str_hex).decode('ascii')
 
+    def init_and_listen(listenAddresses, call_type):
+        listen = MidiListener(listenAddresses, call_type)
+
+        start = time.time()
+   
+        midiController = MidiController()
+
+        for address in listenAddresses:
+            midiController.request_value(address)
+
+        while time.time() - start < 10:
+            time.sleep(0.5)
+            if listen.has_received_all():
+                break
+
+        listen.stop()
+
+        return listen.get_results()
+
 class MidiUserSync():
     def __init__(self, sendback, address, addressMain):
         self.loop = asyncio.get_event_loop()
@@ -494,8 +524,19 @@ class MidiMultiplexer:
     def __init__(self):
         self.callbacks = []
         self.lock = threading.Lock()
-        port_name = mido.get_input_names()[0]
+
+        port_name = None
+        for port in mido.get_input_names():
+            if midi_name in port:
+                port_name = port
+                break
+        
+        if not port_name:
+            raise Exception("Nessuna porta MIDI trovata. Assicurati che il dispositivo sia connesso e riprova.")
+
         self.port = mido.open_input(port_name, callback=self._dispatch)
+
+        
 
     def _dispatch(self, msg):
         with self.lock:

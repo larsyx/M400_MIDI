@@ -9,7 +9,6 @@ from app.dao.user_dao import UserDAO
 from app.dao.layout_canale_dao import LayoutCanaleDAO
 from dotenv import load_dotenv
 from midi.midi_controller import MidiListener, call_type, MidiController
-import time
 
 class SceneService:
     def __init__(self):
@@ -21,7 +20,7 @@ class SceneService:
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "view", "administration"))
         load_dotenv()
         self.postName = [int(val,16) for val in os.getenv("Fader_Post_Name").split(",")]
-        self.midiController = MidiController("ped")
+        self.midiController = MidiController()
 
     def manage_scene(self, request, adminUser):
         if self.utenteDAO.is_admin(adminUser):
@@ -62,20 +61,7 @@ class SceneService:
 
                 listenAddressAuxName.append(auxAddress + self.postName)
             
-            listen = MidiListener(listenAddressAuxName, call_type.NAME)
-
-            start = time.time()
-
-            for address in listenAddressAuxName:
-                self.midiController.request_value(address)
-
-            while time.time() - start < 10:
-                time.sleep(0.5)
-                if listen.has_received_all():
-                    break
-
-            listen.stop()
-            resultsValueAuxName = listen.get_results()
+            resultsValueAuxName = MidiListener.init_and_listen(listenAddressAuxName, call_type.NAME)
             
             resultsValueAuxSetName = []
 
@@ -128,20 +114,7 @@ class SceneService:
 
                 listenAddressAuxName.append(auxAddress + self.postName)
             
-            listen = MidiListener(listenAddressAuxName, call_type.NAME)
-
-            start = time.time()
-
-            for address in listenAddressAuxName:
-                self.midiController.request_value(address)
-
-            while time.time() - start < 10:
-                time.sleep(0.5)
-                if listen.has_received_all():
-                    break
-
-            listen.stop()
-            resultsValueAuxName = listen.get_results()
+            resultsValueAuxName = MidiListener.init_and_listen(listenAddressAuxName, call_type.NAME)
             
             resultsValueAuxSetName = []
 
@@ -191,20 +164,7 @@ class SceneService:
 
                 listenAddressAuxName.append(auxAddress + self.postName)
             
-            listen = MidiListener(listenAddressAuxName, call_type.NAME)
-
-            start = time.time()
-
-            for address in listenAddressAuxName:
-                self.midiController.request_value(address)
-
-            while time.time() - start < 10:
-                time.sleep(0.5)
-                if listen.has_received_all():
-                    break
-
-            listen.stop()
-            resultsValueAuxName = listen.get_results()
+            resultsValueAuxName = MidiListener.init_and_listen(listenAddressAuxName, call_type.NAME)
             
             resultsValueAuxSetName = []
 

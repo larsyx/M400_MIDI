@@ -1,5 +1,4 @@
 
-import time
 from dotenv import load_dotenv
 from fastapi.templating import Jinja2Templates
 from app.dao.channel_dao import ChannelDAO
@@ -19,7 +18,7 @@ class UserService:
         self.layoutCanaleDAO = LayoutCanaleDAO()
         self.channelDAO = ChannelDAO()
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "view", "user"))
-        self.midiController = MidiController("pedal")
+        self.midiController = MidiController()
         self.postMainFader = [int(val,16) for val in os.getenv("Main_Post_Fix_Fader").split(",")]
 
     def load_scene(self, scenaID, userID, request):
@@ -32,8 +31,6 @@ class UserService:
             return RedirectResponse(url="/user/getScenes", status_code=303)
             
         # get value canali
-        midiController = MidiController("pedal")
-
         listenAddress = []
         auxAddress = [int(x,16) for x in aux.indirizzoMidi.split(",")]
         auxAddressMain = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postMainFader
@@ -48,30 +45,14 @@ class UserService:
             listenAddress.append(channelAddress + auxAddress)
 
         listenAddress.append(auxAddressMain)
-        listen = MidiListener(listenAddress, call_type.CHANNEL)
 
-        start = time.time()
-
-        for address in listenAddress:
-            midiController.request_value(address)
-
-        while time.time() - start < 10:
-            time.sleep(0.5)
-            if listen.has_received_all():
-                break
-
-        
-        listen.stop()
-        resultsValue = listen.get_results()
+        resultsValue = MidiListener.init_and_listen(listenAddress, call_type.CHANNEL)
         
         resultsValueSet = []
         
-        for canale in canali:
-            channelMidi = self.channelDAO.get_channel_address(channel_id = canale.canaleId)
-            channelAddress = [int(x,16) for x in channelMidi.split(",")] 
-          
+        for address in listenAddress:
             try:
-                resultsValueSet.append(resultsValue[tuple(channelAddress + auxAddress)])
+                resultsValueSet.append(resultsValue[tuple(address)])
             except KeyError as e:
                 print(f"error key {e}")
                 resultsValueSet.append(0)
@@ -86,13 +67,14 @@ class UserService:
         
         return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "indirizzoaux": aux.indirizzoMidi, "indirizzoauxMain": aux.indirizzoMidiMain, "valueMain": valueMain, "hasBatteria" : hasBatteria})
         
-    def set_layout(self, userID, scenaID, request):
-        
+    def set_layout(self, userID, scenaID, request):  
         channels = self.channelDAO.get_all_channels()
         layouts = self.layoutCanaleDAO.get_layout_channel(userID, scenaID)
         
-        layout_canali_ids = {layout_canale.canaleId for layout_canale in layouts}
+        if not layouts:
+            return RedirectResponse(url="/user/getScenes", status_code=303)
 
+        layout_canali_ids = {layout_canale.canaleId for layout_canale in layouts}
         channel = [channel for channel in channels if channel.id not in layout_canali_ids]
 
         return self.templates.TemplateResponse("layout.html", {"request": request, "canali": channel, "layout": layouts})
@@ -110,5 +92,4 @@ class UserService:
         
     def set_fader_main(self, value, auxAddress):
         addressAuxhex = [int(x,16) for x in auxAddress.split(",")] + self.postMainFader
-
         self.midiController.send_command(addressAuxhex, MidiController.convert_fader_to_hex(int(value)))
