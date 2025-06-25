@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from app.dao.channel_dao import ChannelDAO
 from app.dao.aux_dao import AuxDAO
 from app.dao.user_dao import UserDAO
-from midi.midiController import MidiController, MidiListener, call_type
+from midi.midi_controller import MidiController, MidiListener, call_type
 import os 
 import time
 
@@ -21,7 +21,7 @@ class VideoService():
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "view", "video"))
         self.midiController = MidiController("pedal")
 
-    def loadScene(self, request):
+    def load_scene(self, request):
         canali = self.channelDAO.get_all_channels()
         aux = self.auxDAO.get_aux_by_id(self.auxId)
 
@@ -99,8 +99,7 @@ class VideoService():
 
         return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "valueMain" : valueMain, "switchMain": switchMain})
 
-
-    def setFader(self, channel_id, value):
+    def set_fader(self, channel_id, value):
         channel_address = self.channelDAO.get_channel_address(channel_id)
     
         if(channel_address != None):
@@ -111,19 +110,18 @@ class VideoService():
 
             address = channelAddresshex + address_aux
             
-            self.midiController.send_command(address, MidiController.convertValue(int(value)))
+            self.midiController.send_command(address, MidiController.convert_fader_to_hex(int(value)))
 
-
-    def setFaderMain(self, value):
+    def set_fader_main(self, value):
         aux = self.auxDAO.get_aux_by_id(self.auxId) 
 
         if aux:
             address_aux_main = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postMainFader
-            self.midiController.send_command(address_aux_main, MidiController.convertValue(int(value)))
+            self.midiController.send_command(address_aux_main, MidiController.convert_fader_to_hex(int(value)))
 
-    def setSwitchMain(self, value):
+    def set_switch_main(self, value):
         aux = self.auxDAO.get_aux_by_id(self.auxId)
 
         if aux:
             address_aux_main = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postMainSwitch
-            self.midiController.send_command(address_aux_main, MidiController.convertSwitch(value))
+            self.midiController.send_command(address_aux_main, MidiController.convert_switch_to_hex(value))

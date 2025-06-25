@@ -43,7 +43,7 @@ async def set_fader(request: Request):
     value = data.get("value")
     indirizzoAux = data.get("aux")
 
-    user_service.setFader(canaleId, value, indirizzoAux)
+    user_service.set_fader(canaleId, value, indirizzoAux)
     
 
 @router.post("/user/scene_{scene_id}/set/main")
@@ -54,7 +54,7 @@ async def set_fader_main(request: Request):
     value = data.get("value")
     indirizzoAux = data.get("aux")
     
-    user_service.setFaderMain(value, indirizzoAux)
+    user_service.set_fader_main(value, indirizzoAux)
    
 @router.post("/user/scene_{scene_id}/layout/addChannelLayout")
 async def add_channel_Layout(request: Request, scene_id: int):

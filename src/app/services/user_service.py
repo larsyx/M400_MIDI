@@ -9,7 +9,7 @@ from app.dao.user_dao import UserDAO
 from fastapi.responses import RedirectResponse
 import os
 
-from midi.midiController import MidiController, MidiListener, call_type
+from midi.midi_controller import MidiController, MidiListener, call_type
 
 class UserService:
     def __init__(self):
@@ -97,7 +97,7 @@ class UserService:
 
         return self.templates.TemplateResponse("layout.html", {"request": request, "canali": channel, "layout": layouts})
       
-    def setFader(self, canaleId, value, indirizzoAux):
+    def set_fader(self, canaleId, value, indirizzoAux):
         canaleAddress = self.channelDAO.get_channel_address(canaleId)
     
         if(canaleAddress != None):
@@ -106,9 +106,9 @@ class UserService:
 
             indirizzo = channelAddresshex + addressAuxhex
             
-            self.midiController.send_command(indirizzo, MidiController.convertValue(int(value)))
+            self.midiController.send_command(indirizzo, MidiController.convert_fader_to_hex(int(value)))
         
-    def setFaderMain(self, value, auxAddress):
+    def set_fader_main(self, value, auxAddress):
         addressAuxhex = [int(x,16) for x in auxAddress.split(",")] + self.postMainFader
 
-        self.midiController.send_command(addressAuxhex, MidiController.convertValue(int(value)))
+        self.midiController.send_command(addressAuxhex, MidiController.convert_fader_to_hex(int(value)))

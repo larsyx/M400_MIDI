@@ -26,7 +26,7 @@ async def manage_user(request: Request):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return admin_service.loadManageUser(request, user["sub"])
+    return admin_service.load_manage_user(request, user["sub"])
 
 
 @router.post("/admin/createUser")
@@ -52,7 +52,7 @@ async def manage_scene(request: Request):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return scene_service.manageScene(request, user["sub"])
+    return scene_service.manage_scene(request, user["sub"])
 
 @router.post("/admin/create_scene")
 async def create_scene(request : Request, nome: str = Form(...), descrizione:str = Form(...)):
@@ -77,14 +77,14 @@ async def add_partecipanti_scena(request : Request, scene_id : int):
 
 #manage user scene
 @router.post("/admin/scene_{scene_id}/addParticipants", response_class=HTMLResponse)
-async def add_partecipanti_scena(request : Request, scene_id : int, username : str = Form(...), aux : str = Form(...)):
+async def add_participants_scene(request : Request, scene_id : int, username : str = Form(...), aux : str = Form(...)):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
     return scene_service.add_partecipante(request, user["sub"], scene_id, username, aux)
 
 @router.post("/admin/scene_{scene_id}/removeParticipants", response_class=HTMLResponse)
-async def add_partecipanti_scena(request : Request, scene_id : int, username : str = Form(...), aux : int = Form(...)):
+async def remove_participants_scene(request : Request, scene_id : int, username : str = Form(...), aux : int = Form(...)):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
@@ -107,7 +107,7 @@ async def manage_user(request: Request):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return admin_service.loadManageChannels(request, user["sub"])
+    return admin_service.load_manage_channels(request, user["sub"])
 
 @router.post("/admin/manageChannels/changeDescription")
 async def change_description(request: Request):
@@ -119,7 +119,7 @@ async def change_description(request: Request):
     id = data.get("id")
     value = data.get("value")
 
-    return admin_service.changeDescription(user["sub"], typeReq, id, value)
+    return admin_service.change_description(user["sub"], typeReq, id, value)
 
 
 # manage mixer scene
@@ -128,21 +128,21 @@ async def manage_scene_mixer(request: Request):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return admin_service.loadMixerScene(request)
+    return admin_service.load_mixer_scene(request)
 
 @router.post("/admin/addMixerScene")
 async def add_mixer_scene(request: Request, idScene: int = Form(...), name: str = Form(...)):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return admin_service.addMixerScene(request, idScene, name)
+    return admin_service.add_mixer_scene(request, idScene, name)
 
 @router.post("/admin/removeMixerScene")
 async def remove_mixer_scene(request: Request, idScene: int = Form(...)):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return admin_service.removeMixerScene(request, idScene)
+    return admin_service.remove_mixer_scene(request, idScene)
 
 
 # default user layout
@@ -151,7 +151,7 @@ async def default_user_layout(request: Request):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return admin_service.loadDefaultUserLayout(request)
+    return admin_service.load_default_user_layout(request)
 
 @router.post("/admin/set/defaultUserLayout")
 async def default_user_layout(request: Request):
@@ -163,4 +163,4 @@ async def default_user_layout(request: Request):
     drums = data.get("drums", [])
 
 
-    return admin_service.saveDefaultUserLayout(channels, drums)
+    return admin_service.save_default_user_layout(channels, drums)

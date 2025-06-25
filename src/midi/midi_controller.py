@@ -16,10 +16,10 @@ fader_post = [int(val,0) for val in os.getenv("Main_Post_Fix_Fader").split(",")]
 switch_post = [int(val,0) for val in os.getenv("Main_Post_Fix_Switch").split(",")]
 preMain = os.getenv("Main_Pre_Fix")
 
-preDca = [0x09]
-dca_fader_post = [0x00, 0x0A]
-dca_switch_post = [0x00, 0x08]
-
+# dca
+preDca = [int(os.getenv("Pre_Dca"), 0)]
+dca_fader_post = [int(val,0) for val in os.getenv("Dca_Fader_Post").split(",")]
+dca_switch_post = [int(val,0) for val in os.getenv("Dca_Switch_Post").split(",")]
 
 
 header = [int(Manufacturer_ID), int(Device_ID)] + [int(a) for a in Model_ID] 
@@ -43,7 +43,6 @@ class MidiController:
     def __init__(self, name):
         self.ped = mido.get_output_names()[1]
 
-    
     def send_command(self, address, data):
         sysex_msg = build_sysex(address, Command_ID_Set, data)
 
@@ -52,7 +51,7 @@ class MidiController:
         with mido.open_output(self.ped) as outport:
             outport.send(msg)
     
-    def convertValue(value):
+    def convert_fader_to_hex(value):
         if value == 0:
             return [0x78, 0x76]
         if value >=75:
@@ -82,7 +81,7 @@ class MidiController:
 
         return [first_value, second_value]
 
-    def convertSwitch(switch):
+    def convert_switch_to_hex(switch):
         return [0x00] if switch else [0x01] 
 
     def request_value(self, address):
@@ -94,15 +93,14 @@ class MidiController:
         with mido.open_output(self.ped) as outport:
             outport.send(msg)
 
+    def load_scene(self, scene_number):
 
-    def loadScene(self, scene_number):
-
-        channel, program_number = MidiController.convertValueScene(scene_number=scene_number)
+        channel, program_number = MidiController.convert_fader_to_hexScene(scene_number=scene_number)
         msg = mido.Message('program_change', program=program_number, channel=channel)
         with mido.open_output(self.ped) as outport:
             outport.send(msg)
 
-    def convertValueScene(scene_number):
+    def convert_fader_to_hexScene(scene_number):
         if not 0 <= scene_number <= 299:
             return None
 
@@ -119,19 +117,55 @@ class MidiController:
 
         return channel, program_number
 
+    def convert_freq_to_hex(freq):
+        if 20 <= freq <= 20000:
+            b1 = (freq >> 14) & 0x7F  
+            b2 = (freq >> 7) & 0x7F
+            b3 = freq & 0x7F   
+            return [b1, b2, b3]
+        
+        return None
+
+    def convert_q_to_hex(q):
+        if 0.36 <= q <= 16:
+            q *= 100
+            first_value = int(q / 128)
+            second_value = int(q % 128)
+
+            return [first_value, second_value]
+        return None
+
+    def convert_gain_to_hex(gain):
+        if -15 <= gain <= 15:
+            if gain >= 0:
+                gain *= 10 
+                gain = int(gain)
+                first_value = int(gain / 128)
+                second_value = gain % 128
+
+                return [first_value, second_value]
+            else:
+                gain += 0.1
+                gain *= -10
+                gain = int(gain)
+                first_value = 127 - int((gain / 128))
+                second_value = 127 - (gain % 128)
+
+                return [first_value, second_value]
+        
+        return None
+
 
 def roland_checksum(address_bytes, data_bytes):
     total = sum(address_bytes) + sum(data_bytes)
     checksum = (128 - (total % 128)) % 128
-    return checksum
-    
+    return checksum  
 
 def build_sysex(address, command, data):
     checksum = roland_checksum(address, data)
     return header + [command] + address + data + [checksum]
 
    
-
 class call_type(Enum):
     CHANNEL = "channel"
     SWITCH = "switch"
@@ -150,25 +184,25 @@ class MidiListener:
 
         match calltype:
             case call_type.CHANNEL: 
-                callfn = self.callbackChannel
+                callfn = self.callback_channel
             case call_type.SWITCH:
-                callfn = self.callbackSwitch
+                callfn = self.callback_switch
             case call_type.Q:
-                callfn = self.callbackQ
+                callfn = self.callback_q
             case call_type.FREQ:
-                callfn = self.callbackFreq
+                callfn = self.callback_freq
             case call_type.GAIN:
-                callfn = self.callbackGain
+                callfn = self.callback_gain
             case call_type.PREAMP:
-                callfn = self.callbackPreamp
+                callfn = self.callback_preamp
             case call_type.NAME:
-                callfn = self.callbackName
+                callfn = self.callback_name
 
         self.callback = callfn
 
         get_midi_multiplexer().register(self.callback)
 
-    def callbackChannel(self, msg):
+    def callback_channel(self, msg):
         if not self.running:
             return
         if msg.type == 'sysex':
@@ -176,9 +210,9 @@ class MidiListener:
             key = data[6:10]
             with self.lock:
                 if key in self.midi_addresses and key not in self.received:
-                    self.received[key] = MidiListener.convert_value(data[10], data[11])
+                    self.received[key] = MidiListener.convert_hex_to_fader(data[10], data[11])
 
-    def callbackSwitch(self, msg):
+    def callback_switch(self, msg):
         if not self.running:
             return
         if msg.type == 'sysex':
@@ -186,9 +220,9 @@ class MidiListener:
             key = data[6:10]
             with self.lock:
                 if key in self.midi_addresses and key not in self.received:
-                    self.received[key] = MidiListener.convert_switch(data[10])
+                    self.received[key] = MidiListener.convert_hex_to_switch(data[10])
 
-    def callbackQ(self, msg):
+    def callback_q(self, msg):
         if not self.running:
             return 
         if msg.type == 'sysex':
@@ -198,7 +232,7 @@ class MidiListener:
                 if key in self.midi_addresses and key not in self.received:
                     self.received[key] = MidiListener.convert_hex_to_Q(data[10], data[11])
 
-    def callbackFreq(self, msg):
+    def callback_freq(self, msg):
         if not self.running:
             return 
         if msg.type == 'sysex':
@@ -208,7 +242,7 @@ class MidiListener:
                 if key in self.midi_addresses and key not in self.received:
                     self.received[key] = MidiListener.convert_hex_to_freq(data[10], data[11], data[12])
 
-    def callbackGain(self, msg):
+    def callback_gain(self, msg):
         if not self.running:
             return 
         if msg.type == 'sysex':
@@ -218,7 +252,7 @@ class MidiListener:
                 if key in self.midi_addresses and key not in self.received:
                     self.received[key] = MidiListener.convert_hex_to_gain(data[10], data[11])
                     
-    def callbackPreamp(self, msg):
+    def callback_preamp(self, msg):
         if not self.running:
             return
         if msg.type == 'sysex':
@@ -228,7 +262,7 @@ class MidiListener:
                 if key in self.midi_addresses and key not in self.received:
                     self.received[key] = data[10]
 
-    def callbackName(self, msg):
+    def callback_name(self, msg):
         if not self.running:
             return
         if msg.type == 'sysex':
@@ -251,7 +285,7 @@ class MidiListener:
         with self.lock:
             return dict(self.received)
         
-    def convert_value(firstValue, secondValue):
+    def convert_hex_to_fader(firstValue, secondValue):
         try:
             if firstValue == 0x00:
                 value = (secondValue / 100) * 25 + 75
@@ -281,37 +315,7 @@ class MidiListener:
         except Exception as e:
             print(f"errore: {e}")
 
-    # def convert_value(first_value, second_value):
-    #     try:
-    #         if first_value == 0x00:
-    #             value = (second_value / 100) * 25 + 75
-    #             return round(value)
-    #         elif first_value == 0x78:
-    #             return 0
-    #         elif 121 <= first_value <= 127 and 0 <= second_value <= 127:
-    #             #get db
-    #             high = 127 - first_value
-        #         low = 127 - second_value
-        #         int_decibel = (high * 128) + low
-        #         decibel = int_decibel / -10
-        #         decibel -= 0.1
-                
-        #         #convert db in int range
-        #         if decibel >= -40:
-        #             value = decibel + 60
-        #         elif decibel >= -60:
-        #             value = (decibel + 60) / 2 + 10
-        #         elif decibel >= -89.6:
-        #             value = ((decibel + 89.6) * 9 / 29.6) + 1
-                
-        #         return int(value)
-
-        # except Exception as e:
-        #     print(f"errore: {e}")
-        
-
-
-    def convert_switch(value):
+    def convert_hex_to_switch(value):
         return False if value == 0x01 else True
 
     def convert_hex_to_Q(first_value, second_value):
@@ -381,7 +385,7 @@ class MidiUserSync():
                 canale = f"0x{data[6]:02X}, 0x{data[7]:02X}"
                 valore = 0
                 if data[8:10] == tuple(self.post_address):
-                    valore = MidiListener.convert_value(data[10], data[11])
+                    valore = MidiListener.convert_hex_to_fader(data[10], data[11])
 
                     asyncio.run_coroutine_threadsafe(
                         self.send_back(canale, valore),
@@ -389,7 +393,7 @@ class MidiUserSync():
                     )
                 elif data[6:10] == tuple(self.addressMain):
                     canale = "main"
-                    valore = MidiListener.convert_value(data[10], data[11])
+                    valore = MidiListener.convert_hex_to_fader(data[10], data[11])
 
                     asyncio.run_coroutine_threadsafe(
                         self.send_back(canale, valore),
@@ -426,23 +430,20 @@ class MidiVideoSync():
 
                     if data[8:10] == tuple(switch_post):
                         typeCmd = "switch"
-                        valore = MidiListener.convert_switch(data[10])
+                        valore = MidiListener.convert_hex_to_switch(data[10])
                     elif data[8:10] == tuple(fader_post):
-                        valore = MidiListener.convert_value(data[10], data[11])
+                        valore = MidiListener.convert_hex_to_fader(data[10], data[11])
                         typeCmd = "fader"
 
                 elif data[8:10] == tuple(self.post_address):
-                    valore = MidiListener.convert_value(data[10], data[11])
+                    valore = MidiListener.convert_hex_to_fader(data[10], data[11])
                     typeCmd ="fader"
 
-                print(f"canale: {canale}, valore: {valore}, typeCmd: {typeCmd}")
-                print(f"data: {data[8:10]} {self.post_address}")
                 if typeCmd != "":
                     asyncio.run_coroutine_threadsafe(
                         self.send_back(typeCmd, canale, valore),
                         self.loop
                     )
-
 
 class MidiMixerSync():
     def __init__(self, send_back):
@@ -469,19 +470,19 @@ class MidiMixerSync():
                 valore = 0
                 if data[8:10] == tuple(switch_post):
                     typeCmd = "switch"
-                    valore = MidiListener.convert_switch(data[10])
+                    valore = MidiListener.convert_hex_to_switch(data[10])
                 elif data[8:10] == tuple(fader_post):
-                    valore = MidiListener.convert_value(data[10], data[11])
+                    valore = MidiListener.convert_hex_to_fader(data[10], data[11])
                     typeCmd = "fader"
 
                 if data[6] == preDca[0]:
                     canale = f"0x{data[6]:02X}, 0x{data[7]:02X}, 0x{data[8]:02X}, 0x{data[9]:02X}"
                     if data[8:10] == tuple(dca_fader_post):
-                        valore = MidiListener.convert_value(data[10], data[11])
+                        valore = MidiListener.convert_hex_to_fader(data[10], data[11])
                         typeCmd = "fader"
                     elif data[8:10] == tuple(dca_switch_post):
                         typeCmd = "switch"
-                        valore = MidiListener.convert_switch(data[10])
+                        valore = MidiListener.convert_hex_to_switch(data[10])
 
                 if typeCmd != "":
                     asyncio.run_coroutine_threadsafe(
@@ -512,8 +513,6 @@ class MidiMultiplexer:
     def close(self):
         self.port.close()
 
-
-
 _multiplexer_instance = None
 
 def get_midi_multiplexer():
@@ -522,81 +521,38 @@ def get_midi_multiplexer():
         _multiplexer_instance = MidiMultiplexer()
     return _multiplexer_instance
 
-
-
-def getEQAddressValue(typeFreq, typeEQ, value):
+def get_eq_address_value(typeFreq, typeEQ, value):
     match typeFreq:
         case 0:
             match typeEQ:
                 case "gain":
-                    return eq_low_gain, convertGainToHex(value)
+                    return eq_low_gain, MidiController.convert_gain_to_hex(value)
                 case "freq":
-                    return eq_low_freq, convertFreqToHex(int(value))
+                    return eq_low_freq, MidiController.convert_freq_to_hex(int(value))
         case 1:
             match typeEQ:
                 case "gain":
-                    return eq_low_mid_gain, convertGainToHex(value)
+                    return eq_low_mid_gain, MidiController.convert_gain_to_hex(value)
                 case "freq":
-                    return eq_low_mid_freq, convertFreqToHex(int(value))
+                    return eq_low_mid_freq, MidiController.convert_freq_to_hex(int(value))
                 case "q":
-                    return eq_low_mid_q, convertQtoHex(value)
+                    return eq_low_mid_q, MidiController.convert_q_to_hex(value)
         case 2:
             match typeEQ:
                 case "gain":
-                    return eq_mid_hi_gain, convertGainToHex(value)
+                    return eq_mid_hi_gain, MidiController.convert_gain_to_hex(value)
                 case "freq":
-                    return eq_mid_hi_freq, convertFreqToHex(int(value))
+                    return eq_mid_hi_freq, MidiController.convert_freq_to_hex(int(value))
                 case "q":
-                    return eq_mid_hi_q, convertQtoHex(value)
+                    return eq_mid_hi_q, MidiController.convert_q_to_hex(value)
         case 3:
             match typeEQ:
                 case "gain":
-                    return eq_high_gain, convertGainToHex(value)
+                    return eq_high_gain, MidiController.convert_gain_to_hex(value)
                 case "freq":
-                    return eq_high_freq, convertFreqToHex(int(value))
+                    return eq_high_freq, MidiController.convert_freq_to_hex(int(value))
 
-
-def convertQtoHex(q):
-    if 0.36 <= q <= 16:
-        q *= 100
-        first_value = int(q / 128)
-        second_value = int(q % 128)
-
-        return [first_value, second_value]
-    return None
-
-
-def convertGainToHex(gain):
-    if -15 <= gain <= 15:
-        if gain >= 0:
-            gain *= 10 
-            gain = int(gain)
-            first_value = int(gain / 128)
-            second_value = gain % 128
-
-            return [first_value, second_value]
-        else:
-            gain += 0.1
-            gain *= -10
-            gain = int(gain)
-            first_value = 127 - int((gain / 128))
-            second_value = 127 - (gain % 128)
-
-            return [first_value, second_value]
-    
-    return None
-
-
-def convertFreqToHex(freq):
-    if 20 <= freq <= 20000:
-        b1 = (freq >> 14) & 0x7F  
-        b2 = (freq >> 7) & 0x7F
-        b3 = freq & 0x7F   
-        return [b1, b2, b3]
-    
-    return None
-
-def getEQChannel(channel_address, typeEQ):
+def get_eq_channel(channel_address, typeEQ):
     channels = dict()
     
     if typeEQ == call_type.Q: 

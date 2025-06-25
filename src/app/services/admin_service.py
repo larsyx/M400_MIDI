@@ -19,12 +19,10 @@ class AdminService:
         self.partecipazioneScenaDAO = PartecipazioneScenaDAO()
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "view", "administration"))
 
-    def loadManageUser(self, request, adminUser):
+    def load_manage_user(self, request, adminUser):
         users = self.get_all_users(adminUser)
         return self.templates.TemplateResponse(request, "manage_user.html", {"users": users})
-
-    
-
+ 
     def create_user(self, request, adminUser, username, nome, ruolo):
         try:
             if self.userDAO.is_admin(adminUser):
@@ -87,8 +85,7 @@ class AdminService:
             print(f"Error retrieving all users: {e}")
             return None
         
-
-    def loadManageChannels(self, request, user):
+    def load_manage_channels(self, request, user):
         try:
             if self.userDAO.is_admin(user):
                 channels = self.channelDAO.get_all_channels()
@@ -99,10 +96,8 @@ class AdminService:
         except Exception as e:
             print(f"Error loading manage channels: {e}")
             return None
-        
 
-
-    def changeDescription(self, user, type, id, value):
+    def change_description(self, user, type, id, value):
         try:
             if self.userDAO.is_admin(user):
                 if value == "":
@@ -118,10 +113,8 @@ class AdminService:
             return None
 
 
-
     #mixer scene
-
-    def loadMixerScene(self, request):
+    def load_mixer_scene(self, request):
         file_path = os.path.join(os.path.dirname(__file__), "..", "..", "Database", "scenes.json")
         with open(file_path, "r") as json_data:
             scene = json.load(json_data)
@@ -130,7 +123,7 @@ class AdminService:
 
             return self.templates.TemplateResponse(request, "manage_mixer_scene.html", {"scenes" : scenes})
 
-    def addMixerScene(self, request, idScene, name):
+    def add_mixer_scene(self, request, idScene, name):
         file_path = os.path.join(os.path.dirname(__file__), "..", "..", "Database", "scenes.json")
         with open(file_path, "r") as json_data:
             scene = json.load(json_data)
@@ -155,7 +148,7 @@ class AdminService:
 
             return RedirectResponse(url="/admin/manageSceneMixer", status_code=303)
 
-    def removeMixerScene(self, request, idScene):
+    def remove_mixer_scene(self, request, idScene):
         file_path = os.path.join(os.path.dirname(__file__), "..", "..", "Database", "scenes.json")
         with open(file_path, "r") as json_data:
             data = json.load(json_data)
@@ -172,7 +165,7 @@ class AdminService:
     def change_aux_user(self, user, aux, scene):
         self.partecipazioneScenaDAO.change_aux_user(scene, user, aux)
 
-    def loadDefaultUserLayout(self, request):
+    def load_default_user_layout(self, request):
         file_path = os.path.join(os.path.dirname(__file__), "..", "..", "Database", "default_layout.json")
         with open(file_path, "r") as json_data:
             data = json.load(json_data)
@@ -189,8 +182,7 @@ class AdminService:
 
         return self.templates.TemplateResponse(request, "default_layout.html", {"canali": channels, "channels_layout": channels_layout, "drums_layout": drums_layout})
 
-
-    def saveDefaultUserLayout(self, channels, drums):
+    def save_default_user_layout(self, channels, drums):
         file_path = os.path.join(os.path.dirname(__file__), "..", "..", "Database", "default_layout.json")
         with open(file_path, "r") as json_data:
             data = json.load(json_data)

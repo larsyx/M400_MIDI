@@ -11,7 +11,7 @@ async def home(request : Request):
     user = get_current_user(request)
     verify_mixer(user["sub"])   
 
-    return mixer_service.loadFader(request)
+    return mixer_service.load_fader(request)
 
 
 @router.post("/mixer/set")
@@ -23,7 +23,7 @@ async def set_fader(request: Request):
     canaleId = data.get("canaleId")
     value = data.get("value")
 
-    mixer_service.setFaderValue(canaleId,value)
+    mixer_service.set_fader_value(canaleId,value)
 
 @router.post("/mixer/switch")
 async def set_switch_channel(request : Request):
@@ -34,7 +34,7 @@ async def set_switch_channel(request : Request):
     canaleId = data.get("canaleId")
     switch = data.get("switch")
 
-    mixer_service.setSwitchChannel(canaleId=canaleId, switch=switch)
+    mixer_service.set_switch_channel(canaleId=canaleId, switch=switch)
 
 
 @router.post("/mixer/set/main")
@@ -44,7 +44,7 @@ async def set_fader_main(request: Request):
     data = await request.json()
     value = data.get("value")
 
-    mixer_service.setMainFaderValue(value)
+    mixer_service.set_main_fader_value(value)
 
 @router.post("/mixer/switch/main")
 async def set_switch_main(request: Request):
@@ -53,7 +53,7 @@ async def set_switch_main(request: Request):
     data = await request.json()
     switch = data.get("switch")
 
-    mixer_service.setMainSwitchChannel(switch)
+    mixer_service.set_main_switch_channel(switch)
 
 
 @router.post("/mixer/set/dca")
@@ -64,7 +64,7 @@ async def set_fader_DCA(request: Request):
     dca = data.get("dca_id")
     value = data.get("value")
 
-    mixer_service.setDcaFaderValue(dca, value)
+    mixer_service.set_dca_fader_value(dca, value)
 
 @router.post("/mixer/switch/dca")
 async def set_switch_DCA(request: Request):
@@ -74,7 +74,7 @@ async def set_switch_DCA(request: Request):
     dca = data.get("dca_id")
     switch = data.get("switch")
 
-    mixer_service.setDcaSwitchChannel(dca,  switch)
+    mixer_service.set_dca_switch_channel(dca,  switch)
 
 
 @router.get("/mixer/loadScene/{scene_id}")
@@ -82,7 +82,7 @@ async def load_scene(request: Request, scene_id: int):
     user = get_current_user(request)
     verify_mixer(user["sub"])   
 
-    return mixer_service.loadScene(scene_id)
+    return mixer_service.load_scene(scene_id)
 
 @router.post("/mixer/EQset")
 async def eq_set(request: Request):
@@ -96,14 +96,14 @@ async def eq_set(request: Request):
     value = data.get("value")
 
 
-    mixer_service.eqSet(channel, typeFreq, typeEq, value)
+    mixer_service.eq_set(channel, typeFreq, typeEq, value)
 
 @router.get("/mixer/EQget/{channel}")
 async def eq_get(request: Request, channel : int):
     user = get_current_user(request)
     verify_mixer(user["sub"])
 
-    return mixer_service.eqGet(channel)
+    return mixer_service.eq_get(channel)
 
 
 @router.post("/mixer/EQSwitch")
@@ -115,14 +115,14 @@ async def eq_switch_set(request: Request):
     channel = data.get("channel")
     switch = data.get("switch")
 
-    mixer_service.eqSwitchSet(channel, switch)
+    mixer_service.eq_switch_set(channel, switch)
 
 @router.get("/mixer/EQSwitch/{channel}")
 async def eq_switch_get(request: Request, channel: int):
     user = get_current_user(request)
     verify_mixer(user["sub"])
 
-    return mixer_service.eqSwitchGet(channel)
+    return mixer_service.eq_switch_get(channel)
 
 @router.post("/mixer/PreampSet")
 async def eq_preamp_set(request: Request):
@@ -133,14 +133,14 @@ async def eq_preamp_set(request: Request):
     channel = data.get("channel")
     value = data.get("value")
 
-    mixer_service.eqPreampSet(channel, int(value))
+    mixer_service.eq_preamp_set(channel, int(value))
 
 @router.get("/mixer/PreampGet/{channel}")
 async def eq_preamp_get(request: Request, channel : int):
     user = get_current_user(request)
     verify_mixer(user["sub"])
 
-    return mixer_service.eqPreampGet(channel)
+    return mixer_service.eq_preamp_get(channel)
 
 
 # aux 
@@ -149,7 +149,7 @@ async def eq_preamp_get(request: Request, aux_id : int):
     user = get_current_user(request)
     verify_mixer(user["sub"])
 
-    return mixer_service.getAuxParameters(aux_id)
+    return mixer_service.get_aux_parameters(aux_id)
 
 @router.post("/mixer/aux/set")
 async def set_fader(request: Request):
@@ -161,4 +161,4 @@ async def set_fader(request: Request):
     canaleId = data.get("canaleId")
     value = data.get("value")
 
-    mixer_service.setFaderAuxValue(auxId, canaleId, value)
+    mixer_service.set_fader_aux_value(auxId, canaleId, value)

@@ -55,11 +55,8 @@ function changeDrum(action){
 
         id = input.id.split("_")
         canaleId = id[1]
-        console.log(canaleId)
         sendMessage(canaleId, value);
     }
-
-
 } 
 
 socket.onopen = function(){
@@ -71,7 +68,6 @@ socket.onopen = function(){
 };
 
 socket.onmessage = function(event){
-    console.log(event.data);
     const response = JSON.parse(event.data);
     if(response != null){
         let element = null;

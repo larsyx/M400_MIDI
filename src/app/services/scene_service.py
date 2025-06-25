@@ -8,7 +8,7 @@ from app.dao.scene_dao import SceneDAO
 from app.dao.user_dao import UserDAO
 from app.dao.layout_canale_dao import LayoutCanaleDAO
 from dotenv import load_dotenv
-from midi.midiController import MidiListener, call_type, MidiController
+from midi.midi_controller import MidiListener, call_type, MidiController
 import time
 
 class SceneService:
@@ -23,7 +23,7 @@ class SceneService:
         self.postName = [int(val,16) for val in os.getenv("Fader_Post_Name").split(",")]
         self.midiController = MidiController("ped")
 
-    def manageScene(self, request, adminUser):
+    def manage_scene(self, request, adminUser):
         if self.utenteDAO.is_admin(adminUser):
             scenes = self.sceneDAO.get_all_scenes()
             return self.templates.TemplateResponse(request, "manage_scene.html", {"scenes" : scenes, })
@@ -223,7 +223,6 @@ class SceneService:
             print(f"Error retrieving scenes: {e}")
             return self.templates.TemplateResponse(request, "update_scene.html")
 
-
     def get_all_scene(self, adminUser):
         if self.utenteDAO.is_admin(adminUser) == False:
             return HTTPResponse(status_code=403, content="Non hai i permessi per accedere a questa risorsa")
@@ -259,7 +258,6 @@ class SceneService:
             print(f"Error updating scene: {e}")
             return False
         
-
     def get_all_user_scene(self, username, request):
         try:
             scenes = self.sceneDAO.get_all_user_scene(username)
