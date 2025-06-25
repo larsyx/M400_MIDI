@@ -1,12 +1,12 @@
 from Database.database import DBSession
-from Models.utente import RuoloUtente, Utente
+from models.utente import RuoloUtente, Utente
 from sqlalchemy.orm import Session
 
 class UserDAO:
     def __init__(self):
         self.db = DBSession.get()
 
-    def getUserByUsername(self, username):
+    def get_user_by_username(self, username):
         try:
             user = self.db.query(Utente).filter(Utente.username == username).first()
             return user if user else None
@@ -14,9 +14,9 @@ class UserDAO:
             print(f"Error retrieving user: {e}")
             return None
         
-    def isAdmin(self, username):
+    def is_admin(self, username):
         try:
-            user = self.getUserByUsername(username)
+            user = self.get_user_by_username(username)
 
             if user:
                 return user.ruolo == RuoloUtente.amministratore
@@ -26,10 +26,9 @@ class UserDAO:
             print(f"Error checking admin status: {e}")
             return False
 
-
-    def isMixer(self, username):
+    def is_mixer(self, username):
         try:
-            user = self.getUserByUsername(username)
+            user = self.get_user_by_username(username)
 
             if user:
                 return user.ruolo == RuoloUtente.mixerista
@@ -39,9 +38,9 @@ class UserDAO:
             print(f"Error checking mixer status: {e}")
             return False
 
-    def isVideo(self, username):
+    def is_video(self, username):
         try:
-            user = self.getUserByUsername(username)
+            user = self.get_user_by_username(username)
 
             if user:
                 return user.ruolo == RuoloUtente.video
@@ -51,7 +50,7 @@ class UserDAO:
             print(f"Error checking mixer status: {e}")
             return False
 
-    def createUser(self, username, nome, ruolo):
+    def create_user(self, username, nome, ruolo):
         try:
             new_user = Utente(username=username, nome=nome, ruolo=RuoloUtente[ruolo])
             self.db.add(new_user)
@@ -61,10 +60,9 @@ class UserDAO:
             print(f"Error creating user: {e}")
             return None
 
-
-    def deleteUser(self, username):
+    def delete_user(self, username):
         try:
-            user = self.getUserByUsername(username)
+            user = self.get_user_by_username(username)
             if user:
                 self.db.delete(user)
                 self.db.commit()
@@ -75,10 +73,9 @@ class UserDAO:
             print(f"Error deleting user: {e}")
             return None
 
-
-    def updateUser(self, username, nome, ruolo):
+    def update_user(self, username, nome, ruolo):
         try:
-            user = self.getUserByUsername(username)
+            user = self.get_user_by_username(username)
             if user:
                 user.nome = nome
                 user.ruolo = RuoloUtente[ruolo]
@@ -90,7 +87,7 @@ class UserDAO:
             print(f"Error updating user: {e}")
             return None
         
-    def getAllUsers(self):
+    def get_all_users(self):
         try:
             users = self.db.query(Utente).all()
             return users
@@ -98,8 +95,7 @@ class UserDAO:
             print(f"Error retrieving all users: {e}")
             return None
         
-
-    def getOnlyUser(self):
+    def get_only_user(self):
         try:
             users = self.db.query(Utente).filter(Utente.ruolo == RuoloUtente.utente)
             return users

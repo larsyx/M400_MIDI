@@ -1,12 +1,12 @@
 from Database.database import DBSession
-from Models.aux_ import Aux
+from models.aux_ import Aux
 
 
 class AuxDAO:
     def __init__(self):
         self.db = DBSession.get()
 
-    def getAllAux(self):
+    def get_all_aux(self):
         try:
             aux = self.db.query(Aux).all()
             return aux
@@ -14,7 +14,7 @@ class AuxDAO:
             print(f"Error retrieving all aux: {e}")
             return None
 
-    def getAuxById(self, id):
+    def get_aux_by_id(self, id):
         try:
             aux = self.db.query(Aux).filter(Aux.id == id).first()
             return aux

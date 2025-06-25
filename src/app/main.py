@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
-templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "View", "static"))
+templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "view", "static"))
 
 app = FastAPI()
 
@@ -19,7 +19,7 @@ app.include_router(user_routes.router)
 app.include_router(mixer_routes.router)
 app.include_router(video_routes.router)
 
-app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "View", "static")), name="static")
+app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "view", "static")), name="static")
 
 
 @app.on_event("shutdown")

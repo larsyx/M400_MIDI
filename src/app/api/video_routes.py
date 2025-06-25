@@ -1,27 +1,25 @@
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
-from app.DAO.channel_dao import ChannelDAO
-from app.DAO.layout_canale_dao import LayoutCanaleDAO
+from app.dao.channel_dao import ChannelDAO
+from app.dao.layout_canale_dao import LayoutCanaleDAO
 from app.auth.security import get_current_user, verify_video
-from app.services.scene_controller import SceneController
-from app.services.video_controller import VideoController
+from app.services.video_service import VideoService
 
 router = APIRouter()
 
-sceneController = SceneController()
-videoController = VideoController()
+video_service = VideoService()
 
 
 @router.get("/video/home")
-async def loadScene(request: Request):
+async def load_scene(request: Request):
     user_data = get_current_user(request)
     verify_video(user_data["sub"])
 
-    return videoController.loadScene(request)
+    return video_service.loadScene(request)
 
 @router.post("/video/set")
-async def setFader(request: Request):
+async def set_fader(request: Request):
     user_data = get_current_user(request)
     verify_video(user_data["sub"])
 
@@ -29,28 +27,27 @@ async def setFader(request: Request):
     canaleId = data.get("canaleId")
     value = data.get("value")
 
-    videoController.setFader(canaleId, value)
+    video_service.setFader(canaleId, value)
     
 
 @router.post("/video/set/main")
-async def setFaderMain(request: Request):
+async def set_fader_main(request: Request):
     user_data = get_current_user(request)
     verify_video(user_data["sub"])
 
     data = await request.json()
     value = data.get("value")
     
-    videoController.setFaderMain(value)
+    video_service.setFaderMain(value)
    
 @router.post("/video/switch/main")
-async def setSwitchMain(request: Request):
+async def set_switch_main(request: Request):
     user_data = get_current_user(request)
     verify_video(user_data["sub"])
 
     data = await request.json()
     value = data.get("switch")
     
-    print("Switching main video to:", value)
-    videoController.setSwitchMain(value)
+    video_service.setSwitchMain(value)
 
     

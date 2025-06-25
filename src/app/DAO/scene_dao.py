@@ -1,5 +1,5 @@
 from Database.database import DBSession
-from Models.scena import Scena
+from models.scena import Scena
 
 
 class SceneDAO:
@@ -7,7 +7,7 @@ class SceneDAO:
         self.db = DBSession.get()
 
 
-    def getSceneById(self, id):
+    def get_scene_by_id(self, id):
         try:
             scene = self.db.query(Scena).filter(Scena.id == id).first()
             return scene
@@ -15,7 +15,7 @@ class SceneDAO:
             print(f"Error retrieving scene: {e}")
             return None
 
-    def getAllScenes(self):
+    def get_all_scenes(self):
         try:
             scenes = self.db.query(Scena).all()
             return scenes
@@ -24,7 +24,7 @@ class SceneDAO:
             return None
 
 
-    def createScene(self, nome, descrizione):
+    def create_scene(self, nome, descrizione):
         try:
             new_scene = Scena(nome=nome, descrizione=descrizione)
             self.db.add(new_scene)
@@ -35,9 +35,9 @@ class SceneDAO:
             return None
         
 
-    def updateScene(self, id, nome, descrizione):
+    def update_scene(self, id, nome, descrizione):
         try:
-            scene = self.getSceneById(id)
+            scene = self.get_scene_by_id(id)
             if scene:
                 scene.nome = nome
                 scene.descrizione = descrizione
@@ -50,9 +50,9 @@ class SceneDAO:
             return None
         
     
-    def deleteScene(self, id):
+    def delete_scene(self, id):
         try:
-            scene = self.getSceneById(id)
+            scene = self.get_scene_by_id(id)
             if scene:
                 self.db.delete(scene)
                 self.db.commit()

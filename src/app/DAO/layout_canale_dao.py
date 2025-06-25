@@ -1,8 +1,8 @@
 from sqlalchemy import desc
 from Database.database import DBSession
-from Models.canale import Canale
-from Models.layoutCanale import LayoutCanale
-from app.DAO.channel_dao import ChannelDAO 
+from models.canale import Canale
+from models.layoutCanale import LayoutCanale
+from app.dao.channel_dao import ChannelDAO 
 import json
 import os
 
@@ -12,7 +12,7 @@ class LayoutCanaleDAO:
     def __init__(self):
         self.db = DBSession.get()
         
-    def getLayoutCanaleById(self, user, scene, canale):
+    def get_layout_channel_by_id(self, user, scene, canale):
         try:
             layout = self.db.query(LayoutCanale).filter(
                 LayoutCanale.user == user,
@@ -24,8 +24,7 @@ class LayoutCanaleDAO:
             print(f"Error retrieving layout: {e}")
             return None
         
-
-    def getLayoutCanale(self, user, scene):
+    def get_layout_channel(self, user, scene):
         try:
             layout = self.db.query(LayoutCanale).filter(
                 LayoutCanale.user == user,
@@ -35,11 +34,10 @@ class LayoutCanaleDAO:
         except Exception as e:
             print(f"Error retrieving layout: {e}")
             return None
-       
-        
-    def setLayoutCanale(self, user, scene, canale, posizione, descrizione, isBatteria):
+           
+    def set_layout_channel(self, user, scene, canale, posizione, descrizione, isBatteria):
         try:
-            layout = self.getLayoutCanaleById(user, scene, canale)
+            layout = self.get_layout_channel_by_id(user, scene, canale)
             layout.descrizione = descrizione
             layout.posizione = posizione
             layout.isBatteria = isBatteria
@@ -52,7 +50,7 @@ class LayoutCanaleDAO:
             print(f"Error retrieving layout: {e}")
             return None
         
-    def addLayoutCanale(self, user, scene, canale, descrizione, isBatteria=False):
+    def add_layout_channel(self, user, scene, canale, descrizione, isBatteria=False):
         try: 
             layout = self.db.query(LayoutCanale).filter(
                 LayoutCanale.user == user,
@@ -78,9 +76,9 @@ class LayoutCanaleDAO:
             print(f"Error retrieving layout: {e}")
             return None
         
-    def removeLayoutCanale(self, user, scene, canale):
+    def remove_layout_channel(self, user, scene, canale):
         try:
-            channelToRemove = self.getLayoutCanaleById(user, scene, canale)
+            channelToRemove = self.get_layout_channel_by_id(user, scene, canale)
 
             updateChannel = self.db.query(LayoutCanale).filter(
                     LayoutCanale.user == user,
@@ -89,7 +87,7 @@ class LayoutCanaleDAO:
             ).all()
 
             for channel in updateChannel:
-                self.setLayoutCanale(user,scene,channel.canaleId, channel.posizione-1, channel.descrizione, channel.isBatteria)
+                self.set_layout_channel(user,scene,channel.canaleId, channel.posizione-1, channel.descrizione, channel.isBatteria)
 
             self.db.delete(channelToRemove)
             self.db.commit()
@@ -99,8 +97,7 @@ class LayoutCanaleDAO:
             print(f"Error retrieving layout: {e}")
             return None
 
-    
-    def addDefaultLayoutCanale(self, user, scene):
+    def add_default_layout_channel(self, user, scene):
         file_path = os.path.join(os.path.dirname(__file__), "..", "..", "Database", "default_layout.json")
         with open(file_path, "r") as json_data:
             data = json.load(json_data)
@@ -110,7 +107,7 @@ class LayoutCanaleDAO:
             channels_ids = [ch['id'] for ch in channels]
             drums = [d for d in data.get('drums', []) if d['id'] not in channels_ids]
 
-            if self.getLayoutCanale(user, scene) is not None and len(self.getLayoutCanale(user, scene)) > 0:
+            if self.get_layout_channel(user, scene) is not None and len(self.get_layout_channel(user, scene)) > 0:
                 return True
             
             channelDAO = ChannelDAO()
@@ -118,11 +115,11 @@ class LayoutCanaleDAO:
             for channel in channels:
                 channel_obj = channelDAO.get_channel_by_id(channel['id'])
                 if channel_obj is not None:
-                    self.addLayoutCanale(user, scene, channel['id'], channel['descrizione'], False)
+                    self.add_layout_channel(user, scene, channel['id'], channel['descrizione'], False)
 
 
             for drum in drums:
                 channel_obj = channelDAO.get_channel_by_id(drum['id'])
                 if channel_obj is not None:
-                    self.addLayoutCanale(user, scene, drum['id'], drum['descrizione'], True)
+                    self.add_layout_channel(user, scene, drum['id'], drum['descrizione'], True)
 

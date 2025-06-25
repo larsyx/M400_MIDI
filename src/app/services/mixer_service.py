@@ -3,14 +3,14 @@ import os
 import time
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from app.DAO.channel_dao import ChannelDAO
-from app.DAO.dca_dao import DCA_DAO
-from app.DAO.aux_dao import AuxDAO
+from app.dao.channel_dao import ChannelDAO
+from app.dao.dca_dao import DCA_DAO
+from app.dao.aux_dao import AuxDAO
 from midi.midiController import MidiController, MidiListener, call_type, getEQAddressValue, getEQChannel
 from dotenv import load_dotenv
 
 
-class MixerController:
+class MixerService:
     def __init__(self):
         self.channelDAO = ChannelDAO()
         self.dcaDAO = DCA_DAO()
@@ -23,7 +23,7 @@ class MixerController:
         self.postEqSwitch = [int(val,16) for val in os.getenv("EQ_Post_Switch").split(",")]
         self.postName = [int(val,16) for val in os.getenv("Fader_Post_Name").split(",")]
         self.postLink = [int(val,16) for val in os.getenv("Fader_Post_link").split(",")]
-        self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "View", "mixer"))
+        self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "view", "mixer"))
         self.midiController = MidiController("pedal")
 
     def loadFader(self, request):
@@ -226,7 +226,7 @@ class MixerController:
 
         # auxs name
         listenAddressAuxName = []
-        auxs = self.auxDAO.getAllAux()
+        auxs = self.auxDAO.get_all_aux()
         for aux in auxs:
             auxAddress = [int(x,16) for x in aux.indirizzoMidiMain.split(",")]
             listenAddressAuxName.append(auxAddress + self.postName)
@@ -261,7 +261,7 @@ class MixerController:
 
 
     def getAuxParameters(self, aux_id):
-        aux = self.auxDAO.getAuxById(aux_id)
+        aux = self.auxDAO.get_aux_by_id(aux_id)
         channels = self.channelDAO.get_all_channels()
         if aux and channels:
             address_aux = [int(x, 16) for x in aux.indirizzoMidi.split(",")]
@@ -540,7 +540,7 @@ class MixerController:
                 return value
 
     def setFaderAuxValue(self, auxId, canaleId, value):
-        aux = self.auxDAO.getAuxById(auxId)
+        aux = self.auxDAO.get_aux_by_id(auxId)
         if aux:
             address_aux = [int(x,16) for x in aux.indirizzoMidi.split(",")]
             canaleAddress = self.channelDAO.get_channel_address(canaleId)

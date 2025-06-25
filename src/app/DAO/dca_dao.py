@@ -1,7 +1,7 @@
 
 
 from Database.database import DBSession
-from Models.dca import DCA
+from models.dca import DCA
 
 
 class DCA_DAO:
@@ -26,8 +26,7 @@ class DCA_DAO:
         return self.db.query(DCA).filter(DCA.indirizzoMidiFader == address).first()
     
     def get_dca_by_address_switch(self, address):
-        return self.db.query(DCA).filter(DCA.indirizzoMidiSwitch == address).first()
-    
+        return self.db.query(DCA).filter(DCA.indirizzoMidiSwitch == address).first() 
 
     def update_dca_description(self, id, value):
         try:

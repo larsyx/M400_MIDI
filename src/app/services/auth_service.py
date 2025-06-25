@@ -1,10 +1,10 @@
 from fastapi.responses import RedirectResponse
 from Database.database import DBSession
-from Models import Utente
-from app.DAO.user_dao import UserDAO
+from models import Utente
+from app.dao.user_dao import UserDAO
 from ..auth.auth import create_access_token
 
-class AuthController:
+class AuthService:
     def __init__(self):
         self.db = DBSession.get()
 
@@ -28,11 +28,11 @@ class AuthController:
 
     def home(self, username):
         userDAO = UserDAO()
-        if(userDAO.isAdmin(username)):
+        if(userDAO.is_admin(username)):
             return RedirectResponse(url = "/admin", status_code=302)
-        elif(userDAO.isMixer(username)):
+        elif(userDAO.is_mixer(username)):
             return RedirectResponse(url="/mixer/home", status_code=302)
-        elif(userDAO.isVideo(username)):
+        elif(userDAO.is_video(username)):
             return RedirectResponse(url="/video/home", status_code=302)
         else:
             return RedirectResponse(url = "/user/getScenes", status_code=302)

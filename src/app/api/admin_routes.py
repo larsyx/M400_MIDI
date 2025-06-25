@@ -1,32 +1,32 @@
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from app.auth.security import get_current_user, verify_admin
-from app.services.admin_controller import AdminController
-from app.services.scene_controller import SceneController 
+from app.services.admin_service import AdminService
+from app.services.scene_service import SceneService 
 router = APIRouter()
 
 
-sceneController = SceneController()
+scene_service = SceneService()
 
 import os
 
-adminController = AdminController()
+admin_service = AdminService()
 
 @router.get("/admin", response_class=HTMLResponse)
 async def admin(request: Request):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    index_path = os.path.join(os.path.dirname(__file__), ".." ,"View", "administration", "home.html")  
+    index_path = os.path.join(os.path.dirname(__file__), ".." ,"view", "administration", "home.html")  
     return FileResponse(index_path)
 
 # user manage
 @router.get("/admin/manageUser", response_class=HTMLResponse)
-async def manageUser(request: Request):
+async def manage_user(request: Request):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return adminController.loadManageUser(request, user["sub"])
+    return admin_service.loadManageUser(request, user["sub"])
 
 
 @router.post("/admin/createUser")
@@ -34,7 +34,7 @@ async def create_user(request: Request, username: str = Form(...), nome: str = F
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return adminController.create_user(request, user["sub"], username, nome, ruolo)
+    return admin_service.create_user(request, user["sub"], username, nome, ruolo)
 
 
 @router.post("/admin/deleteUser", response_class=HTMLResponse)
@@ -42,23 +42,23 @@ async def delete_user(request : Request, username: str = Form(...)):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return adminController.delete_user(request, user["sub"], username)
+    return admin_service.delete_user(request, user["sub"], username)
 
 
 
 #scene manage   
 @router.get("/admin/manageScene", response_class=HTMLResponse)
-async def manageScene(request: Request):
+async def manage_scene(request: Request):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return sceneController.manageScene(request, user["sub"])
+    return scene_service.manageScene(request, user["sub"])
 
-@router.post("/admin/createScene")
+@router.post("/admin/create_scene")
 async def create_scene(request : Request, nome: str = Form(...), descrizione:str = Form(...)):
     user = get_current_user(request)
     verify_admin(user["sub"])
-    return sceneController.create_scene(request, user["sub"], nome, descrizione)
+    return scene_service.create_scene(request, user["sub"], nome, descrizione)
 
 
 @router.get("/admin/scene_{scene_id}/")
@@ -66,32 +66,32 @@ async def get_scene(request : Request, scene_id: int):
     user = get_current_user(request)
     verify_admin(user["sub"])
     
-    return sceneController.get_scene(request, user["sub"], scene_id)
+    return scene_service.get_scene(request, user["sub"], scene_id)
 
 @router.post("/admin/scene_{scene_id}/deleteScene", response_class=HTMLResponse)
 async def add_partecipanti_scena(request : Request, scene_id : int):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return sceneController.delete_scene(request, user["sub"], scene_id)
+    return scene_service.delete_scene(request, user["sub"], scene_id)
 
 #manage user scene
-@router.post("/admin/scene_{scene_id}/addPartecipazione", response_class=HTMLResponse)
+@router.post("/admin/scene_{scene_id}/addParticipants", response_class=HTMLResponse)
 async def add_partecipanti_scena(request : Request, scene_id : int, username : str = Form(...), aux : str = Form(...)):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return sceneController.add_partecipante(request, user["sub"], scene_id, username, aux)
+    return scene_service.add_partecipante(request, user["sub"], scene_id, username, aux)
 
-@router.post("/admin/scene_{scene_id}/removePartecipazione", response_class=HTMLResponse)
+@router.post("/admin/scene_{scene_id}/removeParticipants", response_class=HTMLResponse)
 async def add_partecipanti_scena(request : Request, scene_id : int, username : str = Form(...), aux : int = Form(...)):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return sceneController.remove_partecipante(request, user["sub"], scene_id, username, aux)
+    return scene_service.remove_partecipante(request, user["sub"], scene_id, username, aux)
 
 @router.post("/admin/scene_{scene_id}/changeAux")
-async def changeAux(request: Request, scene_id : int):
+async def change_aux(request: Request, scene_id : int):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
@@ -99,18 +99,18 @@ async def changeAux(request: Request, scene_id : int):
     user = data.get("user")
     aux = data.get("aux")
 
-    adminController.changeAuxUser(user, aux, scene_id)
+    admin_service.change_aux_user(user, aux, scene_id)
 
 # manage channel
 @router.get("/admin/manageChannels", response_class=HTMLResponse)
-async def manageUser(request: Request):
+async def manage_user(request: Request):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return adminController.loadManageChannels(request, user["sub"])
+    return admin_service.loadManageChannels(request, user["sub"])
 
 @router.post("/admin/manageChannels/changeDescription")
-async def changeDescription(request: Request):
+async def change_description(request: Request):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
@@ -119,42 +119,42 @@ async def changeDescription(request: Request):
     id = data.get("id")
     value = data.get("value")
 
-    return adminController.changeDescription(user["sub"], typeReq, id, value)
+    return admin_service.changeDescription(user["sub"], typeReq, id, value)
 
 
 # manage mixer scene
 @router.get("/admin/manageSceneMixer")
-async def manageSceneMixer(request: Request):
+async def manage_scene_mixer(request: Request):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return adminController.loadMixerScene(request)
+    return admin_service.loadMixerScene(request)
 
 @router.post("/admin/addMixerScene")
-async def addMixerScene(request: Request, idScene: int = Form(...), name: str = Form(...)):
+async def add_mixer_scene(request: Request, idScene: int = Form(...), name: str = Form(...)):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return adminController.addMixerScene(request, idScene, name)
+    return admin_service.addMixerScene(request, idScene, name)
 
 @router.post("/admin/removeMixerScene")
-async def removeMixerScene(request: Request, idScene: int = Form(...)):
+async def remove_mixer_scene(request: Request, idScene: int = Form(...)):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return adminController.removeMixerScene(request, idScene)
+    return admin_service.removeMixerScene(request, idScene)
 
 
 # default user layout
 @router.get("/admin/defaultUserLayout", response_class=HTMLResponse)
-async def defaultUserLayout(request: Request):
+async def default_user_layout(request: Request):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
-    return adminController.loadDefaultUserLayout(request)
+    return admin_service.loadDefaultUserLayout(request)
 
 @router.post("/admin/set/defaultUserLayout")
-async def defaultUserLayout(request: Request):
+async def default_user_layout(request: Request):
     user = get_current_user(request)
     verify_admin(user["sub"])
 
@@ -162,8 +162,5 @@ async def defaultUserLayout(request: Request):
     channels = data.get("channels", [])
     drums = data.get("drums", [])
 
-    print("Channels:", channels)
-    print("Drums:", drums)
 
-
-    return adminController.saveDefaultUserLayout(channels, drums)
+    return admin_service.saveDefaultUserLayout(channels, drums)

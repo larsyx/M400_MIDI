@@ -1,41 +1,41 @@
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
-from app.DAO.channel_dao import ChannelDAO
-from app.DAO.layout_canale_dao import LayoutCanaleDAO
+from app.dao.channel_dao import ChannelDAO
+from app.dao.layout_canale_dao import LayoutCanaleDAO
 from app.auth.security import get_current_user
-from app.services.scene_controller import SceneController
-from app.services.user_controller import UserController
+from app.services.user_service import UserService
+from app.services.scene_service import SceneService
 
 router = APIRouter()
 
-sceneController = SceneController()
-userController = UserController()
+user_service = UserService()
+scene_service = SceneService()
 
 @router.get("/user/getScenes", response_class=HTMLResponse)
-async def getScenes(request: Request):
+async def get_scenes(request: Request):
     user_data = get_current_user(request)
 
-    return sceneController.get_all_user_scene(user_data["sub"], request)
+    return scene_service.get_all_user_scene(user_data["sub"], request)
 
     
 @router.get("/user/scene_{scene_id}/", response_class=HTMLResponse)
-async def loadScene(request: Request, scene_id: int):
+async def load_scene(request: Request, scene_id: int):
     user_data = get_current_user(request)
     
-    return userController.load_scene(userID = user_data["sub"], scenaID = scene_id, request=request)
+    return user_service.load_scene(userID = user_data["sub"], scenaID = scene_id, request=request)
 
 
 @router.get("/user/scene_{scene_id}/layout", response_class=HTMLResponse)
-async def setLayout(request: Request, scene_id: int):
+async def set_layout(request: Request, scene_id: int):
     user_data = get_current_user(request)
 
-    return userController.set_layout(userID = user_data["sub"], scenaID = scene_id, request=request)
+    return user_service.set_layout(userID = user_data["sub"], scenaID = scene_id, request=request)
 
 
 
 @router.post("/user/scene_{scene_id}/set")
-async def setFader(request: Request):
+async def set_fader(request: Request):
     user_data = get_current_user(request)
 
     data = await request.json()
@@ -43,41 +43,40 @@ async def setFader(request: Request):
     value = data.get("value")
     indirizzoAux = data.get("aux")
 
-    userController.setFader(canaleId, value, indirizzoAux)
+    user_service.setFader(canaleId, value, indirizzoAux)
     
 
 @router.post("/user/scene_{scene_id}/set/main")
-async def setFaderMain(request: Request):
+async def set_fader_main(request: Request):
     user_data = get_current_user(request)
 
     data = await request.json()
     value = data.get("value")
     indirizzoAux = data.get("aux")
     
-    userController.setFaderMain(value, indirizzoAux)
+    user_service.setFaderMain(value, indirizzoAux)
    
 @router.post("/user/scene_{scene_id}/layout/addChannelLayout")
-async def aggiungiCanaleLayout(request: Request, scene_id: int):
+async def add_channel_Layout(request: Request, scene_id: int):
     user_data = get_current_user(request)
     
 
     layoutDAO = LayoutCanaleDAO()
     data = await request.json()
-    layoutDAO.addLayoutCanale(user_data["sub"], scene_id, data.get("canale_id"), data.get("descrizione"))
+    layoutDAO.add_layout_channel(user_data["sub"], scene_id, data.get("canale_id"), data.get("descrizione"))
 
     return True
 
 
 @router.post("/user/scene_{scene_id}/layout/removeChannelLayout")
-async def removeCanaleLayout(request: Request, scene_id: int):
+async def remove_channel_layout(request: Request, scene_id: int):
     user_data = get_current_user(request)
-
 
     layoutDAO = LayoutCanaleDAO()
     data = await request.json()
     canale_id = data.get("canale_id")
 
-    layoutDAO.removeLayoutCanale(user_data["sub"], scene_id, canale_id)
+    layoutDAO.remove_layout_channel(user_data["sub"], scene_id, canale_id)
 
     channelDAO = ChannelDAO()
     channel = channelDAO.get_channel_by_id(canale_id)
@@ -85,7 +84,7 @@ async def removeCanaleLayout(request: Request, scene_id: int):
 
     
 @router.post("/user/scene_{scene_id}/layout/updateLayout")
-async def setLayouts(request: Request, scene_id : int):
+async def set_layouts(request: Request, scene_id : int):
     user_data = get_current_user(request)
     
     layoutDAO = LayoutCanaleDAO()   
@@ -94,6 +93,6 @@ async def setLayouts(request: Request, scene_id : int):
     channelslayout = data.get("channelsLayout")
 
     for layout in channelslayout:
-        layoutDAO.setLayoutCanale(user_data["sub"], scene_id, layout.get("canaleId"), layout.get("posizione"), layout.get("descrizione"), layout.get("isBatteria"))
+        layoutDAO.set_layout_channel(user_data["sub"], scene_id, layout.get("canaleId"), layout.get("posizione"), layout.get("descrizione"), layout.get("isBatteria"))
 
     return "Layout salvato con successo"

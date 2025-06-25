@@ -1,17 +1,17 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from app.DAO.dca_dao import DCA_DAO
+from app.dao.dca_dao import DCA_DAO
 from app.auth.security import get_current_user_token, verify_mixer, verify_video
 from midi.midiController import MidiMixerSync, MidiUserSync, MidiVideoSync
-from app.DAO.channel_dao import ChannelDAO
-from app.DAO.aux_dao import AuxDAO
+from app.dao.channel_dao import ChannelDAO
+from app.dao.aux_dao import AuxDAO
 import os
 from dotenv import load_dotenv
 
 router = APIRouter()
 
 @router.websocket("/ws/liveSync")
-async def websocket(websocket: WebSocket):
+async def live_user(websocket: WebSocket):
     cookies = websocket.cookies
     session_id = cookies.get("access_token")
     user_id = get_current_user_token(session_id)
@@ -61,7 +61,7 @@ async def websocket(websocket: WebSocket):
 
 
 @router.websocket("/ws/liveSyncMixer")
-async def websocket(websocket: WebSocket):
+async def live_mixer(websocket: WebSocket):
 
     cookies = websocket.cookies
     session_id = cookies.get("access_token")
@@ -120,7 +120,7 @@ async def websocket(websocket: WebSocket):
 
 
 @router.websocket("/ws/liveMixerSync/aux/{aux_id}")
-async def websocket(websocket: WebSocket, aux_id: int):
+async def live_aux_mixer(websocket: WebSocket, aux_id: int):
     cookies = websocket.cookies
     session_id = cookies.get("access_token")
     user_id = get_current_user_token(session_id)
@@ -150,7 +150,7 @@ async def websocket(websocket: WebSocket, aux_id: int):
             print(f"errore sync {e}")
 
     auxDAO = AuxDAO()
-    aux = auxDAO.getAuxById(aux_id)
+    aux = auxDAO.get_aux_by_id(aux_id)
     address = [int(val,0) for val in aux.indirizzoMidi.split(",")]
     addressMain = [int(val,0) for val in aux.indirizzoMidiMain.split(",")]
     sync = MidiUserSync(sendback=send_back, address=address, addressMain=addressMain)
@@ -169,7 +169,7 @@ async def websocket(websocket: WebSocket, aux_id: int):
 
 
 @router.websocket("/ws/liveSyncVideo")
-async def websocket(websocket: WebSocket):
+async def live_video(websocket: WebSocket):
 
     cookies = websocket.cookies
     session_id = cookies.get("access_token")
@@ -205,7 +205,7 @@ async def websocket(websocket: WebSocket):
     load_dotenv()
     auxdao = AuxDAO()
     auxId = os.getenv("VIDEO_AUX_ID")
-    aux = auxdao.getAuxById(int(auxId))
+    aux = auxdao.get_aux_by_id(int(auxId))
 
     if(aux):
         address = [int(val,0) for val in aux.indirizzoMidi.split(",")]

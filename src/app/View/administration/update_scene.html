@@ -40,7 +40,7 @@
         </div>
 
         <div>
-            <form action="./addPartecipazione" method="POST">
+            <form action="./addParticipants" method="POST">
                 <label for="user">Utente</label>
                 <select name="username" id="user">
                     {% for user in users%}
@@ -70,7 +70,7 @@
                 <option value="{{aux.id}}" {% if aux.id|string == partecipante.aux_id|string %}selected{% endif %}>{{aux.nome}} {{nome}}</option>
                 {% endfor %}
             </select>
-            <form action="./removePartecipazione" method="post"> 
+            <form action="./removeParticipants" method="post"> 
                 <input type="hidden" name="username" value="{{partecipante.utenteUsername}}">
                 <input type="hidden" name="aux" value="{{partecipante.aux_id}}">
                 <button type="submit">Elimina</button>

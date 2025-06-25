@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String
-from Models.base import Base
+from .base import Base
 
 
 class DCA(Base):

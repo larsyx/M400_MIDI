@@ -1,23 +1,23 @@
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from Models.utente import RuoloUtente
-from app.DAO.channel_dao import ChannelDAO
-from app.DAO.scene_dao import SceneDAO
-from app.DAO.user_dao import UserDAO
-from app.DAO.dca_dao import DCA_DAO
-from app.DAO.partecipazione_scena_dao import PartecipazioneScenaDAO
+from models.utente import RuoloUtente
+from app.dao.channel_dao import ChannelDAO
+from app.dao.scene_dao import SceneDAO
+from app.dao.user_dao import UserDAO
+from app.dao.dca_dao import DCA_DAO
+from app.dao.partecipazione_scena_dao import PartecipazioneScenaDAO
 from fastapi.responses import RedirectResponse
 import os
 import json
 
-class AdminController:
+class AdminService:
     def __init__(self):
         self.userDAO = UserDAO()
         self.sceneDAO = SceneDAO()
         self.channelDAO = ChannelDAO()
         self.dcaDAO = DCA_DAO()
         self.partecipazioneScenaDAO = PartecipazioneScenaDAO()
-        self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "View", "administration"))
+        self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "view", "administration"))
 
     def loadManageUser(self, request, adminUser):
         users = self.get_all_users(adminUser)
@@ -27,12 +27,12 @@ class AdminController:
 
     def create_user(self, request, adminUser, username, nome, ruolo):
         try:
-            if self.userDAO.isAdmin(adminUser):
+            if self.userDAO.is_admin(adminUser):
                 message=""
                 users = self.get_all_users(adminUser)
                 if username != None and username != "" and nome != None and nome != "" and ruolo != None and RuoloUtente.__contains__(ruolo):
-                    if not self.userDAO.getUserByUsername(username):
-                        new_user = self.userDAO.createUser(username=username, nome=nome, ruolo=ruolo)
+                    if not self.userDAO.get_user_by_username(username):
+                        new_user = self.userDAO.create_user(username=username, nome=nome, ruolo=ruolo)
                         users.append(new_user)
                         message = "Utente inserito con successo"
                     else: 
@@ -50,10 +50,10 @@ class AdminController:
     def delete_user(self, request, adminUser, username):
         users = self.get_all_users(adminUser)
         try:
-            if self.userDAO.isAdmin(adminUser):
+            if self.userDAO.is_admin(adminUser):
                 message = ""
-                if self.userDAO.getUserByUsername(username) != None:
-                    user = self.userDAO.deleteUser(username)
+                if self.userDAO.get_user_by_username(username) != None:
+                    user = self.userDAO.delete_user(username)
                     message = f"utente {user.nome} rimosso correttamente"
                     users.remove(user)
                 else:
@@ -67,8 +67,8 @@ class AdminController:
         
     def update_user(self, adminUser, username, nome, ruolo):
         try:
-            if self.userDAO.isAdmin(adminUser):
-                user = self.userDAO.updateUser(username)
+            if self.userDAO.is_admin(adminUser):
+                user = self.userDAO.update_user(username)
                 return True
             else:
                 return False
@@ -78,8 +78,8 @@ class AdminController:
 
     def get_all_users(self, adminUser):
         try:
-            if self.userDAO.isAdmin(adminUser):
-                users = self.userDAO.getAllUsers()
+            if self.userDAO.is_admin(adminUser):
+                users = self.userDAO.get_all_users()
                 return users
             else:
                 return HTMLResponse(status_code=403, content="Non hai i permessi per accedere a questa risorsa")
@@ -90,7 +90,7 @@ class AdminController:
 
     def loadManageChannels(self, request, user):
         try:
-            if self.userDAO.isAdmin(user):
+            if self.userDAO.is_admin(user):
                 channels = self.channelDAO.get_all_channels()
                 dcas = self.dcaDAO.get_dca()
                 return self.templates.TemplateResponse(request, "manage_channels.html", {"channels": channels, "dcas": dcas})
@@ -104,7 +104,7 @@ class AdminController:
 
     def changeDescription(self, user, type, id, value):
         try:
-            if self.userDAO.isAdmin(user):
+            if self.userDAO.is_admin(user):
                 if value == "":
                     value = None
                 if type == "channel":
@@ -169,8 +169,8 @@ class AdminController:
 
             return RedirectResponse(url="/admin/manageSceneMixer", status_code=303)
 
-    def changeAuxUser(self, user, aux, scene):
-        self.partecipazioneScenaDAO.changeAuxUser(scene, user, aux)
+    def change_aux_user(self, user, aux, scene):
+        self.partecipazioneScenaDAO.change_aux_user(scene, user, aux)
 
     def loadDefaultUserLayout(self, request):
         file_path = os.path.join(os.path.dirname(__file__), "..", "..", "Database", "default_layout.json")
