@@ -50,4 +50,10 @@ async def set_switch_main(request: Request):
     
     video_service.set_switch_main(value)
 
-    
+
+@router.get("/video/getFadersValue")
+async def get_fader_value(request: Request):
+    user_data = get_current_user(request)
+    verify_video(user_data["sub"])
+
+    return video_service.get_faders_value()

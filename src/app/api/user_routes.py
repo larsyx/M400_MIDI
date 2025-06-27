@@ -33,7 +33,6 @@ async def set_layout(request: Request, scene_id: int):
     return user_service.set_layout(userID = user_data["sub"], scenaID = scene_id, request=request)
 
 
-
 @router.post("/user/scene_{scene_id}/set")
 async def set_fader(request: Request):
     user_data = get_current_user(request)
@@ -96,3 +95,9 @@ async def set_layouts(request: Request, scene_id : int):
         layoutDAO.set_layout_channel(user_data["sub"], scene_id, layout.get("canaleId"), layout.get("posizione"), layout.get("descrizione"), layout.get("isBatteria"))
 
     return "Layout salvato con successo"
+
+@router.get("/user/scene_{scene_id}/getFadersValue")
+async def get_fader_value(request: Request, scene_id : int, aux: str, auxMain: str):
+    user_data = get_current_user(request)
+
+    return user_service.get_faders_value(user_data["sub"], scene_id, aux, auxMain)

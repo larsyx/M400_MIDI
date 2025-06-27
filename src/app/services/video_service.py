@@ -6,6 +6,7 @@ from app.dao.aux_dao import AuxDAO
 from app.dao.user_dao import UserDAO
 from midi.midi_controller import MidiController, MidiListener, call_type
 import os 
+import json
 
 class VideoService():
 
@@ -21,54 +22,9 @@ class VideoService():
         self.midiController = MidiController()
 
     def load_scene(self, request):
-        canali = self.channelDAO.get_all_channels()
-        aux = self.auxDAO.get_aux_by_id(self.auxId)
-
-        listenAddressFader = []
-
-        # initialize the list of addresses for request and listen
-        auxIndirizzo = [int(x,16) for x in aux.indirizzoMidi.split(",")] 
-        auxIndirizzoMain = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postMainFader
-        auxIndirizzoMainSwitch = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postMainSwitch
-
-        for canale in canali:
-            channelAddress = [int(x,16) for x in canale.indirizzoMidi.split(",")]
-            listenAddressFader.append(channelAddress + auxIndirizzo)
-
-
-        listenAddressFader.append(auxIndirizzoMain)
-
-        # channel request and listen
-        resultsValue = MidiListener.init_and_listen(listenAddressFader, call_type.CHANNEL)
-        resultsValueSet = []
         
-        # get channel value
-        for address_channel in listenAddressFader:
-            try:
-                resultsValueSet.append(resultsValue[tuple(address_channel)])
-            except KeyError as k:
-                print("errore chiave ", k)
-                resultsValueSet.append(0)
-
-        # get main fader value
-        try:
-            valueMain = resultsValue[tuple(auxIndirizzoMain)]
-        except KeyError as e:
-            print(f"error key {e}")
-            valueMain = 0
-
-        coppieCanali = list(zip(canali, resultsValueSet))
-
-
-        # switch Main request and listen
-        resultsValueSwitch = MidiListener.init_and_listen([auxIndirizzoMainSwitch], call_type.SWITCH)
-
-        if resultsValueSwitch:
-            switchMain = list(resultsValueSwitch.items())[0]
-        else:
-            switchMain = False
-
-        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "valueMain" : valueMain, "switchMain": switchMain})
+        channels = self.channelDAO.get_all_channels()
+        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": channels})
 
     def set_fader(self, channel_id, value):
         channel_address = self.channelDAO.get_channel_address(channel_id)
@@ -96,3 +52,53 @@ class VideoService():
         if aux:
             address_aux_main = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postMainSwitch
             self.midiController.send_command(address_aux_main, MidiController.convert_switch_to_hex(value))
+
+    def get_faders_value(self):
+
+        channels = self.channelDAO.get_all_channels()
+        aux = self.auxDAO.get_aux_by_id(self.auxId)
+
+        listen_address_fader = []
+
+        # initialize the list of addresses for request and listen
+        aux_address = [int(x,16) for x in aux.indirizzoMidi.split(",")] 
+        aux_address_main = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postMainFader
+        aux_address_main_switch = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postMainSwitch
+
+        for channel in channels:
+            channel_address = [int(x,16) for x in channel.indirizzoMidi.split(",")]
+            listen_address_fader.append(channel_address + aux_address)
+
+
+        listen_address_fader.append(aux_address_main)
+
+        # channel request and listen
+        results_value = MidiListener.init_and_listen(listen_address_fader, call_type.CHANNEL)
+        results_value_set = {}
+        
+        # get channel value
+        for channel in channels:
+            channel_midi = self.channelDAO.get_channel_address(channel_id = channel.id)
+            channel_address = [int(x,16) for x in channel_midi.split(",")] + aux_address
+            try:
+                results_value_set[channel.id] = results_value[tuple(channel_address)]
+            except KeyError as e:
+                print(f"error key {e}")
+                results_value_set[channel.id] = 0
+
+        try:
+            results_value_set["main"] = results_value[tuple(aux_address_main)]
+        except KeyError as e:
+            print(f"error key {e}")
+            results_value_set["main"] = 0
+
+        # switch Main request and listen
+        results_value_switch = MidiListener.init_and_listen([aux_address_main_switch], call_type.SWITCH)
+
+        try:
+            results_value_set["switch"] = results_value_switch[tuple(aux_address_main_switch)]
+        except KeyError as e:
+            print(f"error key {e}")
+            results_value_set["switch"] = False
+
+        return json.dumps(results_value_set, indent=2)

@@ -40,6 +40,7 @@ async def live_user(websocket: WebSocket):
             print(f"errore sync {e}")
 
 
+    sync = None
 
     try:
         while True:
@@ -54,8 +55,9 @@ async def live_user(websocket: WebSocket):
             
     except WebSocketDisconnect:
         print("Il client ha chiuso la connessione.")
-        sync.stop()
     finally:
+        if sync:
+            sync.stop()
         is_active = False      
 
 
@@ -114,8 +116,9 @@ async def live_mixer(websocket: WebSocket):
             
     except WebSocketDisconnect:
         print("Il client ha chiuso la connessione.")
-        sync.stop()
     finally:
+        if sync:
+            sync.stop()
         is_active = False  
 
 
@@ -162,8 +165,9 @@ async def live_aux_mixer(websocket: WebSocket, aux_id: int):
             
     except WebSocketDisconnect:
         print("Il client ha chiuso la connessione.")
-        sync.stop()
     finally:
+        if sync:
+            sync.stop()
         is_active = False      
 
 
@@ -219,7 +223,8 @@ async def live_video(websocket: WebSocket):
             
     except WebSocketDisconnect:
         print("Il client ha chiuso la connessione.")
-        sync.stop()
     finally:
+        if sync:
+            sync.stop()
         is_active = False  
 

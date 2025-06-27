@@ -64,7 +64,6 @@ function checkSwitch(canaleId, switchValue){
     xhttp.send(JSON.stringify(message));
 }
 
-
 function checkSwitchMain(switchValue){
     const xhttp = new XMLHttpRequest();
     xhttp.open("POST", "./switch/main", true)
@@ -77,47 +76,134 @@ function checkSwitchMain(switchValue){
     xhttp.send(JSON.stringify(message));
 }
 
-const socket = new WebSocket(`wss://${window.location.host}/ws/liveSyncVideo`); 
+let socket;
+let isConneting = false;
+const spinner = document.getElementById("spinner-container");
 
-socket.onopen = function(){};
 
-socket.onmessage = function(event){
-    const response = JSON.parse(event.data);
-    if(response != null){
-        let elname = "";
+function syncFader(){
+    if(spinner)
+        spinner.hidden = false;
 
-        let element = null;
-        if(response.type === "switch"){
-            element = document.getElementById(elname+"switch_"+response.channel);
-            if(element != null){
-                element.checked = response.value;
+    const xhttp = new XMLHttpRequest();
+    xhttp.open("GET", `./getFadersValue`);
+    xhttp.send();
+
+    xhttp.onreadystatechange = function() {
+        if (this.readyState === XMLHttpRequest.DONE) {
+            if (this.status === 200) {
+                try {
+                    const response = JSON.parse(this.responseText);
+                    const responseJson = typeof response === "string" ? JSON.parse(response) : response;
+                    if (responseJson != null) {
+                        for (const key in responseJson) {
+                            let element;
+                            if(key == 'switch'){
+                                element = document.getElementById("switch_main");
+                                if(element != null)
+                                    element.checked = responseJson[key];   
+                            }else{
+                                element = document.getElementById("canale_" + key);
+                                if (element != null)
+                                    element.value = parseInt(responseJson[key], 10);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Errore nel parsing JSON:", e);
+                }
+            } else {
+                console.warn("Errore nella richiesta:", this.status, this.statusText);
             }
-        }else if(response.type === "fader"){
-            element = document.getElementById(elname+"canale_"+response.channel);
-            if(element != null)
-                element.value = response.value;
+
+            if (spinner)
+                spinner.hidden = true;
         }
-
     }
-};
+}
 
-socket.onerror = function(error){
-    message = document.querySelector(".alert");
-    message.hidden = false;
-    message.getElementsByTagName("p")[0].innerHTML = "Errore sincronizzazione: " + error.message;
-};
+// WebSocket connection
+function createAndConnectWebSocket(){
+    if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING || isConnecting)) {
+        return;
+    }
 
-socket.onclose = function(e){
-    message = document.querySelector(".alert");
-    message.hidden = false;
-    message.getElementsByTagName("p")[0].innerHTML = "Disconnesso, nessuna sincronizzazione con il mixer <a href='./home'>ricarica la pagina</a>";
+    isConnecting = true;
 
-};
+    syncFader();
+
+    socket = new WebSocket(`wss://${window.location.host}/ws/liveSyncVideo`); 
+
+    socket.onopen = function(){
+        message = document.querySelector(".alert");
+        message.hidden = true;
+    };
+
+    socket.onmessage = function(event){
+        const response = JSON.parse(event.data);
+        if(response != null){
+            let elname = "";
+
+            let element = null;
+            if(response.type === "switch"){
+                element = document.getElementById(elname+"switch_"+response.channel);
+                if(element != null){
+                    element.checked = response.value;
+                }
+            }else if(response.type === "fader"){
+                element = document.getElementById(elname+"canale_"+response.channel);
+                if(element != null)
+                    element.value = response.value;
+            }
+
+        }
+    };
+
+    socket.onerror = function(error){
+        isConnecting = false;
+        message = document.querySelector(".alert");
+        message.hidden = false;
+        message.getElementsByTagName("p")[0].innerHTML = "Errore sincronizzazione: " + error.message;
+    };
+
+    socket.onclose = function(e){
+        isConnecting = false;
+        message = document.querySelector(".alert");
+        message.hidden = false;
+        message.getElementsByTagName("p")[0].innerHTML = "Disconnesso, nessuna sincronizzazione con il mixer <a href='#' onclick='createAndConnectWebSocket();'>ricarica la pagina</a>";
+
+    };
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    createAndConnectWebSocket();
+  }
+});
+
+window.addEventListener("focus", () => {
+  createAndConnectWebSocket();
+});
+
+window.addEventListener("pageshow", (event) => {
+    if (event.persisted || socket.readyState !== WebSocket.OPEN) {
+        createAndConnectWebSocket();
+    }
+});
+
+createAndConnectWebSocket();
 
 
-const buttonContainer = document.getElementById("scene-button");
-button = buttonContainer.querySelector("button[type='menu']");
-button.addEventListener("click", function() {
-    const sceneContainer = document.querySelector(".scene-container-list");
-    sceneContainer.classList.toggle("visible");
+document.addEventListener("DOMContentLoaded", function () {
+    const buttonContainer = document.getElementById("scene-button");
+    if (!buttonContainer) return;
+
+    const button = buttonContainer.querySelector("button[type='menu']");
+    if (!button) return;
+
+    button.addEventListener("click", function () {
+        const sceneContainer = document.querySelector(".scene-container-list");
+        if (sceneContainer)
+            sceneContainer.classList.toggle("visible");
+    });
 });

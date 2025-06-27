@@ -7,58 +7,7 @@
         <title>M-400 remote control</title>
         <link rel="icon" type="image/png" href="/static/resource/mixer_icon.png" />
 
-        <style>
-            ul {
-              list-style: none;
-              padding: 0;
-              width: 100%;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-            }
-            li {
-                width: 80%;
-                padding: 10px;
-                margin: 5px 0;
-                background-color: #f0f0f0;
-                border: 1px solid #ccc;
-                border-radius: 10px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            #addbuttons {
-                width: 100%;
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-                justify-content: center;
-                margin-bottom: 20px;
-            }
-
-            #addbuttons button {
-                margin: 3px;
-                padding: 5px;
-                width: 95%;
-                height: 95%;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-
-            @media screen and (max-width: 400px) {
-                input[type="text"] {
-                    width: 100px;
-                }
-                
-            }
-
-            @media screen and (max-width: 300px) {
-                input[type="text"] {
-                    width: 60px;
-                }
-                
-            }
-        </style>
+        <link rel="stylesheet" href="/static/style/user/layout.css"/>
 
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
         <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>

@@ -7,6 +7,7 @@ from app.dao.partecipazione_scena_dao import PartecipazioneScenaDAO
 from app.dao.user_dao import UserDAO
 from fastapi.responses import RedirectResponse
 import os
+import json
 
 from midi.midi_controller import MidiController, MidiListener, call_type
 
@@ -29,43 +30,13 @@ class UserService:
 
         if not canali or not aux:
             return RedirectResponse(url="/user/getScenes", status_code=303)
-            
-        # get value canali
-        listenAddress = []
-        auxAddress = [int(x,16) for x in aux.indirizzoMidi.split(",")]
-        auxAddressMain = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postMainFader
 
         for canale in canali:
-            channelMidi = self.channelDAO.get_channel_address(channel_id = canale.canaleId)
-            channelAddress = [int(x,16) for x in channelMidi.split(",")] 
-
             if not hasBatteria and canale.isBatteria:
                 hasBatteria = True
-                
-            listenAddress.append(channelAddress + auxAddress)
+                break
 
-        listenAddress.append(auxAddressMain)
-
-        resultsValue = MidiListener.init_and_listen(listenAddress, call_type.CHANNEL)
-        
-        resultsValueSet = []
-        
-        for address in listenAddress:
-            try:
-                resultsValueSet.append(resultsValue[tuple(address)])
-            except KeyError as e:
-                print(f"error key {e}")
-                resultsValueSet.append(0)
-
-        try:
-            valueMain = resultsValue[tuple(auxAddressMain)]
-        except KeyError as e:
-            print(f"error key {e}")
-            valueMain = 0
-
-        coppieCanali = list(zip(canali, resultsValueSet))
-        
-        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "indirizzoaux": aux.indirizzoMidi, "indirizzoauxMain": aux.indirizzoMidiMain, "valueMain": valueMain, "hasBatteria" : hasBatteria})
+        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": canali, "indirizzoaux": aux.indirizzoMidi, "indirizzoauxMain": aux.indirizzoMidiMain, "hasBatteria" : hasBatteria})
         
     def set_layout(self, userID, scenaID, request):  
         channels = self.channelDAO.get_all_channels()
@@ -93,3 +64,38 @@ class UserService:
     def set_fader_main(self, value, auxAddress):
         addressAuxhex = [int(x,16) for x in auxAddress.split(",")] + self.postMainFader
         self.midiController.send_command(addressAuxhex, MidiController.convert_fader_to_hex(int(value)))
+
+    def get_faders_value(self, user_id, scene_id, aux, aux_main):
+        channels = self.layoutCanaleDAO.get_layout_channel(user_id, scene_id)
+        listen_address = []
+        aux = [int(x,16) for x in aux.split(",")]
+        aux_main = [int(x,16) for x in aux_main.split(",")] + self.postMainFader
+
+        for channel in channels:
+            channel_midi = self.channelDAO.get_channel_address(channel_id = channel.canaleId)
+            channel_address = [int(x,16) for x in channel_midi.split(",")] 
+
+            listen_address.append(channel_address + aux)
+
+        listen_address.append(aux_main)
+
+        results_value = MidiListener.init_and_listen(listen_address, call_type.CHANNEL)
+
+        results_value_set = {}
+
+        for channel in channels:
+            channel_midi = self.channelDAO.get_channel_address(channel_id = channel.canaleId)
+            channel_address = [int(x,16) for x in channel_midi.split(",")] + aux
+            try:
+                results_value_set[channel.canaleId] = results_value[tuple(channel_address)]
+            except KeyError as e:
+                print(f"error key {e}")
+                results_value_set[channel.canaleId] = 0
+
+        try:
+            results_value_set["main"] = results_value[tuple(aux_main)]
+        except KeyError as e:
+            print(f"error key {e}")
+            results_value_set["main"] = 0
+
+        return json.dumps(results_value_set, indent=2)

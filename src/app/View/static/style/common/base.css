@@ -7,3 +7,17 @@
     font-size: 24px;
 }
 
+#spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;   /* larghezza contenitore */
+    height: 200px;  
+}
+
+.spinner-border {
+    width: 100px;   
+    height: 100px;
+    border-width: 0.3em; 
+}
+
