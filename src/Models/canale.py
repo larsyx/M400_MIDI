@@ -12,6 +12,5 @@ class Canale(Base):
     nome = Column(String, nullable=False)
     descrizione = Column(String, nullable = True)
     indirizzoMidi = Column(String, nullable=False, unique=True)
-    indirizzoPreamp = Column(String, nullable=True, unique=True)
 
     layoutCanale = relationship("LayoutCanale", back_populates="canale")

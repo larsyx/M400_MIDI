@@ -7,6 +7,7 @@ from app.dao.dca_dao import DCA_DAO
 from app.dao.aux_dao import AuxDAO
 from midi.midi_controller import MidiController, MidiListener, call_type, get_eq_address_value, get_eq_channel
 from dotenv import load_dotenv
+import json
 
 
 class MixerService:
@@ -22,6 +23,8 @@ class MixerService:
         self.postEqSwitch = [int(val,16) for val in os.getenv("EQ_Post_Switch").split(",")]
         self.postName = [int(val,16) for val in os.getenv("Fader_Post_Name").split(",")]
         self.postLink = [int(val,16) for val in os.getenv("Fader_Post_link").split(",")]
+        self.pre_preamp = [int(val,16) for val in os.getenv("Preamp_Pre").split(",")]
+        self.post_preamp = [int(val,16) for val in os.getenv("Preamp_Post").split(",")]
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "view", "mixer"))
         self.midiController = MidiController()
 
@@ -51,6 +54,7 @@ class MixerService:
 
             listenAddressFader.append(dcaFader)
             listenAddressSwitch.append(dcaSwitch)
+            listenAddressName.append(dcaFader[0:2] + self.postName)
 
         listenAddressFader.append(self.preMain + self.postMainFader)
         listenAddressSwitch.append(self.preMain + self.postSwitch)
@@ -119,13 +123,26 @@ class MixerService:
         # get names channel
         resultsValueName = MidiListener.init_and_listen(listenAddressName, call_type.NAME)       
         resultsValueSetName = []
-
-        for address in listenAddressName: 
+        resultDcaValueSetName = []
+        
+        # get channel name
+        for canale in canali:
+            channelAddress = [int(x,16) for x in canale.indirizzoMidi.split(",")] 
             try:
-                resultsValueSetName.append(resultsValueName[tuple(address)])
+                resultsValueSetName.append(resultsValueName[tuple(channelAddress + self.postName)])
             except KeyError as k:
                 print("errore chiave ", k)
-                resultsValueSetName.append("")
+                resultsValueSetName.append(0)
+
+        # get dca name
+
+        for dcaChannel in dca:
+            dcaAddress = [int(x,16) for x in dcaChannel.indirizzoMidiFader.split(",")] 
+            try:
+                resultDcaValueSetName.append(resultsValueName[tuple(dcaAddress[0:2] + self.postName)])
+            except KeyError as k:
+                print("errore chiave ", k)
+                resultDcaValueSetName.append(0)
 
         # get link channel
         resultsValueLink = MidiListener.init_and_listen(listenAddressLink, call_type.SWITCH)    
@@ -142,17 +159,21 @@ class MixerService:
         skip = False
         for i in range(len(resultsValueSetLink)-1):
             if not skip:
-                if resultsValueSetLink[i] and resultsValueSetLink[i+1]:
-                    resultsValueSetLink[i] = False
-                    skip = True
+                if resultsValueSetLink[i]:
+                    if resultsValueSetLink[i+1]:
+                        resultsValueSetLink[i] = False
+                        skip = True
+                    if not resultsValueSetLink[i+1]:
+                        resultsValueSetLink[i] = False
+                        resultsValueSetLink[i+1] = True
+                        skip = True
             else:
                 skip = False
-        
 
         coppieCanali = list(zip(canali, resultsValueSet, resultsValueSetSwitch, resultsValueSetName, resultsValueSetLink))
 
         #DCA
-        coppieDca = list(zip(dca, resultDcaValueSet, resultDcaValueSetSwitch))
+        coppieDca = list(zip(dca, resultDcaValueSet, resultDcaValueSetSwitch, resultDcaValueSetName))
 
 
         # get scene for recall
@@ -361,23 +382,40 @@ class MixerService:
 
     def eq_preamp_set(self, channel, value):
         if channel and 0 <= value <= 55:
-            channel_address = self.channelDAO.get_preamp_by_channel(channel)
-            if channel_address:
-                channel_address = [int(x, 16) for x in channel_address.split(',')]
-                self.midiController.send_command(channel_address, [value])
+            channel_address = self.pre_preamp + [channel] + self.post_preamp
+            self.midiController.send_command(channel_address, [value])
 
     def eq_preamp_get(self, channel):
         if channel:
-            channel_address = self.channelDAO.get_preamp_by_channel(channel)
+            
+            channel_address = self.channelDAO.get_channel_address(channel)
+
             if channel_address:
 
                 channel_address = [int(x, 16) for x in channel_address.split(',')]
-                
-                # channel request and listen
-                resultsValue = MidiListener.init_and_listen([channel_address], call_type.PREAMP)
+                channel_address[0] -= 1
+                channel_address += self.postName
 
-                value = next(iter(resultsValue.values()))
-                return value
+                resultsValue = MidiListener.init_and_listen([channel_address], call_type.PATCH_CHANNEL)
+
+                value_patchbay = next(iter(resultsValue.values()))
+                if 0 < value_patchbay < 80:
+                    address_request = self.pre_preamp + [value_patchbay] + self.post_preamp
+                    
+                    # channel request and listen
+                    resultsValue = MidiListener.init_and_listen([address_request], call_type.PREAMP)
+
+                    value = next(iter(resultsValue.values()))
+                else:
+                    value_patchbay = -1
+                    value = 0
+
+                response = {
+                    "ch_patch" : value_patchbay,
+                    "preamp" : value
+                }
+                
+                return json.dumps(response, indent=2)
 
     def set_fader_aux_value(self, auxId, canaleId, value):
         aux = self.auxDAO.get_aux_by_id(auxId)

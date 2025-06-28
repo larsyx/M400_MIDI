@@ -349,10 +349,13 @@ function setEQSwitch(value){
     xhttp.send(JSON.stringify(message));
 }
 
-function openEq(channel){
+let value_patch = -1
+
+function openEq(channel, name){
   this.channel = channel
   document.getElementsByClassName('eq-container')[0].style.display='block'; 
-  document.getElementById('channel-name').innerHTML=`Canale ${channel}`;
+  document.getElementsByClassName('first-line')[0].style.display='block'; 
+  document.getElementById('channel-name').innerHTML=`CH ${channel} - ${name}`;
 
   const xhttp = new XMLHttpRequest();
   xhttp.open("GET", `/mixer/EQget/${channel}`);
@@ -361,10 +364,16 @@ function openEq(channel){
   spinner = document.getElementById("spinner");
   spinner.classList.remove("hidden-important"); 
   graph = document.getElementsByClassName("graph-container")[0];
+  first_line = document.getElementsByClassName("first-line")[0];
   if (getComputedStyle(graph).display == "none")
       graph = "null"
   else
       graph.style.display ="None"
+
+  if (getComputedStyle(first_line).display == "none")
+      first_line = "null"
+  else
+      first_line.style.display ="None"
 
 
   xhttp.onload = function(){
@@ -384,6 +393,7 @@ function openEq(channel){
       spinner.classList.add("hidden-important"); 
       if(graph)
           graph.style.display ="block"
+
       update();
   }
 
@@ -404,27 +414,46 @@ function openEq(channel){
   xhttp3.send();
 
   xhttp3.onload = function(){
-      const obj = JSON.parse(this.responseText);
+    
+      const json = JSON.parse(this.responseText);
+      const obj = JSON.parse(json);
+
       slider = document.getElementById("pre-amp");
-      if(slider)
-          slider.value=obj; 
+      gain_container = document.getElementById("gain-container");
+      value_patch = parseInt(obj.ch_patch);
+      if(value_patch == -1){
+        gain_container.style.display = "none"
+        if(slider){
+          slider.value = 0
+        }
+      }
+      else{
+        gain_container.style.display = "flex"
+        if(slider){
+            slider.value=obj.preamp;
+        }
+      }      
+      if(first_line)
+          first_line.style.display ="flex"
   }
 }
 
 
 function setPreamp(value){
 
-  const xhttp = new XMLHttpRequest();
-  xhttp.open("POST", `/mixer/PreampSet`);
-  xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  if(value_patch != null && value_patch != -1){
+    const xhttp = new XMLHttpRequest();
+    xhttp.open("POST", `/mixer/PreampSet`);
+    xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
 
-  request = {
-      channel : this.channel,
-      value : value
-  };
+    request = {
+        channel : value_patch,
+        value : value
+    };
 
-  xhttp.send(JSON.stringify(request));
 
+    xhttp.send(JSON.stringify(request));
+  }
 }
 
 function changeValueGain(type){

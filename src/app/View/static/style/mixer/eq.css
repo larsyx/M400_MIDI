@@ -82,6 +82,13 @@ label { display: block; margin: 4px 0; }
     direction: ltr;
 }
 
+#gain-container{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
 @media screen and (max-width: 470px), screen and (max-height:600px){
     .graph-container{
         display: none;

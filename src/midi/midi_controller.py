@@ -62,6 +62,7 @@ class MidiController:
         with mido.open_output(self.ped) as outport:
             outport.send(msg)
     
+    @staticmethod
     def convert_fader_to_hex(value):
         if value == 0:
             return [0x78, 0x76]
@@ -92,6 +93,7 @@ class MidiController:
 
         return [first_value, second_value]
 
+    @staticmethod
     def convert_switch_to_hex(switch):
         return [0x00] if switch else [0x01] 
 
@@ -105,12 +107,12 @@ class MidiController:
             outport.send(msg)
 
     def load_scene(self, scene_number):
-
         channel, program_number = MidiController.convert_fader_to_hexScene(scene_number=scene_number)
         msg = mido.Message('program_change', program=program_number, channel=channel)
         with mido.open_output(self.ped) as outport:
             outport.send(msg)
 
+    @staticmethod
     def convert_fader_to_hexScene(scene_number):
         if not 0 <= scene_number <= 299:
             return None
@@ -128,6 +130,7 @@ class MidiController:
 
         return channel, program_number
 
+    @staticmethod
     def convert_freq_to_hex(freq):
         if 20 <= freq <= 20000:
             b1 = (freq >> 14) & 0x7F  
@@ -137,6 +140,7 @@ class MidiController:
         
         return None
 
+    @staticmethod
     def convert_q_to_hex(q):
         if 0.36 <= q <= 16:
             q *= 100
@@ -146,6 +150,7 @@ class MidiController:
             return [first_value, second_value]
         return None
 
+    @staticmethod
     def convert_gain_to_hex(gain):
         if -15 <= gain <= 15:
             if gain >= 0:
@@ -185,6 +190,7 @@ class call_type(Enum):
     GAIN = "gain"
     PREAMP = "preamp"
     NAME = "name"
+    PATCH_CHANNEL = "patch_channel"
 
 class MidiListener:
     def __init__(self, midi_addresses, calltype):
@@ -208,6 +214,8 @@ class MidiListener:
                 callfn = self.callback_preamp
             case call_type.NAME:
                 callfn = self.callback_name
+            case call_type.PATCH_CHANNEL:
+                callfn = self.callback_patchbay_channel
 
         self.callback = callfn
 
@@ -284,6 +292,17 @@ class MidiListener:
                     str_hex = ''.join(f'{byte:02X}' for byte in data[10:16])
                     self.received[key] = MidiListener.convert_hex_to_str(str_hex)
 
+    def callback_patchbay_channel(self, msg):
+        if not self.running:
+            return
+        if msg.type == 'sysex':
+            data = tuple(msg.data)
+            key = data[6:10]
+            with self.lock:
+                if key in self.midi_addresses and key not in self.received:
+                    str_hex = ''.join(f'{byte:02X}' for byte in data[10:16])
+                    self.received[key] = data[10]
+
     def stop(self):
         self.running = False
         get_midi_multiplexer().unregister(self.callback)
@@ -296,6 +315,7 @@ class MidiListener:
         with self.lock:
             return dict(self.received)
         
+    @staticmethod
     def convert_hex_to_fader(firstValue, secondValue):
         try:
             if firstValue == 0x00:
@@ -326,9 +346,11 @@ class MidiListener:
         except Exception as e:
             print(f"errore: {e}")
 
+    @staticmethod
     def convert_hex_to_switch(value):
         return False if value == 0x01 else True
 
+    @staticmethod
     def convert_hex_to_Q(first_value, second_value):
         if 0 <= first_value <= 12 and  0 <= second_value <= 127:
             q_times_100 = first_value * 128 + second_value
@@ -339,6 +361,7 @@ class MidiListener:
                 return 0.36
             return q
 
+    @staticmethod
     def convert_hex_to_freq(first_value, second_value, third_value):
         if 0 <= first_value <= 1 and 0 <= second_value <= 127 and 0 <= third_value <= 127:
             freq = (first_value << 14) | (second_value << 7) | third_value
@@ -350,6 +373,7 @@ class MidiListener:
 
         return None
         
+    @staticmethod
     def convert_hex_to_gain(first_value, second_value):
         if 0 <= second_value <= 127:
             if 0 <= first_value <=1:
@@ -371,9 +395,11 @@ class MidiListener:
    
         return None
 
+    @staticmethod
     def convert_hex_to_str(str_hex):
         return bytes.fromhex(str_hex).decode('ascii')
 
+    @staticmethod
     def init_and_listen(listenAddresses, call_type):
         listen = MidiListener(listenAddresses, call_type)
 

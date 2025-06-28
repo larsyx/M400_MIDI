@@ -64,7 +64,7 @@
 
 
         <div class="slider_dca">
-            {% for dca, value, switch in dcas%}
+            {% for dca, value, switch, name in dcas%}
                 <div class="canale-container">
 
                     <input id="dca_switch_{{dca.id}}" onchange="checkSwitchDca({{dca.id}}, this.checked)" type="checkbox"{% if switch %} checked {% endif %} hidden>
@@ -74,7 +74,7 @@
                     <input class="inputRange"  type="range" min="0" max="100" value="{{value}}" id="dca_canale_{{ dca.id }}" onchange="sendMessageDca( {{dca.id}} , this.value);" oninput="sendMessageDca({{dca.id}} , this.value);">
                     <button type="button"  onclick="changeValue({{ dca.id }}, 'minus', 'dca')" >-</button>
 
-                    <span class="descrizione">{% if dca.descrizione is not none %} <strong>{{ dca.descrizione }}</strong> {% endif %}</span>
+                    <span class="descrizione">{% if name is not none %} <strong>{{ name }}</strong> {% endif %}</span>
                 </div>
             {% endfor %}
        </div>
@@ -97,7 +97,7 @@
                     <button type="button" onclick="changeValue({{ canale.id }}, 'plus')">+</button>
                     <input class="inputRange"  type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.id }}" onchange="sendMessage( {{ canale.id }}, this.value);" oninput="sendMessage({{ canale.id }}, this.value);">
                     <button type="button"  onclick="changeValue({{ canale.id }}, 'minus')" >-</button>
-                    <button class="eq-button" type="button" onclick="openEq({{canale.id}})" style="font-size: 12px;">EQ</button>
+                    <button class="eq-button" type="button" onclick="openEq({{canale.id}}, '{{name}}')" style="font-size: 12px;">EQ</button>
 
                     <span class="descrizione">{% if name is not none %} <strong> {{ name }}</strong> {% endif %}</span>
                 </div>
@@ -128,10 +128,12 @@
             <span class="eq-close close-span" onclick="this.parentElement.style.display='none'">&times;</span>
             <div class="first-line">
                 <h4 id="channel-name">Channel</h4>
-                <label for="gain">Gain</label>
-                <button type="button"  onclick="changeValueGain('minus')" >-</button>
-                <input id="pre-amp" type="range" min="0" max="55" onchange="setPreamp(this.value)" oninput="setPreamp(this.value)" >
-                <button type="button"  onclick="changeValueGain('plus')" >+</button>
+                <div id="gain-container">
+                    <label for="gain">Gain</label>
+                    <button type="button"  onclick="changeValueGain('minus')" >-</button>
+                    <input id="pre-amp" type="range" min="0" max="55" onchange="setPreamp(this.value)" oninput="setPreamp(this.value)" >
+                    <button type="button"  onclick="changeValueGain('plus')" >+</button>
+                </div>
                 <input type="checkbox" id="switchEQ" onchange="setEQSwitch(this.checked)" hidden>
                 <label for="switchEQ" class="mute">Switch EQ</label>
             </div>
@@ -245,28 +247,5 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
 
 
-        <script>
-            const ranges = document.getElementsByClassName("inputRange");
-
-            Array.from(ranges).forEach(range => {
-                range.addEventListener("wheel", function(event) {
-                    event.preventDefault(); // Impedisce lo scroll della pagina
-
-                    const step = parseFloat(range.step) || 1;
-                    let currentValue = parseFloat(range.value);
-                    
-                    if (event.deltaY < 0) {
-                    // Scroll verso l'alto -> aumenta
-                    range.value = Math.min(currentValue + step, range.max);
-                    } else {
-                    // Scroll verso il basso -> diminuisce
-                    range.value = Math.max(currentValue - step, range.min);
-                    }
-
-                    // Se vuoi puoi scatenare un evento 'input' o 'change'
-                    range.dispatchEvent(new Event('input')); // utile se ci sono altri listener
-                });
-            });
-        </script>
     </body>
 </html>
