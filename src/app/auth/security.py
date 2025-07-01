@@ -24,7 +24,7 @@ def get_current_user_token(access_token):
     if not access_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token mancante nei cookie")
 
-    payload = verify_token(access_token) 
+    payload = verify_token(access_token)
     if payload is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token non valido")
     elif userDAO.get_user_by_username(payload["sub"]) == None:

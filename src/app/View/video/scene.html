@@ -86,7 +86,7 @@
                     <div>{{canale.nome}}</div>
 
                     <button type="button" onclick="changeValue({{ canale.id }}, 'plus')">+</button>
-                    <input class="inputRange"  type="range" min="0" max="100" value="0" id="canale_{{ canale.id }}" onchange="sendMessage( {{canale.id}} , this.value);" oninput="sendMessage({{canale.id}} , this.value);">
+                    <input class="inputRange"  type="range" min="0" max="1000" value="0" id="canale_{{ canale.id }}" onchange="sendMessage( {{canale.id}} , this.value);" oninput="sendMessage({{canale.id}} , this.value);">
                     <button type="button"  onclick="changeValue({{ canale.id }}, 'minus')" >-</button>
 
                     <span class="descrizione">{% if canale.descrizione is not none %} <strong> {{ canale.descrizione }}</strong> {% endif %}</span>
@@ -98,10 +98,13 @@
             <input id="switch_main" onchange="checkSwitchMain(this.checked)" type="checkbox" hidden>
             <label for="switch_main" class="mute">Main</label>
             <button type="button"  onclick="changeValue('main', 'minus')" >-</button>
-            <input class="inputRange"  type="range" min="0" max="100" value="0" id="canale_main" onchange="sendMessageMain(this.value);" oninput="sendMessageMain(this.value);">
+            <input class="inputRange"  type="range" min="0" max="1000" value="0" id="canale_main" onchange="sendMessageMain(this.value);" oninput="sendMessageMain(this.value);">
             <button type="button" onclick="changeValue('main', 'plus')">+</button>
         </div>
 
         <script src="/static/script/video/scene.js"></script>
+        <script>
+            const step = 3;
+        </script>
     </body>
 </html>

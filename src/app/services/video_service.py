@@ -26,7 +26,7 @@ class VideoService():
         channels = self.channelDAO.get_all_channels()
         return self.templates.TemplateResponse("scene.html", {"request": request, "canali": channels})
 
-    def set_fader(self, channel_id, value):
+    def set_fader(self, token, channel_id, value):
         channel_address = self.channelDAO.get_channel_address(channel_id)
     
         if(channel_address != None):
@@ -37,21 +37,21 @@ class VideoService():
 
             address = channelAddresshex + address_aux
             
-            self.midiController.send_command(address, MidiController.convert_fader_to_hex(int(value)))
+            self.midiController.send_command(address, MidiController.convert_fader_to_hex(int(value)), token)
 
-    def set_fader_main(self, value):
+    def set_fader_main(self, token, value):
         aux = self.auxDAO.get_aux_by_id(self.auxId) 
 
         if aux:
             address_aux_main = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postMainFader
-            self.midiController.send_command(address_aux_main, MidiController.convert_fader_to_hex(int(value)))
+            self.midiController.send_command(address_aux_main, MidiController.convert_fader_to_hex(int(value)), token)
 
-    def set_switch_main(self, value):
+    def set_switch_main(self, token, value):
         aux = self.auxDAO.get_aux_by_id(self.auxId)
 
         if aux:
             address_aux_main = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postMainSwitch
-            self.midiController.send_command(address_aux_main, MidiController.convert_switch_to_hex(value))
+            self.midiController.send_command(address_aux_main, MidiController.convert_switch_to_hex(value), token)
 
     def get_faders_value(self):
 

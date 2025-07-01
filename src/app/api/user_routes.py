@@ -36,24 +36,26 @@ async def set_layout(request: Request, scene_id: int):
 @router.post("/user/scene_{scene_id}/set")
 async def set_fader(request: Request):
     user_data = get_current_user(request)
+    token = request.cookies.get("access_token")
 
     data = await request.json()
     canaleId = data.get("canaleId")
     value = data.get("value")
     indirizzoAux = data.get("aux")
 
-    user_service.set_fader(canaleId, value, indirizzoAux)
+    user_service.set_fader(token, canaleId, value, indirizzoAux)
     
 
 @router.post("/user/scene_{scene_id}/set/main")
 async def set_fader_main(request: Request):
     user_data = get_current_user(request)
+    token = request.cookies.get("access_token")
 
     data = await request.json()
     value = data.get("value")
     indirizzoAux = data.get("aux")
     
-    user_service.set_fader_main(value, indirizzoAux)
+    user_service.set_fader_main(token, value, indirizzoAux)
    
 @router.post("/user/scene_{scene_id}/layout/addChannelLayout")
 async def add_channel_Layout(request: Request, scene_id: int):

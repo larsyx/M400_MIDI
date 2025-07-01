@@ -44,7 +44,6 @@ eq_high_freq = [int(val,0) for val in os.getenv("EQ_Post_Hi_Freq").split(",")]
 
 class MidiController: 
     def __init__(self):
-        self.ped = None
 
         for port in mido.get_output_names():
             if midi_name in port:
@@ -54,44 +53,65 @@ class MidiController:
         if not self.ped:
             raise Exception("Nessuna porta midi trovata.\nConnetti il pc al mixer e riprova.")
 
-    def send_command(self, address, data):
+    def send_command(self, address, data, token_user):
         sysex_msg = build_sysex(address, Command_ID_Set, data)
 
         msg = mido.Message('sysex', data=sysex_msg)
 
         with mido.open_output(self.ped) as outport:
             outport.send(msg)
+
+        try:
+            multiplexer = get_midi_multiplexer()
+            multiplexer._dispatch_send(msg, token_user) 
+        except Exception as e:
+            print(f"[DEBUG] Errore durante la dispatch_sysex del messaggio MIDI: {e}")
     
+    # @staticmethod
+    # def convert_fader_to_hex(value):
+    #     if value == 0:
+    #         return [0x78, 0x76]
+    #     if value >=75:
+    #         newvalue = ((value-75)/25)*100 
+    #         return [0x00, int(newvalue)]
+        
+    #     #conversione in db
+    #     decibel = 0
+    #     if value >= 50:
+    #         decibel = (((value-50)*10)/25) -10
+
+    #     if value < 50 and value >= 20:
+    #         decibel = value - 60
+
+    #     if value < 20 and value >= 10:
+    #         decibel = ((value-10)*2) -60
+
+    #     if value < 10 and value >= 1:
+    #         decibel = ((value-1)*(29.6/9))-89.6
+        
+
+
+    #     decibel += 0.1
+    #     decibel *= -10
+    #     decibel = int(decibel)
+    #     first_value = 127 - int((decibel / 128))
+    #     second_value = 127 - (decibel % 128)
+
+    #     return [first_value, second_value]
+
     @staticmethod
     def convert_fader_to_hex(value):
         if value == 0:
             return [0x78, 0x76]
-        if value >=75:
-            newvalue = ((value-75)/25)*100 
-            return [0x00, int(newvalue)]
-        
-        #conversione in db
-        decibel = 0
-        if value >= 50:
-            decibel = (((value-50)*10)/25) -10
+            
+        BASE = 120 * 128 + 125      
+        OFFSET = value - 1               
 
-        if value < 50 and value >= 20:
-            decibel = value - 60
+        total = (BASE + OFFSET) % 16384
 
-        if value < 20 and value >= 10:
-            decibel = ((value-10)*2) -60
-
-        if value < 10 and value >= 1:
-            decibel = ((value-1)*(29.6/9))-89.6
-        
-
-        decibel += 0.1
-        decibel *= -10
-        decibel = int(decibel)
-        first_value = 127 - int((decibel / 128))
-        second_value = 127 - (decibel % 128)
-
-        return [first_value, second_value]
+        a = total // 128
+        b = total % 128
+        return [a, b]
 
     @staticmethod
     def convert_switch_to_hex(switch):
@@ -315,37 +335,58 @@ class MidiListener:
         with self.lock:
             return dict(self.received)
         
-    @staticmethod
-    def convert_hex_to_fader(firstValue, secondValue):
-        try:
-            if firstValue == 0x00:
-                value = (secondValue / 100) * 25 + 75
-                return round(value)
-            elif firstValue == 0x78:
-                return 0
-            elif firstValue == 0x79 or firstValue == 0x7A:
-                norm = round(((secondValue/127) * 4) + 1)
-                return norm if firstValue == 0x79 else norm + 4
-            elif firstValue == 0x7B:
-                norm = round((secondValue/127) * 6) 
-                return norm + 9
-            elif firstValue == 0x7C:
-                norm = round((secondValue/127) * 6)
-                return norm + 15
-            elif firstValue == 0x7D:
-                norm = round((secondValue/127) * 12)
-                return norm + 22
-            elif firstValue == 0x7E:
-                norm = round((secondValue/127) * 12)
-                return norm + 35
-            elif firstValue == 0x7F:
-                norm = round((secondValue/127) * 24)
-                return norm + 48
+    # @staticmethod
+    # def convert_hex_to_fader(firstValue, secondValue):
+    #     try:
+    #         if firstValue == 0x00:
+    #             value = (secondValue / 100) * 25 + 75
+    #             return round(value)
+    #         elif firstValue == 0x78:
+    #             return 0
+    #         elif firstValue == 0x79 or firstValue == 0x7A:
+    #             norm = round(((secondValue/127) * 4) + 1)
+    #             return norm if firstValue == 0x79 else norm + 4
+    #         elif firstValue == 0x7B:
+    #             norm = round((secondValue/127) * 6) 
+    #             return norm + 9
+    #         elif firstValue == 0x7C:
+    #             norm = round((secondValue/127) * 6)
+    #             return norm + 15
+    #         elif firstValue == 0x7D:
+    #             norm = round((secondValue/127) * 12)
+    #             return norm + 22
+    #         elif firstValue == 0x7E:
+    #             norm = round((secondValue/127) * 12)
+    #             return norm + 35
+    #         elif firstValue == 0x7F:
+    #             norm = round((secondValue/127) * 24)
+    #             return norm + 48
             
-            return 0
-        except Exception as e:
-            print(f"errore: {e}")
+    #         return 0
+    #     except Exception as e:
+    #         print(f"errore: {e}")
 
+    @staticmethod
+    def convert_hex_to_fader(a: int, b: int):
+        if not (0 <= a <= 127 and 0 <= b <= 127):
+            raise ValueError("a e b devono essere compresi tra 0 e 127")
+
+        if (a, b) == (0x78, 0x76):
+            return 0
+
+        BASE = 120 * 128 + 125  
+        MODULO = 128 * 128     
+
+        total = a * 128 + b
+        diff = (total - BASE) % MODULO
+
+        n = diff + 1
+
+        if not 1 <= n <= 1000:
+            raise ValueError(f"La coppia ({a}, {b}) non è nella sequenza da 0 a 1000")
+
+        return n
+    
     @staticmethod
     def convert_hex_to_switch(value):
         return False if value == 0x01 else True
@@ -420,11 +461,12 @@ class MidiListener:
         return listen.get_results()
 
 class MidiUserSync():
-    def __init__(self, sendback, address, addressMain):
+    def __init__(self, sendback, address, addressMain, token_user):
         self.loop = asyncio.get_event_loop()
         self.send_back = sendback
         self.post_address = address
         self.addressMain = addressMain
+        self.token = token_user
 
         get_midi_multiplexer().register(self.listening)
 
@@ -432,11 +474,9 @@ class MidiUserSync():
         get_midi_multiplexer().unregister(self.listening)
 
 
-    def listening(self, msg):
-
-        if msg.type == 'sysex':
+    def listening(self, msg, token = None):
+        if msg.type == 'sysex' and (token == None or token != self.token):
             data = tuple(msg.data)
-
             if data[:5] == tuple(header) and data[5] == Command_ID_Set:
                 canale = f"0x{data[6]:02X}, 0x{data[7]:02X}"
                 valore = 0
@@ -447,7 +487,7 @@ class MidiUserSync():
                         self.send_back(canale, valore),
                         self.loop
                     )
-                elif data[6:10] == tuple(self.addressMain):
+                elif data[6:10] == tuple(self.addressMain + fader_post):
                     canale = "main"
                     valore = MidiListener.convert_hex_to_fader(data[10], data[11])
 
@@ -457,12 +497,13 @@ class MidiUserSync():
                     )
 
 class MidiVideoSync():
-    def __init__(self, sendback, address, addressMain):
+    def __init__(self, sendback, address, addressMain, token_user):
         
         self.loop = asyncio.get_event_loop()
         self.send_back = sendback
         self.post_address = address
         self.addressMain = addressMain
+        self.token = token_user
 
         get_midi_multiplexer().register(self.listening)
 
@@ -470,9 +511,8 @@ class MidiVideoSync():
         get_midi_multiplexer().unregister(self.listening)
 
 
-    def listening(self, msg):
-
-        if msg.type == 'sysex':
+    def listening(self, msg, token = None):
+        if msg.type == 'sysex' and (token == None or token != self.token):
             data = tuple(msg.data)
 
             if data[:5] == tuple(header) and data[5] == Command_ID_Set:
@@ -502,9 +542,10 @@ class MidiVideoSync():
                     )
 
 class MidiMixerSync():
-    def __init__(self, send_back):
+    def __init__(self, send_back, token_user):
         self.loop =  asyncio.get_event_loop()
         self.send_back = send_back
+        self.token = token_user
 
         get_midi_multiplexer().register(self.listening)
 
@@ -512,15 +553,16 @@ class MidiMixerSync():
         get_midi_multiplexer().unregister(self.listening)
 
 
-    def listening(self, msg):
-
-        if msg.type == 'sysex':
+    def listening(self, msg, token = None):
+        if msg.type == 'sysex' and (token== None or token != self.token):
             data = tuple(msg.data)
 
             if data[:5] == tuple(header) and data[5] == Command_ID_Set:
-                canale = f"0x{data[6]:02X}, 0x{data[7]:02X}"
+                canale = ""
+                if(3 == data[6] ):
+                    canale = f"0x{data[6]:02X}, 0x{data[7]:02X}"
                 
-                if canale == preMain:
+                if f"0x{data[6]:02X}, 0x{data[7]:02X}" == preMain:
                     canale = "main"
                 typeCmd =""
                 valore = 0
@@ -540,7 +582,8 @@ class MidiMixerSync():
                         typeCmd = "switch"
                         valore = MidiListener.convert_hex_to_switch(data[10])
 
-                if typeCmd != "":
+                
+                if typeCmd != "" and canale != "" :
                     asyncio.run_coroutine_threadsafe(
                         self.send_back(typeCmd, canale, valore),
                         self.loop
@@ -555,14 +598,17 @@ class MidiMultiplexer:
         for port in mido.get_input_names():
             if midi_name in port:
                 port_name = port
-                break
-        
+                break      
         if not port_name:
             raise Exception("Nessuna porta MIDI trovata. Assicurati che il dispositivo sia connesso e riprova.")
 
         self.port = mido.open_input(port_name, callback=self._dispatch)
 
         
+    def _dispatch_send(self, msg, token):
+        with self.lock:
+            for cb in self.callbacks:
+                cb(msg, token)
 
     def _dispatch(self, msg):
         with self.lock:

@@ -33,7 +33,9 @@ function loadAuxParameters(aux_id){
     xhttp.onload = function() {
         if (xhttp.status === 200) {
             const aux_channels = JSON.parse(xhttp.responseText);
-            const aux_channels_list = JSON.parse(aux_channels);
+            const aux_channels_json = JSON.parse(aux_channels);
+            const aux_channels_list = aux_channels_json["channels"];
+            const aux_switch = aux_channels_json["switch"]
 
             for (const [chiave, valore] of Object.entries(aux_channels_list)) {
                 const element = document.getElementById(`aux_canale_${chiave}`);
@@ -41,6 +43,11 @@ function loadAuxParameters(aux_id){
                     element.value = valore;
                 }
             }
+
+            const element = document.getElementById('aux_switch_main');
+            if(element)
+                element.checked = aux_switch;
+
 
             
             spinner.classList.add("hidden-important");
@@ -74,15 +81,32 @@ function sendMessageAux(canaleId, value) {
     }
 }
 
+function checkSwitchAux(canaleId, value) {
+    if(aux_id_selected !== -1){
+        const xhttp = new XMLHttpRequest();
+        xhttp.open("POST", "./aux/switch/set", true)
+        xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+        const message = {
+            auxId : aux_id_selected,
+            canaleId: canaleId,
+            value: value
+        };
+
+        xhttp.send(JSON.stringify(message));
+    }
+}
+
+
 function changeValueAux(canaleId, action){
     
     inputRange = document.getElementById("aux_canale_"+canaleId);
     let value = parseInt(inputRange.value, 10);
 
     if(action == "plus")
-        value = Math.min(value + 1, 100);
+        value = Math.min(value + step, 1000);
     else if(action == "minus")
-        value = Math.max(value -1, 0);
+        value = Math.max(value - step, 0);
     inputRange.value = value;
 
 
@@ -97,11 +121,20 @@ function openAndSetSocket(){
 
     socket_aux.onmessage = function(event) {
         const data = JSON.parse(event.data);
+        const type = data.type
         const canaleId = data.channel;
         const value = data.value;
-        const inputElement = document.getElementById(`aux_canale_${canaleId}`);
-        if (inputElement) {
-            inputElement.value = value;
+        if(type === "fader"){
+            const inputElement = document.getElementById(`aux_canale_${canaleId}`);
+            if (inputElement) {
+                inputElement.value = value;
+            }
+        }
+        else if(type === "switch"){
+            const inputElement = document.getElementById(`aux_switch_${canaleId}`);
+            if (inputElement) {
+                inputElement.checked = value;
+            }
         }
         
     };

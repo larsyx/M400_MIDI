@@ -22,33 +22,36 @@ async def load_scene(request: Request):
 async def set_fader(request: Request):
     user_data = get_current_user(request)
     verify_video(user_data["sub"])
+    token = request.cookies.get("access_token")
 
     data = await request.json()
     canaleId = data.get("canaleId")
     value = data.get("value")
 
-    video_service.set_fader(canaleId, value)
+    video_service.set_fader(token, canaleId, value)
     
 
 @router.post("/video/set/main")
 async def set_fader_main(request: Request):
     user_data = get_current_user(request)
     verify_video(user_data["sub"])
+    token = request.cookies.get("access_token")
 
     data = await request.json()
     value = data.get("value")
     
-    video_service.set_fader_main(value)
+    video_service.set_fader_main(token, value)
    
 @router.post("/video/switch/main")
 async def set_switch_main(request: Request):
     user_data = get_current_user(request)
     verify_video(user_data["sub"])
+    token = request.cookies.get("access_token")
 
     data = await request.json()
     value = data.get("switch")
     
-    video_service.set_switch_main(value)
+    video_service.set_switch_main(token, value)
 
 
 @router.get("/video/getFadersValue")

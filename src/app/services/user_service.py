@@ -50,7 +50,7 @@ class UserService:
 
         return self.templates.TemplateResponse("layout.html", {"request": request, "canali": channel, "layout": layouts})
       
-    def set_fader(self, canaleId, value, indirizzoAux):
+    def set_fader(self, token, canaleId, value, indirizzoAux):
         canaleAddress = self.channelDAO.get_channel_address(canaleId)
     
         if(canaleAddress != None):
@@ -59,11 +59,11 @@ class UserService:
 
             indirizzo = channelAddresshex + addressAuxhex
             
-            self.midiController.send_command(indirizzo, MidiController.convert_fader_to_hex(int(value)))
+            self.midiController.send_command(indirizzo, MidiController.convert_fader_to_hex(int(value)), token)
         
-    def set_fader_main(self, value, auxAddress):
+    def set_fader_main(self, token, value, auxAddress):
         addressAuxhex = [int(x,16) for x in auxAddress.split(",")] + self.postMainFader
-        self.midiController.send_command(addressAuxhex, MidiController.convert_fader_to_hex(int(value)))
+        self.midiController.send_command(addressAuxhex, MidiController.convert_fader_to_hex(int(value)), token)
 
     def get_faders_value(self, user_id, scene_id, aux, aux_main):
         channels = self.layoutCanaleDAO.get_layout_channel(user_id, scene_id)
