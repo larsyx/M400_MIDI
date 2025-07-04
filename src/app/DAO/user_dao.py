@@ -1,5 +1,5 @@
 from Database.database import DBSession
-from models.utente import RuoloUtente, Utente
+from models.user import RuoloUtente, User
 from sqlalchemy.orm import Session
 
 class UserDAO:
@@ -8,7 +8,7 @@ class UserDAO:
 
     def get_user_by_username(self, username):
         try:
-            user = self.db.query(Utente).filter(Utente.username == username).first()
+            user = self.db.query(User).filter(User.username == username).first()
             return user if user else None
         except Exception as e:
             print(f"Error retrieving user: {e}")
@@ -19,7 +19,7 @@ class UserDAO:
             user = self.get_user_by_username(username)
 
             if user:
-                return user.ruolo == RuoloUtente.amministratore
+                return user.role == RuoloUtente.amministratore
             else:
                 return False
         except Exception as e:
@@ -31,7 +31,7 @@ class UserDAO:
             user = self.get_user_by_username(username)
 
             if user:
-                return user.ruolo == RuoloUtente.mixerista
+                return user.role == RuoloUtente.mixerista
             else:
                 return False
         except Exception as e:
@@ -43,7 +43,7 @@ class UserDAO:
             user = self.get_user_by_username(username)
 
             if user:
-                return user.ruolo == RuoloUtente.video
+                return user.role == RuoloUtente.video
             else:
                 return False
         except Exception as e:
@@ -52,7 +52,7 @@ class UserDAO:
 
     def create_user(self, username, nome, ruolo):
         try:
-            new_user = Utente(username=username, nome=nome, ruolo=RuoloUtente[ruolo])
+            new_user = User(username=username, name=nome, role=RuoloUtente[ruolo])
             self.db.add(new_user)
             self.db.commit()
             return new_user
@@ -77,8 +77,8 @@ class UserDAO:
         try:
             user = self.get_user_by_username(username)
             if user:
-                user.nome = nome
-                user.ruolo = RuoloUtente[ruolo]
+                user.name = nome
+                user.role = RuoloUtente[ruolo]
                 self.db.commit()
                 return user
             else:
@@ -89,7 +89,7 @@ class UserDAO:
         
     def get_all_users(self):
         try:
-            users = self.db.query(Utente).all()
+            users = self.db.query(User).all()
             return users
         except Exception as e:
             print(f"Error retrieving all users: {e}")
@@ -97,7 +97,7 @@ class UserDAO:
         
     def get_only_user(self):
         try:
-            users = self.db.query(Utente).filter(Utente.ruolo == RuoloUtente.utente)
+            users = self.db.query(User).filter(User.role == RuoloUtente.utente)
             return users
         except Exception as e:
             print(f"Error retrieving users: {e}")

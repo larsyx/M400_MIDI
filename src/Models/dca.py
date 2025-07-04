@@ -6,8 +6,8 @@ class DCA(Base):
     __tablename__ = 'dca'
 
     id = Column(Integer, primary_key=True)
-    nome = Column(String, nullable=False)
-    descrizione = Column(String, nullable=True)
-    indirizzoMidiFader = Column(String, nullable=False, unique=True)
-    indirizzoMidiSwitch = Column(String, nullable=False, unique=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    midi_fader_address = Column(String, nullable=False, unique=True)
+    midi_switch_address = Column(String, nullable=False, unique=True)
 

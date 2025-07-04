@@ -30,7 +30,7 @@ function changeValue(canaleId, action){
     let value = parseInt(inputRange.value, 10);
 
     if(action == "plus")
-        value = Math.min(value + step, 1000);
+        value = Math.min(value + step, 100);
     else if(action == "minus")
         value = Math.max(value - step, 0);
     inputRange.value = value;
@@ -47,7 +47,7 @@ function changeDrum(action){
     for(const input of inputsRange){
         let value = parseInt(input.value, 10);
         if(action == "plus")
-            value = Math.min(value + step, 1000);
+            value = Math.min(value + step, 100);
         else if(action == "minus")
             value = Math.max(value - step, 0);
         input.value = value;
@@ -169,3 +169,31 @@ window.addEventListener("pageshow", (event) => {
 });
 
 createAndConnectWebSocket();
+
+
+// function toggleMain(){
+//     const lateral = document.getElementsByClassName("lateral")[0];
+//     const container = document.getElementsByClassName("container")[0];
+//     if(lateral.style.display == "none"){
+//         lateral.style.display = "flex";
+//     }
+//     else{
+//         lateral.style.display = "none"
+//     }
+// }
+
+function toggleMain() {
+    const lateral = document.querySelector(".lateral");
+    const container = document.querySelector(".container");
+
+    // Solo su schermi piccoli
+    if (window.innerWidth <= 500) {
+        if (lateral.classList.contains("show")) {
+            lateral.classList.remove("show");
+            container.classList.remove("shifted");
+        } else {
+            lateral.classList.add("show");
+            container.classList.add("shifted");
+        }
+    }
+}

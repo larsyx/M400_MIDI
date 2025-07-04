@@ -33,7 +33,7 @@ class VideoService():
             aux = self.auxDAO.get_aux_by_id(self.auxId) 
 
             channelAddresshex = [int(x,16) for x in channel_address.split(",")]
-            address_aux = [int(x,16) for x in aux.indirizzoMidi.split(",")]
+            address_aux = [int(x,16) for x in aux.midi_address.split(",")]
 
             address = channelAddresshex + address_aux
             
@@ -43,14 +43,14 @@ class VideoService():
         aux = self.auxDAO.get_aux_by_id(self.auxId) 
 
         if aux:
-            address_aux_main = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postMainFader
+            address_aux_main = [int(x,16) for x in aux.midi_address_main.split(",")] + self.postMainFader
             self.midiController.send_command(address_aux_main, MidiController.convert_fader_to_hex(int(value)), token)
 
     def set_switch_main(self, token, value):
         aux = self.auxDAO.get_aux_by_id(self.auxId)
 
         if aux:
-            address_aux_main = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postMainSwitch
+            address_aux_main = [int(x,16) for x in aux.midi_address_main.split(",")] + self.postMainSwitch
             self.midiController.send_command(address_aux_main, MidiController.convert_switch_to_hex(value), token)
 
     def get_faders_value(self):
@@ -61,12 +61,12 @@ class VideoService():
         listen_address_fader = []
 
         # initialize the list of addresses for request and listen
-        aux_address = [int(x,16) for x in aux.indirizzoMidi.split(",")] 
-        aux_address_main = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postMainFader
-        aux_address_main_switch = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postMainSwitch
+        aux_address = [int(x,16) for x in aux.midi_address.split(",")] 
+        aux_address_main = [int(x,16) for x in aux.midi_address_main.split(",")] + self.postMainFader
+        aux_address_main_switch = [int(x,16) for x in aux.midi_address_main.split(",")] + self.postMainSwitch
 
         for channel in channels:
-            channel_address = [int(x,16) for x in channel.indirizzoMidi.split(",")]
+            channel_address = [int(x,16) for x in channel.midi_address.split(",")]
             listen_address_fader.append(channel_address + aux_address)
 
 

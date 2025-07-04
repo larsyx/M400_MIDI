@@ -125,9 +125,9 @@
         <div id ="addbuttons">
             {% for canale in canali %}
             <div id= "Add_{{canale.id}}" style="display: inline-block;">
-                <button type="button" draggable="true" onclick="addChannelConfirmation({{canale.id}}, '{{canale.nome}} {% if canale.descrizione is not none %}: {{ canale.descrizione }} {% endif %}')">{{canale.nome}}
-                    {% if canale.descrizione is not none %}
-                        : {{ canale.descrizione }}
+                <button type="button" draggable="true" onclick="addChannelConfirmation({{canale.id}}, '{{canale.name}} {% if canale.description is not none %}: {{ canale.description }} {% endif %}')">{{canale.name}}
+                    {% if canale.description is not none %}
+                        : {{ canale.description }}
                     {% endif %}
                 </button>
             </div>
@@ -148,7 +148,7 @@
                 <ul id="sortable-channels">
                 {% for layoutcanale in channels_layout %}
                     <li id ="Remove_{{layoutcanale.id}}" class="channelLayout" draggable="true">{{layoutcanale.id}} 
-                        <input type="text" value="{{layoutcanale.descrizione}}"> 
+                        <input type="text" value="{{layoutcanale.description}}"> 
                         <div style="display: inline-block;">
                             <button type="button" onclick="removeChannelLayout({{layoutcanale.id}})">Elimina</button>
                         </div>
@@ -162,7 +162,7 @@
                 <ul id="sortable-drums">
                 {% for drum in drums_layout %}
                     <li id ="Remove_{{drum.id}}" class="channelLayout" draggable="true">{{drum.id}} 
-                        <input type="text" value="{{drum.descrizione}}"> 
+                        <input type="text" value="{{drum.description}}"> 
                         <div style="display: inline-block;">
                             <button type="button" onclick="removeChannelLayout({{drum.id}})">Elimina</button>
                         </div>

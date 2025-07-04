@@ -1,5 +1,5 @@
 from Database.database import DBSession
-from models.canale import Canale
+from models.channel import Channel
 
 
 class ChannelDAO:
@@ -8,7 +8,7 @@ class ChannelDAO:
 
     def get_all_channels(self):
          try:
-            channels = self.db.query(Canale).all()
+            channels = self.db.query(Channel).all()
             return channels
          except Exception as e:
             print(f"Error retrieving all channels: {e}")
@@ -16,7 +16,7 @@ class ChannelDAO:
 
     def get_channel_by_id(self, channel_id):
         try:
-            channel = self.db.query(Canale).filter(Canale.id == channel_id).first()
+            channel = self.db.query(Channel).filter(Channel.id == channel_id).first()
             return channel
         except Exception as e:
             print(f"Error retrieving channels: {e}")
@@ -25,10 +25,10 @@ class ChannelDAO:
     def get_channel_address(self, channel_id):
         channel = self.get_channel_by_id(channel_id)
 
-        return channel.indirizzoMidi if channel else None
+        return channel.midi_address if channel else None
     
     def get_channel_by_address(self, address):
-        channel = self.db.query(Canale).filter(Canale.indirizzoMidi == address)[0]
+        channel = self.db.query(Channel).filter(Channel.midi_address == address)[0]
         if channel:
             return channel
         else:
@@ -36,7 +36,7 @@ class ChannelDAO:
         
     def update_channel_description(self, id, value):
         try:
-            self.db.query(Canale).filter(Canale.id == id).update({Canale.descrizione: value})
+            self.db.query(Channel).filter(Channel.id == id).update({Channel.description: value})
             self.db.commit()
             return True
         except Exception as e:

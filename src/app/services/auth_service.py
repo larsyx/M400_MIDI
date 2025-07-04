@@ -1,6 +1,6 @@
 from fastapi.responses import RedirectResponse
 from Database.database import DBSession
-from models import Utente
+from models import User
 from app.dao.user_dao import UserDAO
 from ..auth.auth import create_access_token
 
@@ -12,7 +12,7 @@ class AuthService:
 
         username = username.strip()
 
-        user = self.db.query(Utente).filter(Utente.username == username).first()
+        user = self.db.query(User).filter(User.username == username).first()
 
         if user:
             token = create_access_token({"sub": user.username})

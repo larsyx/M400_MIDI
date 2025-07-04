@@ -68,9 +68,9 @@
         <div>
             <ul>
                 {% for user in users %}
-                    <li><strong>{{user.nome}}</strong> : {{user.username}} : {{user.ruolo.value}} 
-                        {% if user.ruolo.value != "amministratore"%}
-                        <form action="/admin/deleteUser" method="POST">
+                    <li><strong>{{user.name}}</strong> : {{user.username}} : {{user.role.value}} 
+                        {% if user.role.value != "amministratore"%}
+                        <form action="/admin/deleteUser" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare {{user.name}}?');">
                             <input type="hidden" name="username" value ="{{user.username}}">
                             <button type="submit">Elimina</button>
                         </form>

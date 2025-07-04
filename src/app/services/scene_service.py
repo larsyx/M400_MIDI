@@ -39,7 +39,7 @@ class SceneService:
         try:
             new_scene = self.sceneDAO.create_scene(nome, descrizione)
             scenes.append(new_scene)
-            return self.templates.TemplateResponse(request, "manage_scene.html", {"scenes" : scenes, "message" : f"scena {new_scene.nome} creata con successo" })
+            return self.templates.TemplateResponse(request, "manage_scene.html", {"scenes" : scenes, "message" : f"scena {new_scene.name} creata con successo" })
         except Exception as e:
             print(f"Error creating scene: {e}")
             return self.templates.TemplateResponse(request, "manage_scene.html", {"scenes" : scenes, "message" : f"errore creazione scena {e}" })
@@ -57,7 +57,7 @@ class SceneService:
             # auxs name
             listenAddressAuxName = []
             for aux in auxs:
-                auxAddress = [int(x,16) for x in aux.indirizzoMidiMain.split(",")]
+                auxAddress = [int(x,16) for x in aux.midi_address_main.split(",")]
 
                 listenAddressAuxName.append(auxAddress + self.postName)
             
@@ -66,7 +66,7 @@ class SceneService:
             resultsValueAuxSetName = []
 
             for aux in auxs:
-                auxAddress = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] 
+                auxAddress = [int(x,16) for x in aux.midi_address_main.split(",")] 
                 try:
                     resultsValueAuxSetName.append(resultsValueAuxName[tuple(auxAddress + self.postName)])
                 except KeyError as k:
@@ -110,7 +110,7 @@ class SceneService:
             # auxs name
             listenAddressAuxName = []
             for aux in auxs:
-                auxAddress = [int(x,16) for x in aux.indirizzoMidi.split(",")]
+                auxAddress = [int(x,16) for x in aux.midi_address.split(",")]
 
                 listenAddressAuxName.append(auxAddress + self.postName)
             
@@ -119,7 +119,7 @@ class SceneService:
             resultsValueAuxSetName = []
 
             for aux in auxs:
-                auxAddress = [int(x,16) for x in aux.indirizzoMidi.split(",")] 
+                auxAddress = [int(x,16) for x in aux.midi_address.split(",")] 
                 try:
                     resultsValueAuxSetName.append(resultsValueAuxName[tuple(auxAddress + self.postName)])
                 except KeyError as k:
@@ -145,7 +145,7 @@ class SceneService:
 
             partecipazioni = list(partecipazioni)
 
-            if user in [u.utenteUsername for u in partecipazioni] and aux in [a.aux_id for a in partecipazioni]:
+            if user in [u.user_username for u in partecipazioni] and aux in [a.aux_id for a in partecipazioni]:
                 self.partecipazioneScenaDAO.remove_participants(sceneId, user, aux)
 
                 partecipazioni = self.partecipazioneScenaDAO.get_participants_scene(sceneId)
@@ -160,7 +160,7 @@ class SceneService:
             # auxs name
             listenAddressAuxName = []
             for aux in auxs:
-                auxAddress = [int(x,16) for x in aux.indirizzoMidi.split(",")]
+                auxAddress = [int(x,16) for x in aux.midi_address.split(",")]
 
                 listenAddressAuxName.append(auxAddress + self.postName)
             
@@ -169,7 +169,7 @@ class SceneService:
             resultsValueAuxSetName = []
 
             for aux in auxs:
-                auxAddress = [int(x,16) for x in aux.indirizzoMidi.split(",")] 
+                auxAddress = [int(x,16) for x in aux.midi_address.split(",")] 
                 try:
                     resultsValueAuxSetName.append(resultsValueAuxName[tuple(auxAddress + self.postName)])
                 except KeyError as k:

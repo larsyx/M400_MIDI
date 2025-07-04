@@ -34,9 +34,9 @@
 
         {% if scene %}
         <div>
-            <h3>Nome: {{scene.nome}}</h3>
+            <h3>Nome: {{scene.name}}</h3>
             <h5>Id: {{scene.id}}</h5>
-            <h5>Descrizione: {{scene.descrizione}}</h5>
+            <h5>Descrizione: {{scene.description}}</h5>
         </div>
 
         <div>
@@ -44,14 +44,14 @@
                 <label for="user">Utente</label>
                 <select name="username" id="user">
                     {% for user in users%}
-                    <option value="{{user.username}}">{{user.nome}}</option>
+                    <option value="{{user.username}}">{{user.name}}</option>
                     {% endfor %}    
                 </select><br>
 
                 <label for="aux">Aux</label>
                 <select name="aux" id="aux">
                     {% for aux, nome in auxs%}
-                    <option value="{{aux.id}}">{{aux.nome}} {{nome}}</option>
+                    <option value="{{aux.id}}">{{aux.name}} {{nome}}</option>
                     {% endfor %}
                 </select> <br><br>
                 <button type="submit">Inserisci Partecipante</button>
@@ -64,14 +64,14 @@
         </div>
 
         {% for partecipante in partecipanti%}
-        <li style="display: flex; align-items: center; gap: 0.5rem;">{{partecipante.utenteUsername}} 
-            <select onchange="changeAux('{{partecipante.utenteUsername}}', this.value);" name="aux" id="aux">
+        <li style="display: flex; align-items: center; gap: 0.5rem;">{{partecipante.user_username}} 
+            <select onchange="changeAux('{{partecipante.user_username}}', this.value);" name="aux" id="aux">
                 {% for aux, nome in auxs%}
-                <option value="{{aux.id}}" {% if aux.id|string == partecipante.aux_id|string %}selected{% endif %}>{{aux.nome}} {{nome}}</option>
+                <option value="{{aux.id}}" {% if aux.id|string == partecipante.aux_id|string %}selected{% endif %}>{{aux.name}} {{nome}}</option>
                 {% endfor %}
             </select>
             <form action="./removeParticipants" method="post"> 
-                <input type="hidden" name="username" value="{{partecipante.utenteUsername}}">
+                <input type="hidden" name="username" value="{{partecipante.user_username}}">
                 <input type="hidden" name="aux" value="{{partecipante.aux_id}}">
                 <button type="submit">Elimina</button>
             </form>
@@ -79,7 +79,7 @@
         {% endfor %}
 
         <div style="margin-top: 5rem;">
-            <form action="./deleteScene" method="post">
+            <form action="./deleteScene" method="post" onsubmit="return confirm('Sei sicuro di voler eliminare questa scena?');">
                 <button type="submit">Elimina Scena</button>
             </form>
         </div>
@@ -103,6 +103,10 @@
                 };
 
                 xhttp.send(JSON.stringify(message));
+
+            }
+
+            function deleteScene(){
 
             }
         </script>

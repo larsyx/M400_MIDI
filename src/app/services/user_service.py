@@ -28,24 +28,22 @@ class UserService:
         aux = self.partecipazioneScenaDAO.get_aux_user(userID, scenaID)
         hasBatteria = False
 
-        if not canali or not aux:
+        if not aux:
             return RedirectResponse(url="/user/getScenes", status_code=303)
 
         for canale in canali:
-            if not hasBatteria and canale.isBatteria:
+            if not hasBatteria and canale.is_drum:
                 hasBatteria = True
                 break
 
-        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": canali, "indirizzoaux": aux.indirizzoMidi, "indirizzoauxMain": aux.indirizzoMidiMain, "hasBatteria" : hasBatteria})
+        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": canali, "indirizzoaux": aux.midi_address, "indirizzoauxMain": aux.midi_address_main, "hasBatteria" : hasBatteria})
         
     def set_layout(self, userID, scenaID, request):  
         channels = self.channelDAO.get_all_channels()
         layouts = self.layoutCanaleDAO.get_layout_channel(userID, scenaID)
         
-        if not layouts:
-            return RedirectResponse(url="/user/getScenes", status_code=303)
 
-        layout_canali_ids = {layout_canale.canaleId for layout_canale in layouts}
+        layout_canali_ids = {layout_canale.channel_id for layout_canale in layouts}
         channel = [channel for channel in channels if channel.id not in layout_canali_ids]
 
         return self.templates.TemplateResponse("layout.html", {"request": request, "canali": channel, "layout": layouts})
@@ -72,7 +70,7 @@ class UserService:
         aux_main = [int(x,16) for x in aux_main.split(",")] + self.postMainFader
 
         for channel in channels:
-            channel_midi = self.channelDAO.get_channel_address(channel_id = channel.canaleId)
+            channel_midi = self.channelDAO.get_channel_address(channel_id = channel.channel_id)
             channel_address = [int(x,16) for x in channel_midi.split(",")] 
 
             listen_address.append(channel_address + aux)
@@ -84,13 +82,13 @@ class UserService:
         results_value_set = {}
 
         for channel in channels:
-            channel_midi = self.channelDAO.get_channel_address(channel_id = channel.canaleId)
+            channel_midi = self.channelDAO.get_channel_address(channel_id = channel.channel_id)
             channel_address = [int(x,16) for x in channel_midi.split(",")] + aux
             try:
-                results_value_set[channel.canaleId] = results_value[tuple(channel_address)]
+                results_value_set[channel.channel_id] = results_value[tuple(channel_address)]
             except KeyError as e:
                 print(f"error key {e}")
-                results_value_set[channel.canaleId] = 0
+                results_value_set[channel.channel_id] = 0
 
         try:
             results_value_set["main"] = results_value[tuple(aux_main)]

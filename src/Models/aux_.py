@@ -1,13 +1,13 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, Integer
 from sqlalchemy.orm import relationship
 from .base import Base
 
 class Aux(Base):
     __tablename__ = 'aux'
 
-    id = Column(String, primary_key=True)
-    nome = Column(String, nullable=False)
-    indirizzoMidi = Column(String, nullable=False, unique=True)
-    indirizzoMidiMain = Column(String, nullable=False, unique=True)
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    midi_address = Column(String, nullable=False, unique=True)
+    midi_address_main = Column(String, nullable=False, unique=True)
 
-    partecipazioneScena = relationship("PartecipazioneScena", back_populates="aux")
+    scene_participation = relationship("SceneParticipation", back_populates="aux")

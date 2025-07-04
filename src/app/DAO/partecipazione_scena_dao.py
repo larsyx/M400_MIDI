@@ -1,7 +1,7 @@
 from Database.database import DBSession
 from models.aux_ import Aux
-from models.partecipazioneScena import PartecipazioneScena
-from models.utente import RuoloUtente, Utente
+from models.scene_participation import SceneParticipation
+from models.user import RuoloUtente, User
 
 
 class PartecipazioneScenaDAO:
@@ -11,10 +11,10 @@ class PartecipazioneScenaDAO:
     def get_aux_user(self, userID, scenaID):
         try:
             partecipazione = (
-                self.db.query(PartecipazioneScena)
+                self.db.query(SceneParticipation)
                 .filter(
-                    PartecipazioneScena.utenteUsername == userID,
-                    PartecipazioneScena.scenaId == scenaID,
+                    SceneParticipation.user_username == userID,
+                    SceneParticipation.scene_id == scenaID,
                 )
                 .first()
             )
@@ -29,7 +29,7 @@ class PartecipazioneScenaDAO:
         
     def get_participants_scene(self, sceneId):
         try:
-            partecipanti = self.db.query(PartecipazioneScena).filter(PartecipazioneScena.scenaId == sceneId)
+            partecipanti = self.db.query(SceneParticipation).filter(SceneParticipation.scene_id == sceneId)
             return partecipanti
         
         except Exception as e:
@@ -38,7 +38,7 @@ class PartecipazioneScenaDAO:
         
     def get_aux_not_in_scene(self, scenaID):
         try:
-            subquery = self.db.query(PartecipazioneScena.aux_id).filter(PartecipazioneScena.scenaId == scenaID)
+            subquery = self.db.query(SceneParticipation.aux_id).filter(SceneParticipation.scene_id == scenaID)
             aux = self.db.query(Aux).filter(Aux.id.not_in(subquery))
             return aux
         except Exception as e:
@@ -47,8 +47,8 @@ class PartecipazioneScenaDAO:
         
     def get_user_not_in_scene(self, scenaID):
         try:
-            subquery = self.db.query(PartecipazioneScena.utenteUsername).filter(PartecipazioneScena.scenaId == scenaID)
-            users = self.db.query(Utente).filter(Utente.username.not_in(subquery), Utente.ruolo == RuoloUtente.utente).order_by(Utente.nome.asc())
+            subquery = self.db.query(SceneParticipation.user_username).filter(SceneParticipation.scene_id == scenaID)
+            users = self.db.query(User).filter(User.username.not_in(subquery), User.role == RuoloUtente.utente).order_by(User.name.asc())
             return users
         except Exception as e:
             print(f"Error get partecipant for user: {e}")
@@ -56,7 +56,7 @@ class PartecipazioneScenaDAO:
         
     def add_participants(self, sceneId, User, aux):
         try:
-            partecipazione = PartecipazioneScena(scenaId = sceneId, utenteUsername = User, aux_id = aux)
+            partecipazione = SceneParticipation(scene_id = sceneId, user_username = User, aux_id = aux)
             self.db.add(partecipazione)
             self.db.commit()
             return partecipazione
@@ -66,7 +66,7 @@ class PartecipazioneScenaDAO:
         
     def remove_participants(self, sceneId, user, aux):
         try:
-            partecipazione = self.db.query(PartecipazioneScena).filter(PartecipazioneScena.scenaId == sceneId, PartecipazioneScena.aux_id == aux, PartecipazioneScena.utenteUsername == user).first()
+            partecipazione = self.db.query(SceneParticipation).filter(SceneParticipation.scene_id == sceneId, SceneParticipation.aux_id == aux, SceneParticipation.user_username == user).first()
 
             self.db.delete(partecipazione)
             self.db.commit()
@@ -77,10 +77,9 @@ class PartecipazioneScenaDAO:
 
     def change_aux_user(self, sceneId, user, aux):
 
-
-        partecipante = self.db.query(PartecipazioneScena).filter(
-            PartecipazioneScena.utenteUsername == user,
-            PartecipazioneScena.scenaId == int(sceneId)
+        partecipante = self.db.query(SceneParticipation).filter(
+            SceneParticipation.user_username == user,
+            SceneParticipation.scene_id == int(sceneId)
         ).first()
 
         auxObj = self.db.query(Aux).filter(

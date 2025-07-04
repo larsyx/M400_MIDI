@@ -68,10 +68,10 @@
                 <div class="canale-container">
 
                     <input id="dca_switch_{{dca.id}}" onchange="checkSwitchDca({{dca.id}}, this.checked)" type="checkbox"{% if switch %} checked {% endif %} hidden>
-                    <label for="dca_switch_{{dca.id}}" class="mute">{{dca.nome}}</label>
+                    <label for="dca_switch_{{dca.id}}" class="mute">{{dca.name}}</label>
 
                     <button type="button" onclick="changeValue({{ dca.id }}, 'plus', 'dca')">+</button>
-                    <input class="inputRange"  type="range" min="0" max="1000" value="{{value}}" id="dca_canale_{{ dca.id }}" onchange="sendMessageDca( {{dca.id}} , this.value);" oninput="sendMessageDca({{dca.id}} , this.value);">
+                    <input class="inputRange"  type="range" min="0" max="100" value="{{value}}" id="dca_canale_{{ dca.id }}" onchange="sendMessageDca( {{dca.id}} , this.value);" oninput="sendMessageDca({{dca.id}} , this.value);">
                     <button type="button"  onclick="changeValue({{ dca.id }}, 'minus', 'dca')" >-</button>
 
                     <span class="descrizione">{% if name is not none %} <strong>{{ name }}</strong> {% endif %}</span>
@@ -79,23 +79,15 @@
             {% endfor %}
        </div>
 
-        <div id="main" class="canale-container">
-            <input id="switch_main" onchange="checkSwitchMain(this.checked)" type="checkbox"  {% if switchMain %} checked {% endif %} hidden>
-            <label for="switch_main" class="mute">Main</label>
-            <button type="button"  onclick="changeValue('main', 'minus')" >-</button>
-            <input class="inputRange"  type="range" min="0" max="1000" value="{{valueMain}}" id="canale_main" onchange="sendMessageMain(this.value);" oninput="sendMessageMain(this.value);">
-            <button type="button" onclick="changeValue('main', 'plus')">+</button>
-        </div>
-
        <div class="slider">
             {% for canale, value, switch, name, link in canali %}
                 {% if not link %}
                 <div class="canale-container">
                     <input id="switch_{{canale.id}}" onchange="checkSwitch({{canale.id}}, this.checked)" type="checkbox"  {% if switch %} checked {% endif %} hidden>
-                    <label for="switch_{{canale.id}}" class="mute">{{canale.nome}}</label>
+                    <label for="switch_{{canale.id}}" class="mute">{{canale.name}}</label>
 
                     <button type="button" onclick="changeValue({{ canale.id }}, 'plus')">+</button>
-                    <input class="inputRange"  type="range" min="0" max="1000" value="{{value}}" id="canale_{{ canale.id }}" onchange="sendMessage( {{ canale.id }}, this.value);" oninput="sendMessage({{ canale.id }}, this.value);">
+                    <input class="inputRange"  type="range" min="0" max="100" value="{{value}}" id="canale_{{ canale.id }}" onchange="sendMessage( {{ canale.id }}, this.value);" oninput="sendMessage({{ canale.id }}, this.value);">
                     <button type="button"  onclick="changeValue({{ canale.id }}, 'minus')" >-</button>
                     <button class="eq-button" type="button" onclick="openEq({{canale.id}}, '{{name}}')" style="font-size: 12px;">EQ</button>
 
@@ -105,7 +97,15 @@
             {% endfor %}
        </div>
 
-        
+        <div id="main" class="canale-container">
+            <input id="switch_main" onchange="checkSwitchMain(this.checked)" type="checkbox"  {% if switchMain %} checked {% endif %} hidden>
+            <label for="switch_main" class="mute">Main</label>
+            <button type="button"  onclick="changeValue('main', 'minus')" >-</button>
+            <input class="inputRange"  type="range" min="0" max="100" value="{{valueMain}}" id="canale_main" onchange="sendMessageMain(this.value);" oninput="sendMessageMain(this.value);">
+            <button type="button" onclick="changeValue('main', 'plus')">+</button>
+        </div> 
+
+
         <div class="scene-container-list" >
             <span class="scene-close close-span" onclick="openScene()">&times;</span>
             <table>
@@ -222,16 +222,16 @@
                         <input id="aux_switch_main" onchange="checkSwitchAux('aux_main', this.checked)" type="checkbox"  {% if switch %} checked {% endif %} hidden>
                         <label for="aux_switch_main" class="mute">Main</label>
                         <button type="button" onclick="changeValueAux('main', 'plus')">+</button>
-                        <input class="inputRange rangeAux"  type="range" min="0" max="1000" value="0" id="aux_canale_main" onchange="sendMessageAux('main', this.value);" oninput="sendMessageAux('main', this.value);">
+                        <input class="inputRange rangeAux"  type="range" min="0" max="100" value="0" id="aux_canale_main" onchange="sendMessageAux('main', this.value);" oninput="sendMessageAux('main', this.value);">
                         <button type="button"  onclick="changeValueAux('main', 'minus')" >-</button>
                         <span class="descrizione"></span>
                     </div>
                 {% for canale, value, switch, name, link in canali %}
                     {% if not link %}
                     <div class="aux-channels-container">
-                        <p>{{canale.nome}}</p>
+                        <p>{{canale.name}}</p>
                         <button type="button" onclick="changeValueAux({{ canale.id }}, 'plus')">+</button>
-                        <input class="inputRange rangeAux"  type="range" min="0" max="1000" value="{{value}}" id="aux_canale_{{ canale.id }}" onchange="sendMessageAux( {{ canale.id }}, this.value);" oninput="sendMessageAux({{ canale.id }}, this.value);">
+                        <input class="inputRange rangeAux"  type="range" min="0" max="100" value="{{value}}" id="aux_canale_{{ canale.id }}" onchange="sendMessageAux( {{ canale.id }}, this.value);" oninput="sendMessageAux({{ canale.id }}, this.value);">
                         <button type="button"  onclick="changeValueAux({{ canale.id }}, 'minus')" >-</button>
                         <span class="descrizione">{% if name is not none %} <strong> {{ name }}</strong> {% endif %}</span>
                     </div>
@@ -253,7 +253,7 @@
 
         <script src="/static/script/mixer/aux_script.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
-
+        <script src="/static/script/common/buttonHolding.js"></script>
 
     </body>
 </html>

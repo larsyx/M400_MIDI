@@ -2,9 +2,9 @@ from .base import Base
 
 
 from .aux_ import Aux
-from .canale import Canale
-from .scena import Scena
-from .utente import RuoloUtente
-from .utente import Utente
-from .partecipazioneScena import PartecipazioneScena
-from .layoutCanale import LayoutCanale 
+from .channel import Channel
+from .scene import Scene
+from .user import RuoloUtente
+from .user import User
+from .scene_participation import SceneParticipation
+from .layout_channel import LayoutChannel 

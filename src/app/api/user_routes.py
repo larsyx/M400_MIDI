@@ -81,7 +81,7 @@ async def remove_channel_layout(request: Request, scene_id: int):
 
     channelDAO = ChannelDAO()
     channel = channelDAO.get_channel_by_id(canale_id)
-    return f"{channel.nome} : {channel.descrizione}"
+    return f"{channel.name} : {channel.description}"
 
     
 @router.post("/user/scene_{scene_id}/layout/updateLayout")

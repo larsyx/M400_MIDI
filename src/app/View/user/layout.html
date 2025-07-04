@@ -17,9 +17,9 @@
         <div id ="addbuttons">
             {% for canale in canali %}
             <div id= "Add_{{canale.id}}" style="display: inline-block;">
-                <button type="button" onclick="addChannelLayout({{canale.id}}, '{{ canale.nome}}{% if canale.descrizione is not none %}: {{ canale.descrizione }}{% endif %}')">{{canale.nome}}
-                    {% if canale.descrizione is not none %}
-                        : {{ canale.descrizione }}
+                <button type="button" onclick="addChannelLayout({{canale.id}}, '{{ canale.name}}{% if canale.description is not none %}: {{ canale.description }}{% endif %}')">{{canale.name}}
+                    {% if canale.description is not none %}
+                        : {{ canale.description }}
                     {% endif %}
                 </button>
             </div>
@@ -30,12 +30,12 @@
             <span>Canali layout</span>
             <ul id="sortable element">
             {% for layoutcanale in layout %}
-                <li id ="Remove_{{layoutcanale.canaleId}}" class="channelLayout" draggable="true">{{layoutcanale.canaleId}} 
-                    <input type="text" value="{{layoutcanale.descrizione}}"> 
+                <li id ="Remove_{{layoutcanale.channel_id}}" class="channelLayout" draggable="true">{{layoutcanale.channel_id}} 
+                    <input type="text" value="{{layoutcanale.description}}"> 
                     <div style="display: inline-block;">
-                        <button type="button" onclick="removeChannelLayout({{layoutcanale.canaleId}})">Elimina</button>
+                        <button type="button" onclick="removeChannelLayout({{layoutcanale.channel_id}})">Elimina</button>
                     </div>
-                    <input type="checkbox" {% if layoutcanale.isBatteria%}checked{%endif%}>
+                    <input type="checkbox" {% if layoutcanale.is_drum%}checked{%endif%}>
                     <i class="fas fa-arrows-alt drag"></i>
                 </li>                
             {% endfor %}

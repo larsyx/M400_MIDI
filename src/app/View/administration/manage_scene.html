@@ -57,7 +57,7 @@
         <div>
             <ul>
                 {% for scene in scenes %}
-                    <li>{{scene.id}} : {{scene.nome}}                        
+                    <li>{{scene.id}} : {{scene.name}}                        
                         <form class="buttons" action ="./scene_{{ scene.id }}/" method="get" style="display: inline;">
                             <button type="submit">Modifica</button>
                         </form>

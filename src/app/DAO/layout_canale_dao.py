@@ -1,7 +1,7 @@
 from sqlalchemy import desc
 from Database.database import DBSession
-from models.canale import Canale
-from models.layoutCanale import LayoutCanale
+from models.channel import Channel
+from models.layout_channel import LayoutChannel
 from app.dao.channel_dao import ChannelDAO 
 import json
 import os
@@ -14,22 +14,22 @@ class LayoutCanaleDAO:
         
     def get_layout_channel_by_id(self, user, scene, canale):
         try:
-            layout = self.db.query(LayoutCanale).filter(
-                LayoutCanale.user == user,
-                LayoutCanale.scenaId == scene,
-                LayoutCanale.canaleId == canale
+            layout = self.db.query(LayoutChannel).filter(
+                LayoutChannel.user_username == user,
+                LayoutChannel.scene_id == scene,
+                LayoutChannel.channel_id == canale
             ).first()
             return layout
         except Exception as e:
-            print(f"Error retrieving layout: {e}")
+            print(f"Error retrieving layout id: {e}")
             return None
         
     def get_layout_channel(self, user, scene):
         try:
-            layout = self.db.query(LayoutCanale).filter(
-                LayoutCanale.user == user,
-                LayoutCanale.scenaId == scene
-            ).order_by(LayoutCanale.posizione).all()
+            layout = self.db.query(LayoutChannel).filter(
+                LayoutChannel.user_username == user,
+                LayoutChannel.scene_id == scene
+            ).order_by(LayoutChannel.position).all()
             return layout
         except Exception as e:
             print(f"Error retrieving layout: {e}")
@@ -38,63 +38,63 @@ class LayoutCanaleDAO:
     def set_layout_channel(self, user, scene, canale, posizione, descrizione, isBatteria):
         try:
             layout = self.get_layout_channel_by_id(user, scene, canale)
-            layout.descrizione = descrizione
-            layout.posizione = posizione
-            layout.isBatteria = isBatteria
+            layout.description = descrizione
+            layout.position = posizione
+            layout.is_drum = isBatteria
 
             self.db.add(layout)
             self.db.commit()
 
             return layout
         except Exception as e:
-            print(f"Error retrieving layout: {e}")
+            print(f"Error setting layout: {e}")
             return None
         
     def add_layout_channel(self, user, scene, canale, descrizione, isBatteria=False):
         try: 
-            layout = self.db.query(LayoutCanale).filter(
-                LayoutCanale.user == user,
-                LayoutCanale.scenaId == scene
-            ).order_by(desc(LayoutCanale.posizione)).first()
+            layout = self.db.query(LayoutChannel).filter(
+                LayoutChannel.user_username == user,
+                LayoutChannel.scene_id == scene
+            ).order_by(desc(LayoutChannel.position)).first()
             posizione=0
             if(layout):
-                posizione = layout.posizione +1
+                posizione = layout.position +1
 
-            layout = LayoutCanale(
-                scenaId=scene,
-                canaleId=canale,
-                user=user,
-                posizione=posizione,
-                descrizione=descrizione,
-                isBatteria=isBatteria
+            layout = LayoutChannel(
+                scene_id=scene,
+                channel_id=canale,
+                user_username=user,
+                position=posizione,
+                description=descrizione,
+                is_drum=isBatteria
             )
 
             self.db.add(layout)
             self.db.commit()
             return True
         except Exception as e:
-            print(f"Error retrieving layout: {e}")
+            print(f"Error adding layout: {e}")
             return None
         
     def remove_layout_channel(self, user, scene, canale):
         try:
             channelToRemove = self.get_layout_channel_by_id(user, scene, canale)
 
-            updateChannel = self.db.query(LayoutCanale).filter(
-                    LayoutCanale.user == user,
-                    LayoutCanale.scenaId == scene,
-                    LayoutCanale.posizione > channelToRemove.posizione
+            updateChannel = self.db.query(LayoutChannel).filter(
+                    LayoutChannel.user_username == user,
+                    LayoutChannel.scene_id == scene,
+                    LayoutChannel.position > channelToRemove.position
             ).all()
 
             for channel in updateChannel:
-                self.set_layout_channel(user,scene,channel.canaleId, channel.posizione-1, channel.descrizione, channel.isBatteria)
+                self.set_layout_channel(user,scene,channel.channel_id, channel.position-1, channel.description, channel.is_drum)
 
             self.db.delete(channelToRemove)
             self.db.commit()
             return True
         
         except Exception as e:
-            print(f"Error retrieving layout: {e}")
+            print(f"Error removing layout: {e}")
             return None
 
     def add_default_layout_channel(self, user, scene):

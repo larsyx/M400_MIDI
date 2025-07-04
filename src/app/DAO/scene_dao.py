@@ -1,5 +1,5 @@
 from Database.database import DBSession
-from models.scena import Scena
+from models.scene import Scene
 
 
 class SceneDAO:
@@ -9,7 +9,7 @@ class SceneDAO:
 
     def get_scene_by_id(self, id):
         try:
-            scene = self.db.query(Scena).filter(Scena.id == id).first()
+            scene = self.db.query(Scene).filter(Scene.id == id).first()
             return scene
         except Exception as e:
             print(f"Error retrieving scene: {e}")
@@ -17,7 +17,7 @@ class SceneDAO:
 
     def get_all_scenes(self):
         try:
-            scenes = self.db.query(Scena).all()
+            scenes = self.db.query(Scene).all()
             return scenes
         except Exception as e:
             print(f"Error retrieving scenes: {e}")
@@ -26,7 +26,7 @@ class SceneDAO:
 
     def create_scene(self, nome, descrizione):
         try:
-            new_scene = Scena(nome=nome, descrizione=descrizione)
+            new_scene = Scene(name=nome, description=descrizione)
             self.db.add(new_scene)
             self.db.commit()
             return new_scene
@@ -39,8 +39,8 @@ class SceneDAO:
         try:
             scene = self.get_scene_by_id(id)
             if scene:
-                scene.nome = nome
-                scene.descrizione = descrizione
+                scene.name = nome
+                scene.description = descrizione
                 self.db.commit()
                 return scene
             else:
@@ -65,7 +65,7 @@ class SceneDAO:
         
     def get_all_user_scene(self, username):
         try:
-            scenes = self.db.query(Scena).filter(Scena.partecipazioneScena.any(utenteUsername=username)).all()
+            scenes = self.db.query(Scene).filter(Scene.scene_participation.any(user_username=username)).all()
             return scenes
         except Exception as e:
             print(f"Error retrieving user scenes: {e}")

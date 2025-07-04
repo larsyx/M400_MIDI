@@ -1,8 +1,8 @@
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from sqlalchemy.engine import Engine
-from models.partecipazioneScena import PartecipazioneScena
-from models.layoutCanale import LayoutCanale
+from models.scene_participation import SceneParticipation
+from models.layout_channel import LayoutChannel
 import os
 DATABASE_URL = "sqlite:///Database/database.db"
 
@@ -18,12 +18,12 @@ def enable_foreign_keys(dbapi_connection, connection_record):
     cursor.close()
 
 
-@event.listens_for(PartecipazioneScena, 'after_delete')
+@event.listens_for(SceneParticipation, 'after_delete')
 def delete_layout_canale(mapper, connection, target):
     connection.execute(
-        LayoutCanale.__table__.delete().where(
-            (LayoutCanale.scenaId == target.scenaId) &
-            (LayoutCanale.user == target.utenteUsername)
+        LayoutChannel.__table__.delete().where(
+            (LayoutChannel.scene_id == target.scene_id) &
+            (LayoutChannel.user_username == target.user_username)
         )
     )
 

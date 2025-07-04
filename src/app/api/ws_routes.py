@@ -84,10 +84,10 @@ async def live_mixer(websocket: WebSocket):
                 elif channel_address.count(',') == 3:
                     dcaDAO = DCA_DAO()
                     if(type == "fader"):
-                        channel = dcaDAO.get_dca_by_address(channel_address)
+                        channel = dcaDAO.get_dca_by_address(channel_address) 
                     elif(type == "switch"):
                         channel = dcaDAO.get_dca_by_address_switch(channel_address)
-                    
+
                     channel = channel.id
                     dca = True
 
@@ -156,8 +156,8 @@ async def live_aux_mixer(websocket: WebSocket, aux_id: int):
 
     auxDAO = AuxDAO()
     aux = auxDAO.get_aux_by_id(aux_id)
-    address = [int(val,0) for val in aux.indirizzoMidi.split(",")]
-    addressMain = [int(val,0) for val in aux.indirizzoMidiMain.split(",")]
+    address = [int(val,0) for val in aux.midi_address.split(",")]
+    addressMain = [int(val,0) for val in aux.midi_address_main.split(",")]
     sync = MidiVideoSync(sendback=send_back, address=address, addressMain=addressMain, token_user=session_id)
                 
 
@@ -214,8 +214,8 @@ async def live_video(websocket: WebSocket):
     aux = auxdao.get_aux_by_id(int(auxId))
 
     if(aux):
-        address = [int(val,0) for val in aux.indirizzoMidi.split(",")]
-        addressMain = [int(val,0) for val in aux.indirizzoMidiMain.split(",")]
+        address = [int(val,0) for val in aux.midi_address.split(",")]
+        addressMain = [int(val,0) for val in aux.midi_address_main.split(",")]
 
     sync = MidiVideoSync(sendback=send_back, address=address, addressMain=addressMain, token_user=session_id)
 

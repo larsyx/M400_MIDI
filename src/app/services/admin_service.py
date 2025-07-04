@@ -1,6 +1,6 @@
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from models.utente import RuoloUtente
+from models.user import RuoloUtente
 from app.dao.channel_dao import ChannelDAO
 from app.dao.scene_dao import SceneDAO
 from app.dao.user_dao import UserDAO
@@ -52,7 +52,7 @@ class AdminService:
                 message = ""
                 if self.userDAO.get_user_by_username(username) != None:
                     user = self.userDAO.delete_user(username)
-                    message = f"utente {user.nome} rimosso correttamente"
+                    message = f"utente {user.name} rimosso correttamente"
                     users.remove(user)
                 else:
                     message = f"utente {username} inesistente"

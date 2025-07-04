@@ -4,7 +4,7 @@
     overflow-y: visible;
     white-space: nowrap;
     padding: 10px;
-    height: 70vh;
+    height: 40%;
 }
 
 .canale-container {
@@ -19,19 +19,28 @@
 
     display: inline-flex;
     flex-direction: column;
+    justify-content: center;
     align-items: center; 
     text-align: center;
     gap: 25px;
 } 
 
-input[type="range"] {
-    height: 60% !important;
-    min-height: fit-content;
+
+@media screen and (orientation: portrait) {
+    .slider, .slider_dca{
+        height: 40%;
+    }
+    .slider input[type="range"],
+    .slider_dca input[type="range"]{
+        height: 22% !important;
+        min-height: fit-content;
+    }
 }
 
+@media screen and (orientation: landscape) {
 
-@media screen and (max-height:1000px){
-    .slider, .slider_dca {
-        height: 90vh; 
-    }  
+    .slider input[type="range"],
+    .slider_dca input[type="range"]{
+        min-height: fit-content;
+    }   
 }

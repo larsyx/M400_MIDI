@@ -88,3 +88,11 @@ input[type="radio"]:checked + label {
     color: white;
     border-color: #007bff;
 }
+
+.aux-channels-container input[type="range"] {
+    height: 60%;
+    min-height: fit-content;
+    writing-mode: vertical-lr;
+    direction: rtl;
+    width: 15px;
+}

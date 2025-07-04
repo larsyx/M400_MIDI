@@ -41,7 +41,7 @@ class MixerService:
 
         # initialize the list of addresses for request and listen
         for canale in canali:
-            channelAddress = [int(x,16) for x in canale.indirizzoMidi.split(",")] 
+            channelAddress = [int(x,16) for x in canale.midi_address.split(",")] 
             
             listenAddressFader.append(channelAddress + self.postMainFader)
             listenAddressSwitch.append(channelAddress + self.postSwitch)
@@ -49,8 +49,8 @@ class MixerService:
             listenAddressLink.append(channelAddress + self.postLink)
 
         for dcaChannel in dca:
-            dcaFader = [int(x,16) for x in dcaChannel.indirizzoMidiFader.split(",")] 
-            dcaSwitch = [int(x,16) for x in dcaChannel.indirizzoMidiSwitch.split(",")]
+            dcaFader = [int(x,16) for x in dcaChannel.midi_fader_address.split(",")] 
+            dcaSwitch = [int(x,16) for x in dcaChannel.midi_switch_address.split(",")]
 
             listenAddressFader.append(dcaFader)
             listenAddressSwitch.append(dcaSwitch)
@@ -65,52 +65,52 @@ class MixerService:
         
         # get channel value
         for canale in canali:
-            channelAddress = [int(x,16) for x in canale.indirizzoMidi.split(",")] 
+            channelAddress = [int(x,16) for x in canale.midi_address.split(",")] 
             try:
                 resultsValueSet.append(resultsValue[tuple(channelAddress + self.postMainFader)])
             except KeyError as k:
-                print("errore chiave ", k)
+                print("errore chiave ch value:", k)
                 resultsValueSet.append(0)
 
         # get dca value
         resultDcaValueSet = []
 
         for dcaChannel in dca:
-            dcaAddress = [int(x,16) for x in dcaChannel.indirizzoMidiFader.split(",")] 
+            dcaAddress = [int(x,16) for x in dcaChannel.midi_fader_address.split(",")] 
             try:
                 resultDcaValueSet.append(resultsValue[tuple(dcaAddress)])
             except KeyError as k:
-                print("errore chiave ", k)
+                print("errore chiave dca value:", k)
                 resultDcaValueSet.append(0)
 
         # get main fader value
         try:
             valueMain = resultsValue[tuple(self.preMain + self.postMainFader)]
         except KeyError as e:
-            print(f"error key {e}")
+            print(f"error key main {e}")
             valueMain = 0
 
 
         # Channel switch get value and listen
         resultsValueSwitch = MidiListener.init_and_listen(listenAddressSwitch, call_type.SWITCH)     
         resultsValueSetSwitch = []
-        
+
         for canale in canali:
-            channelAddress = [int(x,16) for x in canale.indirizzoMidi.split(",")] 
+            channelAddress = [int(x,16) for x in canale.midi_address.split(",")] 
             try:
                 resultsValueSetSwitch.append(resultsValueSwitch[tuple(channelAddress + self.postSwitch)])
             except KeyError as k:
-                print("errore chiave ", k)
+                print("errore chiave ch switch", k)
                 resultsValueSetSwitch.append(0)
 
         resultDcaValueSetSwitch = []
 
         for dcaChannel in dca:
-            dcaAddress = [int(x,16) for x in dcaChannel.indirizzoMidiSwitch.split(",")] 
+            dcaAddress = [int(x,16) for x in dcaChannel.midi_switch_address.split(",")] 
             try:
                 resultDcaValueSetSwitch.append(resultsValueSwitch[tuple(dcaAddress)])
             except KeyError as k:
-                print("errore chiave ", k)
+                print("errore chiave dca switch:", k)
                 resultDcaValueSetSwitch.append(0)
 
         try:
@@ -127,21 +127,21 @@ class MixerService:
         
         # get channel name
         for canale in canali:
-            channelAddress = [int(x,16) for x in canale.indirizzoMidi.split(",")] 
+            channelAddress = [int(x,16) for x in canale.midi_address.split(",")] 
             try:
                 resultsValueSetName.append(resultsValueName[tuple(channelAddress + self.postName)])
             except KeyError as k:
-                print("errore chiave ", k)
+                print("errore chiave ch name:", k)
                 resultsValueSetName.append(0)
 
         # get dca name
 
         for dcaChannel in dca:
-            dcaAddress = [int(x,16) for x in dcaChannel.indirizzoMidiFader.split(",")] 
+            dcaAddress = [int(x,16) for x in dcaChannel.midi_fader_address.split(",")] 
             try:
                 resultDcaValueSetName.append(resultsValueName[tuple(dcaAddress[0:2] + self.postName)])
             except KeyError as k:
-                print("errore chiave ", k)
+                print("errore chiave dca name", k)
                 resultDcaValueSetName.append(0)
 
         # get link channel
@@ -152,7 +152,7 @@ class MixerService:
             try:
                 resultsValueSetLink.append(not resultsValueLink[tuple(address)])
             except KeyError as k:
-                print("errore chiave ", k)
+                print("errore chiave ch link:", k)
                 resultsValueSetLink.append(False)
 
         # only the second link
@@ -186,14 +186,14 @@ class MixerService:
         listenAddressAuxName = []
         auxs = self.auxDAO.get_all_aux()
         for aux in auxs:
-            auxAddress = [int(x,16) for x in aux.indirizzoMidiMain.split(",")]
+            auxAddress = [int(x,16) for x in aux.midi_address_main.split(",")]
             listenAddressAuxName.append(auxAddress + self.postName)
 
         resultsValueAuxName = MidiListener.init_and_listen(listenAddressAuxName, call_type.NAME) 
         resultsValueAuxSetName = {}
 
         for aux in auxs:
-            auxAddress = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] 
+            auxAddress = [int(x,16) for x in aux.midi_address_main.split(",")] 
             try:
                 resultsValueAuxSetName[aux.id] = resultsValueAuxName[tuple(auxAddress + self.postName)]
             except KeyError as k:
@@ -206,14 +206,14 @@ class MixerService:
         aux = self.auxDAO.get_aux_by_id(aux_id)
         channels = self.channelDAO.get_all_channels()
         if aux and channels:
-            address_aux = [int(x, 16) for x in aux.indirizzoMidi.split(",")]
+            address_aux = [int(x, 16) for x in aux.midi_address.split(",")]
 
             aux_addresses_fader = []
             for channel in channels:
-                channel_address = [int(x, 16) for x in channel.indirizzoMidi.split(",")]
+                channel_address = [int(x, 16) for x in channel.midi_address.split(",")]
                 aux_addresses_fader.append(channel_address + address_aux)
 
-            aux_address = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] 
+            aux_address = [int(x,16) for x in aux.midi_address_main.split(",")] 
             aux_addresses_fader.append(aux_address + self.postMainFader)
             results_value = MidiListener.init_and_listen(aux_addresses_fader, call_type.CHANNEL)
            
@@ -221,7 +221,7 @@ class MixerService:
             
             # get channel value
             for channel in channels:
-                channel_address = [int(x,16) for x in channel.indirizzoMidi.split(",")] 
+                channel_address = [int(x,16) for x in channel.midi_address.split(",")] 
                 try:
                     results_value_set[channel.id] = results_value[tuple(channel_address + address_aux)]
                 except KeyError as k:
@@ -235,7 +235,7 @@ class MixerService:
                 print("errore chiave ", k)
                 results_value_set["main"] = 0
 
-            result_switch_main = MidiListener.init_and_listen([[int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postSwitch], call_type.SWITCH)
+            result_switch_main = MidiListener.init_and_listen([[int(x,16) for x in aux.midi_address_main.split(",")] + self.postSwitch], call_type.SWITCH)
 
             response = {
                 "channels" : results_value_set,
@@ -281,14 +281,14 @@ class MixerService:
         dca = self.dcaDAO.get_dca_by_id(dca_id)
 
         if dca:
-            address = [int(x, 16) for x in dca.indirizzoMidiFader.split(",")]
+            address = [int(x, 16) for x in dca.midi_fader_address.split(",")]
             self.midiController.send_command(address, MidiController.convert_fader_to_hex(int(value)), token)
 
     def set_dca_switch_channel(self, token, dca_id, switch):
         dca = self.dcaDAO.get_dca_by_id(dca_id)
 
         if dca:
-            address = [int(x, 16) for x in dca.indirizzoMidiSwitch.split(",")]
+            address = [int(x, 16) for x in dca.midi_switch_address.split(",")]
             self.midiController.send_command(address, MidiController.convert_switch_to_hex(switch), token)
 
     def load_scene(self, token, scene_id):
@@ -438,9 +438,9 @@ class MixerService:
         indirizzo = None
         if aux:
             if(canaleId == "main"):
-                indirizzo = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postMainFader
+                indirizzo = [int(x,16) for x in aux.midi_address_main.split(",")] + self.postMainFader
             else:
-                address_aux = [int(x,16) for x in aux.indirizzoMidi.split(",")]
+                address_aux = [int(x,16) for x in aux.midi_address.split(",")]
 
                 canaleAddress = self.channelDAO.get_channel_address(canaleId)
                 if canaleAddress:
@@ -454,5 +454,5 @@ class MixerService:
         aux = self.auxDAO.get_aux_by_id(auxId)
         if aux:
             if(canaleId == "aux_main"):
-                indirizzo = [int(x,16) for x in aux.indirizzoMidiMain.split(",")] + self.postSwitch
+                indirizzo = [int(x,16) for x in aux.midi_address_main.split(",")] + self.postSwitch
                 self.midiController.send_command(indirizzo, MidiController.convert_switch_to_hex(int(value)), token)

@@ -64,3 +64,9 @@ button {
 #main .descrizione {
     width: auto;
 }
+
+
+input[type="range"] {
+    writing-mode: vertical-lr;
+    direction: rtl;
+}
