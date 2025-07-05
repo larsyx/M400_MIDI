@@ -91,7 +91,7 @@ class SceneService:
             auxs = self.auxDAO.get_all_aux()
             utenti = self.partecipazioneScenaDAO.get_user_not_in_scene(sceneId)
 
-            if user in [u.username for u in utenti] and aux in [a.id for a in auxs]:
+            if user in [u.username for u in utenti] and int(aux) in [a.id for a in auxs]:
                 self.partecipazioneScenaDAO.add_participants(sceneId, user, aux)
                 partecipazioni = self.partecipazioneScenaDAO.get_participants_scene(sceneId)
 

@@ -8,6 +8,5 @@ class DCA(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
-    midi_fader_address = Column(String, nullable=False, unique=True)
-    midi_switch_address = Column(String, nullable=False, unique=True)
+    midi_address = Column(String, nullable=False, unique=True)
 

@@ -23,10 +23,8 @@ class DCA_DAO:
             return dca
         
     def get_dca_by_address(self, address):
-        return self.db.query(DCA).filter(DCA.midi_fader_address == address).first()
+        return self.db.query(DCA).filter(DCA.midi_address == address).first()
     
-    def get_dca_by_address_switch(self, address):
-        return self.db.query(DCA).filter(DCA.midi_switch_address == address).first() 
 
     def update_dca_description(self, id, value):
         try:

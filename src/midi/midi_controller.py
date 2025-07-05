@@ -240,70 +240,70 @@ class MidiListener:
 
         get_midi_multiplexer().register(self.callback)
 
-    def callback_channel(self, msg):
+    def callback_channel(self, msg, token=None):
         if not self.running:
             return
-        if msg.type == 'sysex':
+        if msg.type == 'sysex' and token==None:
             data = tuple(msg.data)
             key = data[6:10]
             with self.lock:
                 if key in self.midi_addresses and key not in self.received:
                     self.received[key] = MidiListener.convert_hex_to_fader(data[10], data[11])
 
-    def callback_switch(self, msg):
+    def callback_switch(self, msg, token=None):
         if not self.running:
             return
-        if msg.type == 'sysex':
+        if msg.type == 'sysex' and token==None:
             data = tuple(msg.data)
             key = data[6:10]
             with self.lock:
                 if key in self.midi_addresses and key not in self.received:
                     self.received[key] = MidiListener.convert_hex_to_switch(data[10])
 
-    def callback_q(self, msg):
+    def callback_q(self, msg, token=None):
         if not self.running:
             return 
-        if msg.type == 'sysex':
+        if msg.type == 'sysex' and token==None:
             data = tuple(msg.data)
             key = data[6:10]
             with self.lock:
                 if key in self.midi_addresses and key not in self.received:
                     self.received[key] = MidiListener.convert_hex_to_Q(data[10], data[11])
 
-    def callback_freq(self, msg):
+    def callback_freq(self, msg, token=None):
         if not self.running:
             return 
-        if msg.type == 'sysex':
+        if msg.type == 'sysex' and token==None:
             data = tuple(msg.data)
             key = data[6:10]
             with self.lock:
                 if key in self.midi_addresses and key not in self.received:
                     self.received[key] = MidiListener.convert_hex_to_freq(data[10], data[11], data[12])
 
-    def callback_gain(self, msg):
+    def callback_gain(self, msg, token=None):
         if not self.running:
             return 
-        if msg.type == 'sysex':
+        if msg.type == 'sysex' and token==None:
             data = tuple(msg.data)
             key = data[6:10]
             with self.lock:
                 if key in self.midi_addresses and key not in self.received:
                     self.received[key] = MidiListener.convert_hex_to_gain(data[10], data[11])
                     
-    def callback_preamp(self, msg):
+    def callback_preamp(self, msg, token=None):
         if not self.running:
             return
-        if msg.type == 'sysex':
+        if msg.type == 'sysex' and token==None:
             data = tuple(msg.data)
             key = data[6:10]
             with self.lock:
                 if key in self.midi_addresses and key not in self.received:
                     self.received[key] = data[10]
 
-    def callback_name(self, msg):
+    def callback_name(self, msg, token=None):
         if not self.running:
             return
-        if msg.type == 'sysex':
+        if msg.type == 'sysex' and token==None: 
             data = tuple(msg.data)
             key = data[6:10]
             with self.lock:
@@ -311,10 +311,10 @@ class MidiListener:
                     str_hex = ''.join(f'{byte:02X}' for byte in data[10:16])
                     self.received[key] = MidiListener.convert_hex_to_str(str_hex)
 
-    def callback_patchbay_channel(self, msg):
+    def callback_patchbay_channel(self, msg, token=None):
         if not self.running:
             return
-        if msg.type == 'sysex':
+        if msg.type == 'sysex' and token==None:
             data = tuple(msg.data)
             key = data[6:10]
             with self.lock:
@@ -573,7 +573,7 @@ class MidiMixerSync():
                     typeCmd = "fader"
 
                 if data[6] == preDca[0]:
-                    canale = f"0x{data[6]:02X}, 0x{data[7]:02X}, 0x{data[8]:02X}, 0x{data[9]:02X}"
+                    canale = f"0x{data[6]:02X}, 0x{data[7]:02X}"
                     if data[8:10] == tuple(dca_fader_post):
                         valore = MidiListener.convert_hex_to_fader(data[10], data[11])
                         typeCmd = "fader"

@@ -25,6 +25,8 @@ class MixerService:
         self.postLink = [int(val,16) for val in os.getenv("Fader_Post_link").split(",")]
         self.pre_preamp = [int(val,16) for val in os.getenv("Preamp_Pre").split(",")]
         self.post_preamp = [int(val,16) for val in os.getenv("Preamp_Post").split(",")]
+        self.dca_fader_post = [int(val,0) for val in os.getenv("Dca_Fader_Post").split(",")]
+        self.dca_switch_post = [int(val,0) for val in os.getenv("Dca_Switch_Post").split(",")]
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "view", "mixer"))
         self.midiController = MidiController()
 
@@ -49,12 +51,11 @@ class MixerService:
             listenAddressLink.append(channelAddress + self.postLink)
 
         for dcaChannel in dca:
-            dcaFader = [int(x,16) for x in dcaChannel.midi_fader_address.split(",")] 
-            dcaSwitch = [int(x,16) for x in dcaChannel.midi_switch_address.split(",")]
+            dca_address = [int(x,16) for x in dcaChannel.midi_address.split(",")]
 
-            listenAddressFader.append(dcaFader)
-            listenAddressSwitch.append(dcaSwitch)
-            listenAddressName.append(dcaFader[0:2] + self.postName)
+            listenAddressFader.append(dca_address + self.dca_fader_post)
+            listenAddressSwitch.append(dca_address + self.dca_switch_post)
+            listenAddressName.append(dca_address + self.postName)
 
         listenAddressFader.append(self.preMain + self.postMainFader)
         listenAddressSwitch.append(self.preMain + self.postSwitch)
@@ -76,7 +77,7 @@ class MixerService:
         resultDcaValueSet = []
 
         for dcaChannel in dca:
-            dcaAddress = [int(x,16) for x in dcaChannel.midi_fader_address.split(",")] 
+            dcaAddress = [int(x,16) for x in dcaChannel.midi_address.split(",")] + self.dca_fader_post 
             try:
                 resultDcaValueSet.append(resultsValue[tuple(dcaAddress)])
             except KeyError as k:
@@ -106,7 +107,7 @@ class MixerService:
         resultDcaValueSetSwitch = []
 
         for dcaChannel in dca:
-            dcaAddress = [int(x,16) for x in dcaChannel.midi_switch_address.split(",")] 
+            dcaAddress = [int(x,16) for x in dcaChannel.midi_address.split(",")] + self.dca_switch_post 
             try:
                 resultDcaValueSetSwitch.append(resultsValueSwitch[tuple(dcaAddress)])
             except KeyError as k:
@@ -137,9 +138,9 @@ class MixerService:
         # get dca name
 
         for dcaChannel in dca:
-            dcaAddress = [int(x,16) for x in dcaChannel.midi_fader_address.split(",")] 
+            dcaAddress = [int(x,16) for x in dcaChannel.midi_address.split(",")] 
             try:
-                resultDcaValueSetName.append(resultsValueName[tuple(dcaAddress[0:2] + self.postName)])
+                resultDcaValueSetName.append(resultsValueName[tuple(dcaAddress + self.postName)])
             except KeyError as k:
                 print("errore chiave dca name", k)
                 resultDcaValueSetName.append(0)
@@ -281,14 +282,14 @@ class MixerService:
         dca = self.dcaDAO.get_dca_by_id(dca_id)
 
         if dca:
-            address = [int(x, 16) for x in dca.midi_fader_address.split(",")]
+            address = [int(x, 16) for x in dca.midi_address.split(",")] + self.dca_fader_post
             self.midiController.send_command(address, MidiController.convert_fader_to_hex(int(value)), token)
 
     def set_dca_switch_channel(self, token, dca_id, switch):
         dca = self.dcaDAO.get_dca_by_id(dca_id)
 
         if dca:
-            address = [int(x, 16) for x in dca.midi_switch_address.split(",")]
+            address = [int(x, 16) for x in dca.midi_address.split(",")] + self.dca_switch_post
             self.midiController.send_command(address, MidiController.convert_switch_to_hex(switch), token)
 
     def load_scene(self, token, scene_id):

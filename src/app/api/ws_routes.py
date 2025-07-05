@@ -10,6 +10,11 @@ from dotenv import load_dotenv
 
 router = APIRouter()
 
+load_dotenv()
+dca_pre = int(os.getenv("Pre_Dca"),0)
+dca_fader_post = [int(val,0) for val in os.getenv("Dca_Fader_Post").split(",")]
+dca_switch_post = [int(val,0) for val in os.getenv("Dca_Switch_Post").split(",")]
+
 @router.websocket("/ws/liveSync")
 async def live_user(websocket: WebSocket):
     cookies = websocket.cookies
@@ -81,12 +86,9 @@ async def live_mixer(websocket: WebSocket):
                 dca = False
                 if channel_address == 'main':
                     channel = channel_address
-                elif channel_address.count(',') == 3:
+                elif int(channel_address[0:4],16) == dca_pre:
                     dcaDAO = DCA_DAO()
-                    if(type == "fader"):
-                        channel = dcaDAO.get_dca_by_address(channel_address) 
-                    elif(type == "switch"):
-                        channel = dcaDAO.get_dca_by_address_switch(channel_address)
+                    channel = dcaDAO.get_dca_by_address(channel_address) 
 
                     channel = channel.id
                     dca = True
