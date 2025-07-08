@@ -76,14 +76,14 @@ async def add_partecipanti_scena(request : Request, scene_id : int):
     return scene_service.delete_scene(request, user["sub"], scene_id)
 
 #manage user scene
-@router.post("/admin/scene_{scene_id}/addParticipants", response_class=HTMLResponse)
+@router.post("/admin/scene_{scene_id}/addParticipants")
 async def add_participants_scene(request : Request, scene_id : int, username : str = Form(...), aux : str = Form(...)):
     user = get_current_user(request)
     verify_admin(user["sub"])
-
+    
     return scene_service.add_partecipante(request, user["sub"], scene_id, username, aux)
 
-@router.post("/admin/scene_{scene_id}/removeParticipants", response_class=HTMLResponse)
+@router.delete("/admin/scene_{scene_id}/removeParticipants", response_class=HTMLResponse)
 async def remove_participants_scene(request : Request, scene_id : int, username : str = Form(...), aux : int = Form(...)):
     user = get_current_user(request)
     verify_admin(user["sub"])

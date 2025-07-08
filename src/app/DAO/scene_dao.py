@@ -20,7 +20,7 @@ class SceneDAO:
             scenes = self.db.query(Scene).all()
             return scenes
         except Exception as e:
-            print(f"Error retrieving scenes: {e}")
+            print(f"Scene dao error retrieving scenes: {e}")
             return None
 
 

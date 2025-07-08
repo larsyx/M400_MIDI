@@ -9,6 +9,7 @@ from app.dao.user_dao import UserDAO
 from app.dao.layout_canale_dao import LayoutCanaleDAO
 from dotenv import load_dotenv
 from midi.midi_controller import MidiListener, call_type, MidiController
+import json
 
 class SceneService:
     def __init__(self):
@@ -54,6 +55,7 @@ class SceneService:
             partecipazioni = self.partecipazioneScenaDAO.get_participants_scene(id)
             utenti = self.partecipazioneScenaDAO.get_user_not_in_scene(id)
 
+
             # auxs name
             listenAddressAuxName = []
             for aux in auxs:
@@ -85,6 +87,8 @@ class SceneService:
         if self.utenteDAO.is_admin(adminUser) == False:
             return HTTPResponse(status_code=403, content="Non hai i permessi per accedere a questa risorsa")
 
+        result = None
+
         try:
             scene = self.sceneDAO.get_scene_by_id(sceneId)
             
@@ -97,41 +101,31 @@ class SceneService:
 
                 utenti = self.partecipazioneScenaDAO.get_user_not_in_scene(sceneId)
 
-                message = "utente assegnato con successo" 
+                result = {
+                    'status' : True,
+                    'message' :"utente assegnato con successo" 
+                }
+
 
                 # create default layout for the user
                 self.layoutCanaleDAO.add_default_layout_channel(user, sceneId)
 
             else:
-                message ="utente ha già un aux assegnato"
+                result = {
+                    'status' : False,
+                    'message' : "utente ha già un aux assegnato" 
+                }
 
             partecipazioni = self.partecipazioneScenaDAO.get_participants_scene(sceneId)
+            return json.dumps(result)
 
-            # auxs name
-            listenAddressAuxName = []
-            for aux in auxs:
-                auxAddress = [int(x,16) for x in aux.midi_address.split(",")]
-
-                listenAddressAuxName.append(auxAddress + self.postName)
-            
-            resultsValueAuxName = MidiListener.init_and_listen(listenAddressAuxName, call_type.NAME)
-            
-            resultsValueAuxSetName = []
-
-            for aux in auxs:
-                auxAddress = [int(x,16) for x in aux.midi_address.split(",")] 
-                try:
-                    resultsValueAuxSetName.append(resultsValueAuxName[tuple(auxAddress + self.postName)])
-                except KeyError as k:
-                    print("errore chiave ", k)
-                    resultsValueAuxSetName.append("")
-
-            auxs = list(zip(auxs, resultsValueAuxSetName))
-            
-            return self.templates.TemplateResponse(request, "update_scene.html", {"scene" : scene, "partecipanti" : partecipazioni, "users" : utenti, "auxs" : auxs, "message" : message })
         except Exception as e:
             print(f"Error retrieving scenes: {e}")
-            return self.templates.TemplateResponse(request, "update_scene.html")
+            result = {
+                'status' : False,
+                'message' : 'errore interno'
+            }
+            return json.dumps(result)
 
     def remove_partecipante(self, request, adminUser, sceneId, user, aux):
         if self.utenteDAO.is_admin(adminUser) == False:
@@ -151,37 +145,27 @@ class SceneService:
                 partecipazioni = self.partecipazioneScenaDAO.get_participants_scene(sceneId)
                 utenti = self.partecipazioneScenaDAO.get_user_not_in_scene(sceneId)
 
-                message = "utente rimosso con successo" 
+                result = {
+                    'status' : True,
+                    'message' : "utente rimosso con successo"
+                } 
             else:
-                message ="utente non ha una precedente assegnazione"
+                result = {
+                    'status' : False,
+                    'message' : "utente non ha una precedente assegnazione"
+                }
 
             utenti = self.partecipazioneScenaDAO.get_user_not_in_scene(sceneId)
 
-            # auxs name
-            listenAddressAuxName = []
-            for aux in auxs:
-                auxAddress = [int(x,16) for x in aux.midi_address.split(",")]
-
-                listenAddressAuxName.append(auxAddress + self.postName)
-            
-            resultsValueAuxName = MidiListener.init_and_listen(listenAddressAuxName, call_type.NAME)
-            
-            resultsValueAuxSetName = []
-
-            for aux in auxs:
-                auxAddress = [int(x,16) for x in aux.midi_address.split(",")] 
-                try:
-                    resultsValueAuxSetName.append(resultsValueAuxName[tuple(auxAddress + self.postName)])
-                except KeyError as k:
-                    print("errore chiave ", k)
-                    resultsValueAuxSetName.append("")
-
-            auxs = list(zip(auxs, resultsValueAuxSetName))
-            
-            return self.templates.TemplateResponse(request, "update_scene.html", {"scene" : scene, "partecipanti" : partecipazioni, "users" : utenti, "auxs" : auxs, "message" : message })
+            return json.dumps(result)
+                        
         except Exception as e:
             print(f"Error retrieving scenes: {e}")
-            return self.templates.TemplateResponse(request, "update_scene.html")
+            result = {
+                'status' : False,
+                'message' :"utente assegnato con successo" 
+            }
+            return json.dumps(result)
 
     def get_all_scene(self, adminUser):
         if self.utenteDAO.is_admin(adminUser) == False:

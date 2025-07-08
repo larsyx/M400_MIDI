@@ -40,43 +40,40 @@
         </div>
 
         <div>
-            <form action="./addParticipants" method="POST">
-                <label for="user">Utente</label>
-                <select name="username" id="user">
-                    {% for user in users%}
-                    <option value="{{user.username}}">{{user.name}}</option>
-                    {% endfor %}    
-                </select><br>
+            <label for="user">Utente</label>
+            <select name="username" id="user">
+                {% for user in users%}
+                <option value="{{user.username}}">{{user.name}}</option>
+                {% endfor %}    
+            </select><br>
 
-                <label for="aux">Aux</label>
-                <select name="aux" id="aux">
-                    {% for aux, nome in auxs%}
-                    <option value="{{aux.id}}">{{aux.name}} {{nome}}</option>
-                    {% endfor %}
-                </select> <br><br>
-                <button type="submit">Inserisci Partecipante</button>
-            </form>
+            <label for="aux">Aux</label>
+            <select name="aux" id="aux">
+                {% for aux, nome in auxs%}
+                <option value="{{aux.id}}">{{aux.name}} {{nome}}</option>
+                {% endfor %}
+            </select> <br><br>
+            <button type="button" onclick="addPartecipante()">Inserisci Partecipante</button>
+
         </div>
         <div>
-            {% if message != None %}
-            <p>{{ message}}</p>
-            {% endif %}
+
+            <p id="message"></p>
+
         </div>
 
+        <div id="participant-list">
         {% for partecipante in partecipanti%}
-        <li style="display: flex; align-items: center; gap: 0.5rem;">{{partecipante.user_username}} 
-            <select onchange="changeAux('{{partecipante.user_username}}', this.value);" name="aux" id="aux">
-                {% for aux, nome in auxs%}
-                <option value="{{aux.id}}" {% if aux.id|string == partecipante.aux_id|string %}selected{% endif %}>{{aux.name}} {{nome}}</option>
-                {% endfor %}
-            </select>
-            <form action="./removeParticipants" method="post"> 
-                <input type="hidden" name="username" value="{{partecipante.user_username}}">
-                <input type="hidden" name="aux" value="{{partecipante.aux_id}}">
-                <button type="submit">Elimina</button>
-            </form>
-        </li>
+            <li id="participant-{{partecipante.user_username}}" style="display: flex; align-items: center; gap: 0.5rem;">{{partecipante.user_username}} 
+                <select onchange="changeAux('{{partecipante.user_username}}', this.value);" name="aux">
+                    {% for aux, nome in auxs%}
+                    <option value="{{aux.id}}" {% if aux.id|string == partecipante.aux_id|string %}selected{% endif %}>{{aux.name}} {{nome}}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" onclick="removePartecipante('{{partecipante.user_username}}', '{{partecipante.aux_id}}');">Elimina</button>
+            </li>
         {% endfor %}
+        </div>
 
         <div style="margin-top: 5rem;">
             <form action="./deleteScene" method="post" onsubmit="return confirm('Sei sicuro di voler eliminare questa scena?');">
@@ -109,6 +106,143 @@
             function deleteScene(){
 
             }
+
+
+            function addPartecipante(){
+                event.preventDefault();
+
+                xhttp = new XMLHttpRequest();
+                xhttp.open("POST", "./addParticipants");
+                xhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                const user_dropdown = document.getElementById("user");
+                const selectedOption = user_dropdown.options[user_dropdown.selectedIndex];
+
+                const aux_dropdown = document.getElementById("aux");
+                const selectedAux = aux_dropdown.options[aux_dropdown.selectedIndex];
+
+                const dati = `username=${encodeURIComponent(selectedOption.value)}&aux=${encodeURIComponent(selectedAux.value)}`;
+
+                xhttp.onload = function () {
+                    if (xhttp.status === 200) {
+                        const data = JSON.parse(xhttp.responseText);
+                        const obj = JSON.parse(data);
+
+                        if(obj['status']){
+                            const participant_container = document.getElementById("participant-list");
+
+                            if (selectedOption) {
+                                const participant = selectedOption.value;
+                                const aux = selectedAux.value;
+
+                                user_dropdown.removeChild(selectedOption);
+
+                                console.log(participant)
+                                const li = document.createElement('li');
+
+                                li.style.display = 'flex';
+                                li.style.alignItems = 'center';
+                                li.style.gap = '0.5rem';
+                                li.id = "participant-" + participant;
+
+                                // 1. Testo username
+                                const usernameText = document.createTextNode(participant + ' ');
+                                li.appendChild(usernameText);
+
+                                // 2. Creo la select
+                                const select = document.createElement('select');
+                                select.name = 'aux';
+                                select.onchange = function() {
+                                    changeAux(participant, this.value);
+                                };
+
+                                // Popolo la select con gli aux
+                                {% for aux, nome in auxs %}
+                                var option = document.createElement("option");
+                                option.value = "{{ aux.id }}";
+                                option.textContent = "{{ aux.name }} {{ nome }}";
+
+                                if(option.value == selectedAux.value)
+                                    option.selected = true;
+
+                                select.appendChild(option);
+                                {% endfor %}
+
+                                li.appendChild(select);
+
+                                // 3. Creo il form per eliminare
+                                const button = document.createElement('button');
+                                button.type="button";
+                                button.onclick = () => removePartecipante(participant, aux);
+                                button.textContent="Elimina";
+
+                                li.appendChild(button);
+
+                                // 4. Aggiungo il li alla lista nella pagina
+                                participant_container.append(li);
+
+                            }
+                        }
+
+                        document.getElementById("message").innerHTML= obj.message;
+
+                    } else {
+                        console.error("Errore nel caricamento:", xhttp.status);
+                    }
+                };
+
+                xhttp.onerror = function () {
+                    console.error("Errore di rete nella richiesta AJAX");
+                };
+                
+                xhttp.send(dati);
+            }
+
+            function removePartecipante(participant, aux){
+                console.log(participant, aux);
+                xhttp = new XMLHttpRequest();
+                xhttp.open("DELETE", "./removeParticipants");
+                xhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+
+                const dati = `username=${encodeURIComponent(participant)}&aux=${encodeURIComponent(aux)}`;
+
+                xhttp.onload = function () {
+                    if (xhttp.status === 200) {
+                        const obj = JSON.parse(xhttp.responseText);
+
+                        if(true){
+                            const participant_container = document.getElementById("participant-list");
+                            
+                            const objRemove = document.getElementById(`participant-${participant}`);
+
+                            if(objRemove)
+                                participant_container.removeChild(objRemove);
+
+
+                            const option = document.createElement('option');
+                            option.value = participant;
+                            option.textContent = participant;
+
+                            const select = document.getElementById("user");
+                            if(select)
+                                select.appendChild(option);
+                        }
+
+                        document.getElementById("message").innerHTML= obj.message;
+
+                    } else {
+                        console.error("Errore nel caricamento:", xhttp.status);
+                    }
+                };
+
+                xhttp.onerror = function () {
+                    console.error("Errore di rete nella richiesta AJAX");
+                };
+                
+                xhttp.send(dati);
+            }
+
         </script>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
