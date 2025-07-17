@@ -11,6 +11,7 @@
         <link rel="stylesheet" href="/static/style/user/scene.css" />
         <link rel="stylesheet" href="/static/style/common/menu.css">
         <link rel="stylesheet" href="/static/style/common/base.css">
+        <link rel="stylesheet" href="/static/style/user/profile.css">
 
         <style>
             #spinner-container {
@@ -26,6 +27,7 @@
                 justify-content: center;
                 align-items: center;
             }
+
         </style>
 
     </head>
@@ -44,11 +46,13 @@
                 </button>
                 <ul id="menu-dropdown" class="dropdown-menu dropdown-menu-end mt-2">
                     <li><a class="dropdown-item" href="/user/getScenes">Home</a></li>
+                    <li><a class="dropdown-item" onclick="openNav()">Profili</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="/">Esci</a></li>
                 </ul>
             </div>
         </div>
+
 
         <div class="alert alert-warning alert-dismissible fade show" role="alert" hidden>
             <p></p>
@@ -64,7 +68,7 @@
             </div>
         </div>
 
-
+        <p class="profile-name"></p>
         <div class="container">
             <div class="slider-main">
                 {% for canale in canali %}
@@ -106,10 +110,29 @@
         </div>
 
         <div class="menu">
-            <button  onclick="window.location.href='../getScenes'">Indietro</button>
-            <button  onclick="window.location.href='./layout'">Modifica Layout</button>
+            <button class="btn btn-secondary" onclick="openSaveNav()">Salva Profilo</button>
+            <button class="btn btn-secondary" onclick="window.location.href='./layout'">Modifica Layout</button>
         </div>
 
+        <div id="profile-nav" class="sidenav">
+            <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+            {% for profile in profiles %}
+            <a id="profile_{{profile.id}}" class="profile-item"  href="#" onclick="loadProfile({{profile.id}}, '{{profile.name}}');">{{profile.name}} <i class="bi bi-trash" onclick="event.stopPropagation(); deleteProfile({{profile.id}})"></i> </a>
+            {% endfor %}
+            <a href="#" onclick="deleteProfiles();" class="deleteAll"><i class="bi bi-trash"></i></a>
+        </div>
+
+        <div id="profile-save-nav" class="sidenav">
+            <a href="javascript:void(0)" class="closebtn" onclick="closeSaveNav()">&times;</a>
+            {% for profile in profiles %}
+            <a href="#" onclick="saveProfile({{profile.id}}, '{{profile.name}}')">{{profile.name}}</a>
+            {% endfor %}
+            <div class="text-profile">
+                <input id="name-profile" type="text" />
+                <button onclick="saveNewProfile()">+</button>
+            </div>
+            <a href="#" onclick="deleteProfiles();" class="deleteAll"><i class="bi bi-trash"></i></a> 
+        </div>
 
        <script>
              let aux = {{ indirizzoaux | tojson}};
@@ -118,15 +141,7 @@
        </script>
 
        <script src="/static/script/user/scene_user.js"></script>
+       <script src="/static/script/user/profile.js"></script>
        <script src="/static/script/common/buttonHolding.js"></script>
-       <script>
-            function vibrateDevice() {
-                if (navigator.vibrate) {
-                    navigator.vibrate(200); // vibra per 200ms
-                } else {
-                    console.log("Vibrazione non supportata su questo dispositivo.");
-                }
-            }
-       </script>
     </body>
 </html>

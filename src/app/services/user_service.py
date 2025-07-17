@@ -5,6 +5,8 @@ from app.dao.channel_dao import ChannelDAO
 from app.dao.layout_canale_dao import LayoutCanaleDAO
 from app.dao.partecipazione_scena_dao import PartecipazioneScenaDAO
 from app.dao.user_dao import UserDAO
+from app.dao.profile_dao import ProfileDAO
+from app.dao.profile_layout_dao import ProfileLayoutDAO
 from fastapi.responses import RedirectResponse
 import os
 import json
@@ -18,6 +20,8 @@ class UserService:
         self.partecipazioneScenaDAO = PartecipazioneScenaDAO()
         self.layoutCanaleDAO = LayoutCanaleDAO()
         self.channelDAO = ChannelDAO()
+        self.profileDAO = ProfileDAO()
+        self.profileLayoutDAO = ProfileLayoutDAO()
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "view", "user"))
         self.midiController = MidiController()
         self.postMainFader = [int(val,16) for val in os.getenv("Main_Post_Fix_Fader").split(",")]
@@ -36,7 +40,9 @@ class UserService:
                 hasBatteria = True
                 break
 
-        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": canali, "indirizzoaux": aux.midi_address, "indirizzoauxMain": aux.midi_address_main, "hasBatteria" : hasBatteria})
+        profiles = self.get_profiles(userID, scenaID)
+
+        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": canali, "indirizzoaux": aux.midi_address, "indirizzoauxMain": aux.midi_address_main, "hasBatteria" : hasBatteria, 'profiles' : profiles})
         
     def set_layout(self, userID, scenaID, request):  
         channels = self.channelDAO.get_all_channels()
@@ -97,3 +103,60 @@ class UserService:
             results_value_set["main"] = 0
 
         return json.dumps(results_value_set, indent=2)
+
+    # profile
+    def create_profile(self, name, user, scene_id, profiles):
+        if name == None or name == "" or scene_id == None or user == None or user == "":
+            return "Errore parametri"
+
+        profile = self.profileDAO.create_profile(name, scene_id, user)
+        if profile and profiles != None and len(profiles) > 0:
+            self.profileLayoutDAO.update_profiles_layout(profile.id, user, scene_id, profiles)
+
+
+    def delete_profile(self, id, user, scene_id):
+        if id == None or  user == None or user == "":
+            return "Errore parametri"
+            
+        return self.profileDAO.delete_profile(id, user, scene_id)
+
+    def delete_profiles(self, user, scene_id):
+        if id == None or  user == None or user == "":
+            return "Errore parametri"
+            
+        profiles = self.profileDAO.get_all_profile_user(user, scene_id)
+
+        for profile in profiles:
+            self.delete_profile(profile.id, user, scene_id)
+
+        return True
+
+
+    def update_profile(self, profile_id, user, scene_id, profiles):
+        if id == None or user == None or user == "":
+            return "Errore parametri"
+
+        if profiles != None and len(profiles) > 0:
+            self.profileLayoutDAO.update_profiles_layout(profile_id, user, scene_id, profiles)
+
+    def get_profiles(self, user, scene_id):
+        if scene_id == None or user == None or user == "":
+            return "Errore parametri"
+
+        return self.profileDAO.get_all_profile_user(user, scene_id)
+
+    def load_profile(self, user, token, scene_id, profile_id):
+        profiles =  self.profileLayoutDAO.get_profile_layout_user_scene(user, profile_id, scene_id)
+
+        aux = self.partecipazioneScenaDAO.get_aux_user(user, scene_id)
+
+        response = {}
+
+        if aux:
+            for profile in profiles:
+                response[profile.channel_id] = profile.value
+                self.set_fader(token, profile.channel_id, profile.value, aux.midi_address)
+
+        return json.dumps(response)
+
+    

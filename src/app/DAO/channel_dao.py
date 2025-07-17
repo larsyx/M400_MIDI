@@ -17,8 +17,10 @@ class ChannelDAO:
     def get_channel_by_id(self, channel_id):
         try:
             channel = self.db.query(Channel).filter(Channel.id == channel_id).first()
+            
             return channel
         except Exception as e:
+            self.db.rollback()
             print(f"Error retrieving channels: {e}")
             return None
 

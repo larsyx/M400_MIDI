@@ -42,6 +42,7 @@
 .sticky{
     position: fixed;
     top: 12%;
+    z-index: -1;
 }
 
 .main-fader{
@@ -79,6 +80,7 @@
 
 button, i {
     touch-action: manipulation;
+    border-radius: 5px !important;
 }
 
 .close-span{
@@ -97,7 +99,7 @@ button, i {
 
     .close-span{
         display: block ;
-        right: -3% !important;
+        right: 3% !important;
         top: -1% !important;
     }
 

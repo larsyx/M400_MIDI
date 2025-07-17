@@ -73,7 +73,7 @@
             <div class="container">
                 {% for scene in scenes %}
                     <form class="buttons" action ="./scene_{{ scene.id }}/" method="get">
-                        <button type="submit">{{scene.name}}</button>
+                        <button type="submit" class="btn btn-secondary">{{scene.name}}</button>
                     </form>
                 {% endfor %}
             </div>

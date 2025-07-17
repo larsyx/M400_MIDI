@@ -9,4 +9,9 @@ class Scene(Base):
     description = Column(String, nullable=True)
 
     scene_participation = relationship("SceneParticipation", back_populates="scene", cascade="all, delete-orphan", passive_deletes=True)
-    layout_channel = relationship("LayoutChannel", back_populates="scene", cascade="all, delete-orphan", passive_deletes=True)
+    layouts = relationship(
+        "LayoutChannel",
+        back_populates="scene",
+        primaryjoin="Scene.id == LayoutChannel.scene_id",
+        cascade="all, delete-orphan"
+    )

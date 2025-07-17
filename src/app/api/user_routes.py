@@ -100,6 +100,48 @@ async def set_layouts(request: Request, scene_id : int):
 
 @router.get("/user/scene_{scene_id}/getFadersValue")
 async def get_fader_value(request: Request, scene_id : int, aux: str, auxMain: str):
+
     user_data = get_current_user(request)
 
     return user_service.get_faders_value(user_data["sub"], scene_id, aux, auxMain)
+
+@router.post("/user/scene_{scene_id}/createProfile")
+async def create_profile(request : Request, scene_id : int):
+    user_data = get_current_user(request)
+
+    data = await request.json()
+    name = data.get("name")
+    profiles = data.get("profiles")
+
+    return user_service.create_profile(name, user_data["sub"], scene_id, profiles)
+    
+
+@router.delete("/user/scene_{scene_id}/deleteProfile")
+async def delete_profile(request: Request, scene_id : int, profile_id : int):
+    user_data = get_current_user(request)
+
+    return user_service.delete_profile(profile_id, user_data["sub"], scene_id)
+    
+@router.delete("/user/scene_{scene_id}/deleteProfiles")
+async def delete_profiles(request: Request, scene_id : int):
+    user_data = get_current_user(request)
+
+    return user_service.delete_profiles(user_data["sub"], scene_id)
+
+@router.put("/user/scene_{scene_id}/updateProfile")
+async def update_profile(request : Request, scene_id : int):
+    user_data = get_current_user(request)
+
+    data = await request.json()
+    profile_id = data.get("id")
+    profiles = data.get("profiles")
+
+    return user_service.update_profile(profile_id, user_data["sub"], scene_id, profiles)
+
+
+@router.get("/user/scene_{scene_id}/getProfile")
+async def get_profile(request : Request, scene_id : int, profile_id: int):
+    user_data = get_current_user(request)
+    token = request.cookies.get("access_token")
+
+    return user_service.load_profile(user_data["sub"], token, scene_id, profile_id)

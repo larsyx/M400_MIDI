@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Integer, ForeignKey, and_
-from sqlalchemy.orm import relationship, foreign
+from sqlalchemy.orm import relationship, foreign, remote
 
 
 from .base import Base
@@ -11,7 +11,8 @@ class SceneParticipation(Base):
     user_username = Column(String, ForeignKey('user.username', ondelete="CASCADE"), primary_key=True)
     aux_id = Column(Integer, ForeignKey('aux.id'), nullable=False)
 
-    scene = relationship("Scene", back_populates="scene_participation")
+    scene = relationship("Scene", back_populates="scene_participation", passive_deletes=True)
     user = relationship("User", back_populates="scene_participation", passive_deletes=True)
     aux = relationship("Aux", back_populates="scene_participation")
-    
+
+    profiles = relationship("Profile", back_populates="scene_participation", cascade="all, delete-orphan")

@@ -127,7 +127,7 @@ class SceneService:
             }
             return json.dumps(result)
 
-    def remove_partecipante(self, request, adminUser, sceneId, user, aux):
+    def remove_partecipante(self, request, adminUser, sceneId, user):
         if self.utenteDAO.is_admin(adminUser) == False:
             return HTTPResponse(status_code=403, content="Non hai i permessi per accedere a questa risorsa")
 
@@ -135,12 +135,11 @@ class SceneService:
             scene = self.sceneDAO.get_scene_by_id(sceneId)
 
             partecipazioni = self.partecipazioneScenaDAO.get_participants_scene(sceneId)
-            auxs = self.auxDAO.get_all_aux()
 
             partecipazioni = list(partecipazioni)
 
-            if user in [u.user_username for u in partecipazioni] and aux in [a.aux_id for a in partecipazioni]:
-                self.partecipazioneScenaDAO.remove_participants(sceneId, user, aux)
+            if user in [u.user_username for u in partecipazioni]:
+                self.partecipazioneScenaDAO.remove_participants(sceneId, user)
 
                 partecipazioni = self.partecipazioneScenaDAO.get_participants_scene(sceneId)
                 utenti = self.partecipazioneScenaDAO.get_user_not_in_scene(sceneId)

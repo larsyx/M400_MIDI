@@ -19,5 +19,9 @@ class User(Base):
     role = Column(SQLEnum(RuoloUtente), nullable=False)
 
     scene_participation = relationship("SceneParticipation", back_populates="user", cascade="all, delete-orphan", passive_deletes=True)
-    layout_channel = relationship("LayoutChannel", back_populates="user", cascade="all, delete-orphan", passive_deletes=True)
-    
+    layouts = relationship(
+        "LayoutChannel",
+        back_populates="user",
+        primaryjoin="User.username == LayoutChannel.user_username",
+        cascade="all, delete-orphan"
+    )

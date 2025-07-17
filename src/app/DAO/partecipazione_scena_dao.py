@@ -64,9 +64,9 @@ class PartecipazioneScenaDAO:
             print(f"Error add for user: {e}")
             return None
         
-    def remove_participants(self, sceneId, user, aux):
+    def remove_participants(self, sceneId, user):
         try:
-            partecipazione = self.db.query(SceneParticipation).filter(SceneParticipation.scene_id == sceneId, SceneParticipation.aux_id == aux, SceneParticipation.user_username == user).first()
+            partecipazione = self.db.query(SceneParticipation).filter(SceneParticipation.scene_id == sceneId, SceneParticipation.user_username == user).first()
 
             self.db.delete(partecipazione)
             self.db.commit()
