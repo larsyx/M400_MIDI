@@ -28,7 +28,7 @@ class AdminService:
             if self.userDAO.is_admin(adminUser):
                 message=""
                 users = self.get_all_users(adminUser)
-                if username != None and username != "" and nome != None and nome != "" and ruolo != None and RuoloUtente.__contains__(ruolo):
+                if username != None and username != "" and nome != None and nome != "" and ruolo != None and ruolo in [ r.value for r in RuoloUtente ]:
                     if not self.userDAO.get_user_by_username(username):
                         new_user = self.userDAO.create_user(username=username, nome=nome, ruolo=ruolo)
                         users.append(new_user)

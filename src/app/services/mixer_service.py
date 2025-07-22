@@ -292,7 +292,7 @@ class MixerService:
             address = [int(x, 16) for x in dca.midi_address.split(",")] + self.dca_switch_post
             self.midiController.send_command(address, MidiController.convert_switch_to_hex(switch), token)
 
-    def load_scene(self, token, scene_id):
+    def load_scene(self, scene_id):
 
         self.midiController.load_scene(scene_id)
 
