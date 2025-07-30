@@ -1,4 +1,4 @@
-const fs = 48000; // frequenza di campionamento
+const fs = 48000;
 const svg = d3.select("#eqChart");
 let width = svg.node().clientWidth;
 let height = +svg.node().clientHeight;

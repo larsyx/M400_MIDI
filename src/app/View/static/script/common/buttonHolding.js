@@ -72,3 +72,41 @@ if(gain){
     btns = gain.querySelectorAll('button[onclick]');
     btns.forEach(enableHoldClick);
 }
+
+const inputRanges = document.querySelectorAll('input[type="range"]');
+inputRanges.forEach(input => {
+    input.addEventListener('mousedown', preventTrackClick, true);
+    input.addEventListener('touchstart', preventTrackClick, { passive: false, capture: true });
+});
+
+function isVertical(slider) {
+    const rect = slider.getBoundingClientRect();
+    return rect.height > rect.width;
+}
+
+function isClickOnThumb(e) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const sliderValue = parseFloat(e.currentTarget.value);
+    const min = parseFloat(e.currentTarget.min || 0);
+    const max = parseFloat(e.currentTarget.max || 100);
+    const valueRatio = (sliderValue - min) / (max - min);
+
+    const thumbHeight = 30; 
+
+    if (isVertical(e.currentTarget)) {
+        const sliderY = e.clientY || (e.touches && e.touches[0].clientY);
+        const thumbCenterY = rect.bottom - rect.height * valueRatio;
+        return Math.abs(sliderY - thumbCenterY) < thumbHeight;
+    } else {
+        const sliderX = e.clientX || (e.touches && e.touches[0].clientX);
+        const thumbCenterX = rect.left + rect.width * valueRatio;
+        return Math.abs(sliderX - thumbCenterX) < thumbHeight;
+    }
+}
+
+function preventTrackClick(e) {
+    if (!isClickOnThumb(e)) {
+        e.stopPropagation();
+        e.preventDefault();
+    }
+}
