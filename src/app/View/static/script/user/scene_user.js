@@ -171,17 +171,6 @@ window.addEventListener("pageshow", (event) => {
 createAndConnectWebSocket();
 
 
-// function toggleMain(){
-//     const lateral = document.getElementsByClassName("lateral")[0];
-//     const container = document.getElementsByClassName("container")[0];
-//     if(lateral.style.display == "none"){
-//         lateral.style.display = "flex";
-//     }
-//     else{
-//         lateral.style.display = "none"
-//     }
-// }
-
 function toggleMain() {
     const lateral = document.querySelector(".lateral");
     const container = document.querySelector(".container");
@@ -197,3 +186,15 @@ function toggleMain() {
         }
     }
 }
+
+
+const dropdownElement = document.querySelector('.dropdown');
+const canvas = document.getElementsByClassName('sticky')[0];
+
+dropdownElement.addEventListener('show.bs.dropdown', () => {
+canvas.style.zIndex = '-1';
+});
+
+dropdownElement.addEventListener('hide.bs.dropdown', () => {
+canvas.style.zIndex = '0';
+});

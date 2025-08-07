@@ -42,7 +42,7 @@
 .sticky{
     position: fixed;
     top: 12%;
-    z-index: -1;
+    z-index: 0;
 }
 
 .main-fader{

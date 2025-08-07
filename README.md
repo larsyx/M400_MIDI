@@ -29,15 +29,25 @@ on macOs/Linux: source venv/bin/activate
     Model_ID = 0x00, 0x00, 0x24
     Command_ID_Data_Set = 0x12
     Command_ID_Data_Request = 0x11
+    Midi_Name = "RSS"
 
     #Main setting
     Main_Post_Fix_Fader = 0x00, 0x0E
     Main_Post_Fix_Switch = 0x00, 0x0C 
     Main_Pre_Fix = 0x06, 0x00
 
+    #DCA setting
+    Pre_Dca = 0x09
+    Dca_Fader_Post = 0x00, 0x0A
+    Dca_Switch_Post = 0x00, 0x08
+
     #Fader setting
     Fader_Post_Name = 0x00, 0x00
     Fader_Post_link = 0x00, 0x08
+
+    #Preamp
+    Preamp_Pre = 0x00
+    Preamp_Post = 0x00, 0x01
 
     #EQ setting
     EQ_Post_Switch = 0x00, 0x50

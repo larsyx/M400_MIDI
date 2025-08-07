@@ -74,9 +74,10 @@ if(gain){
 }
 
 const inputRanges = document.querySelectorAll('input[type="range"]');
+
 inputRanges.forEach(input => {
-    input.addEventListener('mousedown', preventTrackClick, true);
-    input.addEventListener('touchstart', preventTrackClick, { passive: false, capture: true });
+    input.addEventListener('mousedown', onCustomStart, { passive: false, capture: true });
+    input.addEventListener('touchstart', onCustomStart, { passive: false, capture: true });
 });
 
 function isVertical(slider) {
@@ -85,28 +86,95 @@ function isVertical(slider) {
 }
 
 function isClickOnThumb(e) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const sliderValue = parseFloat(e.currentTarget.value);
-    const min = parseFloat(e.currentTarget.min || 0);
-    const max = parseFloat(e.currentTarget.max || 100);
+    const slider = e.currentTarget;
+    const rect = slider.getBoundingClientRect();
+    const sliderValue = parseFloat(slider.value);
+    const min = parseFloat(slider.min || 0);
+    const max = parseFloat(slider.max || 100);
     const valueRatio = (sliderValue - min) / (max - min);
 
-    const thumbHeight = 30; 
+    const thumbSize = 30;
 
-    if (isVertical(e.currentTarget)) {
-        const sliderY = e.clientY || (e.touches && e.touches[0].clientY);
-        const thumbCenterY = rect.bottom - rect.height * valueRatio;
-        return Math.abs(sliderY - thumbCenterY) < thumbHeight;
+    if (isVertical(slider)) {
+        const y = e.clientY || (e.touches && e.touches[0].clientY);
+        const thumbY = rect.bottom - rect.height * valueRatio;
+        return Math.abs(y - thumbY) < thumbSize;
     } else {
-        const sliderX = e.clientX || (e.touches && e.touches[0].clientX);
-        const thumbCenterX = rect.left + rect.width * valueRatio;
-        return Math.abs(sliderX - thumbCenterX) < thumbHeight;
+        const x = e.clientX || (e.touches && e.touches[0].clientX);
+        const thumbX = rect.left + rect.width * valueRatio;
+        return Math.abs(x - thumbX) < thumbSize;
     }
 }
 
-function preventTrackClick(e) {
+
+let isDragging = false;
+let startCoord = 0;
+let startValue = 0;
+let activeSlider = null;
+
+function onCustomStart(e) {
     if (!isClickOnThumb(e)) {
-        e.stopPropagation();
         e.preventDefault();
+        e.stopPropagation();
+    }
+
+    const slider = e.currentTarget;
+    activeSlider = slider;
+    isDragging = true;
+    startValue = parseFloat(slider.value);
+    const vertical = isVertical(slider);
+
+    startCoord = vertical
+        ? (e.clientY || (e.touches && e.touches[0].clientY))
+        : (e.clientX || (e.touches && e.touches[0].clientX));
+
+    const moveHandler = (ev) => onCustomMove(ev, slider, startCoord, startValue, vertical);
+    const endHandler = stopCustomDrag;
+
+    document.addEventListener('mousemove', moveHandler);
+    document.addEventListener('mouseup', endHandler);
+    document.addEventListener('touchmove', moveHandler, { passive: false });
+    document.addEventListener('touchend', endHandler);
+
+    slider._moveHandler = moveHandler;
+    slider._endHandler = endHandler;
+}
+
+function onCustomMove(e, slider, startCoord, startValue, vertical) {
+    if (!isDragging) return;
+
+    e.preventDefault(); 
+
+    const currentCoord = vertical
+        ? (e.clientY || (e.touches && e.touches[0].clientY))
+        : (e.clientX || (e.touches && e.touches[0].clientX));
+
+    const delta = currentCoord - startCoord;
+    const sliderSize = vertical ? slider.offsetHeight : slider.offsetWidth;
+
+    const percent = vertical ? -delta / sliderSize : delta / sliderSize;
+    const range = parseFloat(slider.max) - parseFloat(slider.min);
+    const step = parseFloat(slider.step) || 1;
+
+    let newValue = startValue + percent * range;
+    newValue = Math.round(newValue / step) * step;
+    newValue = Math.max(slider.min, Math.min(slider.max, newValue));
+
+    slider.value = newValue;
+    slider.dispatchEvent(new Event('input'));
+}
+
+function stopCustomDrag() {
+    isDragging = false;
+
+    if (activeSlider) {
+        document.removeEventListener('mousemove', activeSlider._moveHandler);
+        document.removeEventListener('mouseup', activeSlider._endHandler);
+        document.removeEventListener('touchmove', activeSlider._moveHandler);
+        document.removeEventListener('touchend', activeSlider._endHandler);
+
+        delete activeSlider._moveHandler;
+        delete activeSlider._endHandler;
+        activeSlider = null;
     }
 }
