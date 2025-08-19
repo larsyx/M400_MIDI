@@ -89,16 +89,18 @@
         </div>
 
        <div class="slider">
-            {% for canale in canali %}
-                <div class="canale-container">
-                    <div>{{canale.name}}</div>
+            {% for canale, name, link in canali %}
+                {% if not link %}
+                    <div class="canale-container">
+                        <div>{{canale.name}}</div>
 
-                    <button type="button" onclick="changeValue({{ canale.id }}, 'plus')">+</button>
-                    <input class="inputRange"  type="range" min="0" max="100" value="0" id="canale_{{ canale.id }}" onchange="sendMessage( {{canale.id}} , this.value);" oninput="sendMessage({{canale.id}} , this.value);">
-                    <button type="button"  onclick="changeValue({{ canale.id }}, 'minus')" >-</button>
+                        <button type="button" onclick="changeValue({{ canale.id }}, 'plus')">+</button>
+                        <input class="inputRange"  type="range" min="0" max="100" value="0" id="canale_{{ canale.id }}" onchange="sendMessage( {{canale.id}} , this.value);" oninput="sendMessage({{canale.id}} , this.value);">
+                        <button type="button"  onclick="changeValue({{ canale.id }}, 'minus')" >-</button>
 
-                    <span class="descrizione">{% if canale.descrizione is not none %} <strong> {{ canale.descrizione }}</strong> {% endif %}</span>
-                </div>
+                        <span class="descrizione">{% if name is not none %} <strong> {{ name }}</strong> {% elif canale.description is not none %} <strong> {{ canale.description }}</strong> {% endif %}</span>
+                    </div>
+                {% endif %}
             {% endfor %}
        </div>
         

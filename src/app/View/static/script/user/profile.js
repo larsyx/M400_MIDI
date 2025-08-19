@@ -16,6 +16,7 @@ function closeSaveNav() {
 }
 
 function saveProfile(id){
+    closeSaveNav();
     const rawProfiles = getProfileChannelsValue();
 
     const profiles = Object.entries(rawProfiles).map(([key, value]) => ({
@@ -49,6 +50,7 @@ function saveProfile(id){
 }
 
 function saveNewProfile(){
+    closeSaveNav();
     el = document.getElementById("name-profile");
 
     if(el){

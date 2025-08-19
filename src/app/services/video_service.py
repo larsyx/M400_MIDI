@@ -17,6 +17,8 @@ class VideoService():
         self.auxDAO = AuxDAO()
         self.postMainFader = [int(val,16) for val in os.getenv("Main_Post_Fix_Fader").split(",")]
         self.postMainSwitch = [int(val,16) for val in os.getenv("Main_Post_Fix_Switch").split(",")]
+        self.postName = [int(val,16) for val in os.getenv("Fader_Post_Name").split(",")]
+        self.postLink = [int(val,16) for val in os.getenv("Fader_Post_link").split(",")]
         self.auxId = os.getenv("VIDEO_AUX_ID") 
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "view", "video"))
         self.midiController = MidiController()
@@ -24,7 +26,57 @@ class VideoService():
     def load_scene(self, request):
         
         channels = self.channelDAO.get_all_channels()
-        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": channels})
+        listenAddressName = []
+        listenAddressLink = []
+
+        for channel in channels:
+            channelAddress = [int(x,16) for x in channel.midi_address.split(",")] 
+            
+            listenAddressName.append(channelAddress + self.postName)
+            listenAddressLink.append(channelAddress + self.postLink)
+
+        # get names
+        resultsValueName = MidiListener.init_and_listen(listenAddressName, call_type.NAME)       
+        resultsValueSetName = []
+
+        for channel in channels:
+            channelAddress = [int(x,16) for x in channel.midi_address.split(",")] 
+            try:
+                resultsValueSetName.append(resultsValueName[tuple(channelAddress + self.postName)])
+            except KeyError as k:
+                print("errore chiave ch name:", k)
+                resultsValueSetName.append(0)
+
+        # get linked channels
+        resultsValueLink = MidiListener.init_and_listen(listenAddressLink, call_type.SWITCH)    
+        resultsValueSetLink = []
+
+        for address in listenAddressLink:
+            try:
+                resultsValueSetLink.append(not resultsValueLink[tuple(address)])
+            except KeyError as k:
+                print("errore chiave ch link:", k)
+                resultsValueSetLink.append(False)
+
+        # only the second link
+        skip = False
+        for i in range(len(resultsValueSetLink)-1):
+            if not skip:
+                if resultsValueSetLink[i]:
+                    if resultsValueSetLink[i+1]:
+                        resultsValueSetLink[i] = False
+                        skip = True
+                    if not resultsValueSetLink[i+1]:
+                        resultsValueSetLink[i] = False
+                        resultsValueSetLink[i+1] = True
+                        skip = True
+            else:
+                skip = False
+
+        couple = list(zip(channels, resultsValueSetName, resultsValueSetLink))        
+    
+
+        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": couple})
 
     def set_fader(self, token, channel_id, value):
         channel_address = self.channelDAO.get_channel_address(channel_id)

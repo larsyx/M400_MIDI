@@ -12,7 +12,7 @@ function enableHoldClick(button) {
 
     const startClicking = () => {
         triggerClick(); 
-        interval = setInterval(triggerClick, 100);
+        interval = setInterval(triggerClick, 200);
     };
 
     const stopClicking = () => {
@@ -29,17 +29,6 @@ function enableHoldClick(button) {
     button.addEventListener('touchend', stopClicking);
     button.addEventListener('touchcancel', stopClicking);
 
-    button.addEventListener('mousedown', e => {
-        if (isTouch) return; 
-        if (!interval) startClicking();
-    });
-
-    button.addEventListener('mouseup', stopClicking);
-    button.addEventListener('mouseleave', stopClicking);
-
-    button.addEventListener('click', () => {
-        if (!interval) triggerClick();
-    });
 }
 
 const sliders = document.getElementsByClassName('canale-container'); 
