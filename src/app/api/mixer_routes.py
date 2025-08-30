@@ -187,3 +187,14 @@ async def set_fader(request: Request):
     value = data.get("value")
 
     mixer_service.set_switch_aux_value(token, auxId, canaleId, value)
+
+
+@router.post("/mixer/saveDisposition")
+async def save_disposition(request: Request):
+    user = get_current_user(request)
+    verify_mixer(user["sub"])
+
+    data = await request.json()
+    disposition = data.get("disposition")
+
+    mixer_service.save_disposition(disposition)

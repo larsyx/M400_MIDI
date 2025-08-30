@@ -151,3 +151,71 @@ function openScene(){
     const sceneContainer = document.querySelector(".scene-container-list");
     sceneContainer.classList.toggle("visible");
 }
+
+
+// Disposition
+
+function openDisposition(){
+    const dispositionContainer = document.querySelector(".disposition-container");
+    dispositionContainer.classList.toggle("visible");
+}
+
+const sortable =new Sortable(document.getElementById("sortable-element"), {
+    animation: 150,
+    handle: ".drag",
+    dataIdAttr: "id"
+});
+const list = document.getElementById("sortable-element")
+
+let draggedItem = null;
+
+
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('li:not(.dragging)')];
+
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child };
+        } else {
+        return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function saveDisposition() {
+    const ul = document.getElementById("sortable-element");
+    const items = ul.querySelectorAll("li");
+
+    const order = Array.from(items).map(item => item.id);
+
+    const xhttp = new XMLHttpRequest();
+    xhttp.open("POST", "./saveDisposition", true);
+    xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+    const message = {
+        disposition: order
+    };
+
+    xhttp.send(JSON.stringify(message));
+
+    xhttp.onload = function() {
+        if (xhttp.status === 200) {
+            window.location.reload();
+        } else {
+            alert("Errore nel salvataggio della disposizione");
+        }
+    };
+}
+
+function resetOrder(){
+    const ul = document.getElementById("sortable-element");
+    const items = ul.querySelectorAll("li");
+
+    const ids = Array.from(items).map(li => li.id);
+
+    const sortedIds = ids.sort((a, b) => Number(a) - Number(b));
+
+    sortable.sort(sortedIds, true);
+}

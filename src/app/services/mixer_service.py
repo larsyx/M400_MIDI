@@ -33,7 +33,14 @@ class MixerService:
     def load_fader(self, request):
         canali = self.channelDAO.get_all_channels()
         dca = self.dcaDAO.get_dca()
-                    
+
+
+        order = self.load_disposition()
+
+        canali_map = {str(c.id): c for c in canali}
+        canali = [canali_map[cid] for cid in order if cid in canali_map]
+
+
         # get value canali
         
         listenAddressFader = []
@@ -457,3 +464,13 @@ class MixerService:
             if(canaleId == "aux_main"):
                 indirizzo = [int(x,16) for x in aux.midi_address_main.split(",")] + self.postSwitch
                 self.midiController.send_command(indirizzo, MidiController.convert_switch_to_hex(int(value)), token)
+
+    def save_disposition(self, disposition):
+        with open(os.path.join(os.path.dirname(__file__), "..", "..", "Database", "mixer_disposition.json"), "w", encoding="utf-8") as f:
+            json.dump({"disposition": disposition}, f, indent=4, ensure_ascii=False)
+
+
+    def load_disposition(self):
+        with open(os.path.join(os.path.dirname(__file__), "..", "..", "Database", "mixer_disposition.json"), "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data.get("disposition", [])

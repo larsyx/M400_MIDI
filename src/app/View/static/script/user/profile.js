@@ -1,3 +1,5 @@
+
+
 function openNav() {
     document.getElementById("profile-nav").style.width = "250px";
 }
@@ -17,6 +19,8 @@ function closeSaveNav() {
 
 function saveProfile(id){
     closeSaveNav();
+    if(spinner)
+        spinner.hidden = false;
     const rawProfiles = getProfileChannelsValue();
 
     const profiles = Object.entries(rawProfiles).map(([key, value]) => ({
@@ -41,6 +45,8 @@ function saveProfile(id){
                 location.reload();
             } else {
                 alert("errore");
+                if(spinner)
+                    spinner.hidden = true;
             }
         }
     }
@@ -52,6 +58,8 @@ function saveProfile(id){
 function saveNewProfile(){
     closeSaveNav();
     el = document.getElementById("name-profile");
+    if(spinner)
+        spinner.hidden = false;
 
     if(el){
         if(el.value==null || el.value=="")
@@ -80,6 +88,8 @@ function saveNewProfile(){
                         location.reload();
                     } else {
                         alert("errore");
+                        if(spinner)
+                            spinner.hidden = true;
                     }
                 }
             }
@@ -158,6 +168,8 @@ function getProfileChannelsValue(){
 function deleteProfiles(){
     if(confirm('Sei sicuro di voler eliminare tutti i profili?')){
         const xhttp = new XMLHttpRequest();
+        if(spinner)
+            spinner.hidden = false;
 
         xhttp.open("DELETE", `./deleteProfiles`);
 
@@ -168,6 +180,8 @@ function deleteProfiles(){
                     location.reload();
                 } else {
                     alert("errore");
+                    if(spinner)
+                        spinner.hidden = true;
                 }
             }
         }
@@ -179,6 +193,8 @@ function deleteProfiles(){
 function deleteProfile(id){
     if(confirm('Sei sicuro di voler eliminare il profilo?')){
         const xhttp = new XMLHttpRequest();
+        if(spinner)
+            spinner.hidden = false;
 
         const params = new URLSearchParams({
             profile_id: id
@@ -190,8 +206,11 @@ function deleteProfile(id){
                 const status = xhttp.status;
                 if (status === 0 || (status >= 200 && status < 400)) {
                     location.reload();
+
                 } else {
                     alert("errore");
+                    if(spinner)
+                        spinner.hidden = true;
                 }
             }
         }
