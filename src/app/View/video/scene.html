@@ -95,7 +95,7 @@
                         <div>{{canale.name}}</div>
 
                         <button type="button" onclick="changeValue({{ canale.id }}, 'plus')">+</button>
-                        <input class="inputRange"  type="range" min="0" max="100" value="0" id="canale_{{ canale.id }}" onchange="sendMessage( {{canale.id}} , this.value);" oninput="sendMessage({{canale.id}} , this.value);">
+                        <input class="inputRange vertical"  type="range" min="0" max="100" value="0" id="canale_{{ canale.id }}" onchange="sendMessage( {{canale.id}} , this.value);" oninput="sendMessage({{canale.id}} , this.value);">
                         <button type="button"  onclick="changeValue({{ canale.id }}, 'minus')" >-</button>
 
                         <span class="descrizione">{% if name is not none %} <strong> {{ name }}</strong> {% elif canale.description is not none %} <strong> {{ canale.description }}</strong> {% endif %}</span>

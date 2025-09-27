@@ -22,3 +22,12 @@
 }
 
 
+/* Slider orizzontali: permetti solo pan verticale (scroll Y), blocca X */
+input[type="range"]:not(.vertical) {
+  touch-action: pan-y;
+}
+
+/* Slider verticali: permetti solo pan orizzontale (scroll X), blocca Y */
+input[type="range"].vertical {
+  touch-action: pan-x;
+}

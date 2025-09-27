@@ -62,12 +62,6 @@ if(gain){
     btns.forEach(enableHoldClick);
 }
 
-const inputRanges = document.querySelectorAll('input[type="range"]');
-
-inputRanges.forEach(input => {
-    input.addEventListener('mousedown', onCustomStart, { passive: false, capture: true });
-    input.addEventListener('touchstart', onCustomStart, { passive: false, capture: true });
-});
 
 function isVertical(slider) {
     const rect = slider.getBoundingClientRect();
@@ -95,75 +89,92 @@ function isClickOnThumb(e) {
     }
 }
 
+function enableCustomSlider(slider) {
+  let startX = null;
+  let startY = null;
+  let startValue = null;
+  let dragging = false;
+  let vertical = isVertical(slider);
+  let min = Number(slider.min) || 0;
+  let max = Number(slider.max) || 100;
+  let step = Number(slider.step) || 1;
+  let range = max - min;
 
-let isDragging = false;
-let startCoord = 0;
-let startValue = 0;
-let activeSlider = null;
+  function getCoord(e) {
+    return {
+      x: e.clientX,
+      y: e.clientY
+    };
+  }
 
-function onCustomStart(e) {
+  slider.addEventListener("pointerdown", (e) => {
     if (!isClickOnThumb(e)) {
-        e.preventDefault();
-        e.stopPropagation();
+      e.preventDefault();
+      e.stopPropagation();
     }
 
-    const slider = e.currentTarget;
-    activeSlider = slider;
-    isDragging = true;
-    startValue = parseFloat(slider.value);
-    const vertical = isVertical(slider);
+    const { x, y } = getCoord(e);
+    startX = x;
+    startY = y;
+    startValue = Number(slider.value);
+    dragging = false;
+    slider.setPointerCapture(e.pointerId);
+  });
 
-    startCoord = vertical
-        ? (e.clientY || (e.touches && e.touches[0].clientY))
-        : (e.clientX || (e.touches && e.touches[0].clientX));
+  slider.addEventListener("pointermove", (e) => {
+    if (!slider.hasPointerCapture(e.pointerId)) return;
 
-    const moveHandler = (ev) => onCustomMove(ev, slider, startCoord, startValue, vertical);
-    const endHandler = stopCustomDrag;
+    const { x, y } = getCoord(e);
+    const deltaX = x - startX;
+    const deltaY = y - startY;
 
-    document.addEventListener('mousemove', moveHandler);
-    document.addEventListener('mouseup', endHandler);
-    document.addEventListener('touchmove', moveHandler, { passive: false });
-    document.addEventListener('touchend', endHandler);
+    if (!dragging) {
+      // decido la direzione solo dopo che l'utente si è mosso un po'
+      if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+        if (vertical && Math.abs(deltaY) > Math.abs(deltaX)) {
+          dragging = true; // verticale: movimento prevalente in Y
+        } else if (!vertical && Math.abs(deltaX) > Math.abs(deltaY)) {
+          dragging = true; // orizzontale: movimento prevalente in X
+        } else {
+          // gesto è scroll → rilascio il capture e lascio scorrere
+          slider.releasePointerCapture(e.pointerId);
+          return;
+        }
+      } else {
+        return; // non ancora deciso
+      }
+    }
 
-    slider._moveHandler = moveHandler;
-    slider._endHandler = endHandler;
-}
+    e.preventDefault(); // blocco lo scroll SOLO quando sono in drag
 
-function onCustomMove(e, slider, startCoord, startValue, vertical) {
-    if (!isDragging) return;
-
-    e.preventDefault(); 
-
-    const currentCoord = vertical
-        ? (e.clientY || (e.touches && e.touches[0].clientY))
-        : (e.clientX || (e.touches && e.touches[0].clientX));
-
-    const delta = currentCoord - startCoord;
     const sliderSize = vertical ? slider.offsetHeight : slider.offsetWidth;
-
-    const percent = vertical ? -delta / sliderSize : delta / sliderSize;
-    const range = parseFloat(slider.max) - parseFloat(slider.min);
-    const step = parseFloat(slider.step) || 1;
+    const delta = vertical ? -deltaY : deltaX;
+    const percent = delta / sliderSize;
 
     let newValue = startValue + percent * range;
     newValue = Math.round(newValue / step) * step;
-    newValue = Math.max(slider.min, Math.min(slider.max, newValue));
+    newValue = Math.max(min, Math.min(max, newValue));
 
     slider.value = newValue;
-    slider.dispatchEvent(new Event('input'));
-}
+    slider.dispatchEvent(new InputEvent("input", { bubbles: true }));
+  });
 
-function stopCustomDrag() {
-    isDragging = false;
-
-    if (activeSlider) {
-        document.removeEventListener('mousemove', activeSlider._moveHandler);
-        document.removeEventListener('mouseup', activeSlider._endHandler);
-        document.removeEventListener('touchmove', activeSlider._moveHandler);
-        document.removeEventListener('touchend', activeSlider._endHandler);
-
-        delete activeSlider._moveHandler;
-        delete activeSlider._endHandler;
-        activeSlider = null;
+  slider.addEventListener("pointerup", (e) => {
+    if (slider.hasPointerCapture(e.pointerId)) {
+      slider.releasePointerCapture(e.pointerId);
     }
+    dragging = false;
+  });
+
+  slider.addEventListener("pointercancel", () => {
+    dragging = false;
+  });
 }
+
+// Attivazione su tutti gli slider
+document.querySelectorAll('input[type="range"]').forEach(enableCustomSlider);
+
+
+window.addEventListener("offline", () => {
+  alert("Connessione persa!\nConnettiti alla rete Wi-Fi del mixer per continuare a usarlo.");
+});

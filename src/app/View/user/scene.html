@@ -93,7 +93,7 @@
                     <div class="main-fader">
                         <span class="descrizione" style="padding: 10px;">Main</span>
                         <button type="button" onclick="changeValue('main', 'plus')">+</button>
-                        <input class="inputRange" type="range" min="0" max="100" value="0" id="canale_main" onchange="sendMessageMain(this.value);", oninput="sendMessageMain(this.value);">       
+                        <input class="inputRange vertical" type="range"  min="0" max="100" value="0" id="canale_main" onchange="sendMessageMain(this.value);", oninput="sendMessageMain(this.value);">       
                         <button type="button" onclick="changeValue('main', 'minus')">-</button>
                     </div>
                     {% if hasBatteria == true %}

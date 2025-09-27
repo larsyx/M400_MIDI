@@ -103,9 +103,15 @@ function syncFader(){
 
 // WebSocket connection
 function createAndConnectWebSocket(){
-    if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING || isConnecting)) {
-        return;
+
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        return; 
     }
+
+    if (socket && socket.readyState === WebSocket.CONNECTING) {
+        socket.close();
+    }
+
 
     isConnecting = true;
 
@@ -149,26 +155,36 @@ function createAndConnectWebSocket(){
         message = document.querySelector(".alert");
         message.hidden = false;
         message.getElementsByTagName("p")[0].innerHTML = "Disconnesso, nessuna sincronizzazione con il mixer <a href='#' onclick='createAndConnectWebSocket();'>ricarica la pagina</a>";
+
+        setTimeout(createAndConnectWebSocket, 1000); 
     };
 }
 
+
+function ensureWebSocket() {
+  if (!socket || socket.readyState === WebSocket.CLOSED || socket.readyState === WebSocket.CLOSING) {
+    createAndConnectWebSocket();
+  }
+}
+
+
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
-    createAndConnectWebSocket();
+    ensureWebSocket();
   }
 });
 
-window.addEventListener("focus", () => {
-  createAndConnectWebSocket();
-});
-
+window.addEventListener("focus", ensureWebSocket);
 window.addEventListener("pageshow", (event) => {
-    if (event.persisted || socket.readyState !== WebSocket.OPEN) {
-        createAndConnectWebSocket();
+    if (event.persisted) {
+        ensureWebSocket();
     }
 });
 
 createAndConnectWebSocket();
+
+setInterval(ensureWebSocket, 5000);
+
 
 
 function toggleMain() {
