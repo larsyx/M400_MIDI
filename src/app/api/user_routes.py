@@ -105,6 +105,16 @@ async def get_fader_value(request: Request, scene_id : int, aux: str, auxMain: s
 
     return user_service.get_faders_value(user_data["sub"], scene_id, aux, auxMain)
 
+@router.post("/user/scene_{scene_id}/getNamesValue")
+async def get_names_value(request: Request, scene_id : int):
+    user_data = get_current_user(request)
+
+    data = await request.json()
+    list_channels = data.get("list_channels")
+
+    return user_service.get_faders_names(list_channels)
+
+
 @router.post("/user/scene_{scene_id}/createProfile")
 async def create_profile(request : Request, scene_id : int):
     user_data = get_current_user(request)
@@ -145,3 +155,5 @@ async def get_profile(request : Request, scene_id : int, profile_id: int):
     token = request.cookies.get("access_token")
 
     return user_service.load_profile(user_data["sub"], token, scene_id, profile_id)
+
+

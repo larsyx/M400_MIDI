@@ -7,6 +7,7 @@ from app.dao.partecipazione_scena_dao import PartecipazioneScenaDAO
 from app.dao.user_dao import UserDAO
 from app.dao.profile_dao import ProfileDAO
 from app.dao.profile_layout_dao import ProfileLayoutDAO
+from app.dao.aux_dao import AuxDAO
 from fastapi.responses import RedirectResponse
 import os
 import json
@@ -17,6 +18,7 @@ class UserService:
     def __init__(self):
         load_dotenv()
         self.userDAO = UserDAO()
+        self.auxDAO = AuxDAO()
         self.partecipazioneScenaDAO = PartecipazioneScenaDAO()
         self.layoutCanaleDAO = LayoutCanaleDAO()
         self.channelDAO = ChannelDAO()
@@ -25,6 +27,7 @@ class UserService:
         self.templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "..", "view", "user"))
         self.midiController = MidiController()
         self.postMainFader = [int(val,16) for val in os.getenv("Main_Post_Fix_Fader").split(",")]
+        self.postName = [int(val,16) for val in os.getenv("Fader_Post_Name").split(",")]
 
     def load_scene(self, scenaID, userID, request):
         
@@ -42,8 +45,27 @@ class UserService:
 
         profiles = self.get_profiles(userID, scenaID)
 
-        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": canali, "indirizzoaux": aux.midi_address, "indirizzoauxMain": aux.midi_address_main, "hasBatteria" : hasBatteria, 'profiles' : profiles})
-        
+        # auxs name
+        listenAddressAuxName = []
+        auxs = self.auxDAO.get_all_aux()
+        for a in auxs:
+            auxAddress = [int(x,16) for x in a.midi_address_main.split(",")]
+            listenAddressAuxName.append(auxAddress + self.postName)
+
+        resultsValueAuxName = MidiListener.init_and_listen(listenAddressAuxName, call_type.NAME) 
+        resultsValueAuxSetName = {}
+
+        for a in auxs:
+            auxAddress = [int(x,16) for x in a.midi_address_main.split(",")]
+            try:
+                resultsValueAuxSetName[a.id] = resultsValueAuxName[tuple(auxAddress + self.postName)]
+            except KeyError as k:
+                print("errore chiave ", k)
+                resultsValueAuxSetName[a.id] = ""
+
+
+        return self.templates.TemplateResponse("scene.html", {"request": request, "canali": canali, "aux" : aux, "auxs" : auxs, "auxNames" : resultsValueAuxSetName, "hasBatteria" : hasBatteria, 'profiles' : profiles})
+
     def set_layout(self, userID, scenaID, request):  
         channels = self.channelDAO.get_all_channels()
         layouts = self.layoutCanaleDAO.get_layout_channel(userID, scenaID)
@@ -104,6 +126,29 @@ class UserService:
 
         return json.dumps(results_value_set, indent=2)
 
+    def get_faders_names(self, list_channels):
+        listenAddressName = []
+        for channel in list_channels:
+            channel_midi = self.channelDAO.get_channel_address(channel_id = channel)
+            channel_address = [int(x,16) for x in channel_midi.split(",")] 
+            listenAddressName.append(channel_address + self.postName)
+
+        # get names channel
+        resultsValueName = MidiListener.init_and_listen(listenAddressName, call_type.NAME)       
+        resultsValueSetName = dict()
+
+        # get channel name
+        for channel in list_channels:
+            channel_midi = self.channelDAO.get_channel_address(channel_id = channel)
+            channel_address = [int(x,16) for x in channel_midi.split(",")] 
+            try:
+                resultsValueSetName[channel] = resultsValueName[tuple(channel_address + self.postName)]
+            except KeyError as k:
+                print("errore chiave ch name:", k)
+                resultsValueSetName[channel] = 0
+
+        return resultsValueSetName
+
     # profile
     def create_profile(self, name, user, scene_id, profiles):
         if name == None or name == "" or scene_id == None or user == None or user == "":
@@ -159,4 +204,6 @@ class UserService:
 
         return json.dumps(response)
 
+    def get_aux(self, aux_id):
+        return self.auxDAO.get_aux_by_id(aux_id)
     
