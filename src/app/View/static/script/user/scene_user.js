@@ -148,7 +148,6 @@ aux_items.forEach(item => {
 
     item.addEventListener('click', (e) => {
         const id = e.target.id.split("_")[1];
-
         fetch(`./getAux/${id}`, {
             method: 'GET'
         })
@@ -161,9 +160,10 @@ aux_items.forEach(item => {
 
                 aux = data.midi_address;
                 auxMain = data.midi_address_main;
-            })
-            .catch(error => {
-                console.error("Errore nella richiesta:", error);
+
+                syncFader();
+                socket.close();
+                createAndConnectWebSocket();
             });
     });
 });
@@ -271,7 +271,7 @@ function toggleMain() {
 }
 
 
-const dropdownElement = document.querySelector('.dropdown');
+const dropdownElement = document.getElementById('menu');
 const canvas = document.getElementsByClassName('sticky')[0];
 
 dropdownElement.addEventListener('show.bs.dropdown', () => {

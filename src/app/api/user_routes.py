@@ -45,6 +45,12 @@ async def set_fader(request: Request):
 
     user_service.set_fader(token, canaleId, value, indirizzoAux)
     
+@router.get("/user/scene_{scene_id}/getAux/{aux_id}")
+async def get_aux(request: Request, aux_id: int):
+    user_data = get_current_user(request)
+
+    return user_service.get_aux(aux_id)
+
 
 @router.post("/user/scene_{scene_id}/set/main")
 async def set_fader_main(request: Request):

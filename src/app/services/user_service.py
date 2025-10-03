@@ -158,6 +158,8 @@ class UserService:
         if profile and profiles != None and len(profiles) > 0:
             self.profileLayoutDAO.update_profiles_layout(profile.id, user, scene_id, profiles)
 
+        return json.dumps({"id" : profile.id, "name" : profile.name})
+
 
     def delete_profile(self, id, user, scene_id):
         if id == None or  user == None or user == "":

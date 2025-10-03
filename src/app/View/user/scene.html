@@ -59,7 +59,7 @@
     </div>
 
     <div class="menu-buttons position-fixed top-0 end-0 m-3">
-        <div class="dropdown">
+        <div class="dropdown" id="menu">
             <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown"
                 aria-expanded="false">
                 ☰
@@ -154,9 +154,9 @@
     <div id="profile-save-nav" class="sidenav">
         <a href="javascript:void(0)" class="closebtn" onclick="closeSaveNav()">&times;</a>
         {% for profile in profiles %}
-        <a href="#" onclick="saveProfile({{profile.id}}, '{{profile.name}}')">{{profile.name}}</a>
+        <a href="#" id="profile_save_{{profile.id}}" class="profile-item" onclick="saveProfile({{profile.id}}, '{{profile.name}}')">{{profile.name}}</a>
         {% endfor %}
-        <div class="text-profile">
+        <div class="text-profile" id="new-profile-div">
             <input id="name-profile" type="text" />
             <button onclick="saveNewProfile()">+</button>
         </div>
