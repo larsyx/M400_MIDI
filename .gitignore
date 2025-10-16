@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *.so
+*.cpython-*
 
 # Virtual environments
 venv/
@@ -11,3 +12,7 @@ env/
 # IDEs
 .vscode/
 .idea/
+
+
+./src/Database/database.db
+./src/Database/init_db.py

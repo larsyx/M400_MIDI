@@ -17,7 +17,7 @@ input[type="range"]::-webkit-slider-thumb {
     appearance: none;
     width: 30px;
     height: 30px;
-    border-radius: 30%; 
+    border-radius: 30%;
     background: #000000;
     cursor: pointer;
 }
@@ -28,7 +28,7 @@ input[type="range"]::-moz-range-thumb {
     border-radius: 30%;
     background: #000000;
     cursor: pointer;
-    
+
     margin-top: -5px;
     margin-bottom: -5px;
     position: relative;
@@ -36,8 +36,105 @@ input[type="range"]::-moz-range-thumb {
 }
 
 input[type="range"]::-moz-range-progress {
-  background: black;
-  height: 100%;
-  border-radius: 10px;
+    background: black;
+    height: 100%;
+    border-radius: 10px;
 }
 
+
+.sliders-wrapper {
+    display: flex;
+    gap: 50px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 20px 10px;
+    scroll-behavior: smooth;
+}
+
+.sliders-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+
+.sliders-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.sliders-wrapper::-webkit-scrollbar-thumb {
+    background: #000000;
+    border-radius: 10px;
+}
+
+.sliders-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #333333;
+}
+
+.slider-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.slider-label {
+    font-weight: 600;
+    color: #555;
+    font-size: 14px;
+}
+
+.slider-container {
+    position: relative;
+    width: 60px;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slider-track {
+    position: absolute;
+    width: 15px;
+    height: 100%;
+    background: white;
+    border: 1.5px solid black;
+    border-radius: 10px;
+    cursor: pointer;
+    overflow: hidden;
+    touch-action: none;
+}
+
+.slider-fill {
+    position: absolute;
+    width: 15px;
+    background: black;
+    border-radius: 10px;
+    pointer-events: none;
+    transition: height 0.1s ease;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.slider-thumb {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: #000000;
+    border-radius: 30%;
+    cursor: grab;
+    box-shadow: none;
+    transition: transform 0.1s ease;
+    z-index: 10;
+    left: 50%;
+    transform: translateX(-50%);
+    touch-action: none;
+}
+
+.slider-thumb:hover {
+    transform: translateX(-50%) scale(1.05);
+}
+
+.slider-thumb:active {
+    cursor: grabbing;
+    transform: translateX(-50%) scale(1.1);
+}

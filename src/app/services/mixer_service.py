@@ -41,8 +41,7 @@ class MixerService:
         canali = [canali_map[cid] for cid in order if cid in canali_map]
 
 
-        # get value canali
-        
+        # get value canali   
         listenAddressFader = []
         listenAddressSwitch = []
         listenAddressName = []
@@ -55,6 +54,10 @@ class MixerService:
             listenAddressFader.append(channelAddress + self.postMainFader)
             listenAddressSwitch.append(channelAddress + self.postSwitch)
             listenAddressName.append(channelAddress + self.postName)
+
+        # init link in default order
+        for canale in sorted(canali, key=lambda c: c.id):
+            channelAddress = [int(x,16) for x in canale.midi_address.split(",")] 
             listenAddressLink.append(channelAddress + self.postLink)
 
         for dcaChannel in dca:
@@ -156,27 +159,34 @@ class MixerService:
         resultsValueLink = MidiListener.init_and_listen(listenAddressLink, call_type.SWITCH)    
         resultsValueSetLink = []
 
-        for address in listenAddressLink:
+        for canale in sorted(canali, key=lambda c: c.id):
+            channelAddress = [int(x,16) for x in canale.midi_address.split(",")] 
             try:
-                resultsValueSetLink.append(not resultsValueLink[tuple(address)])
+                resultsValueSetLink.append(not resultsValueLink[tuple(channelAddress + self.postLink)])
             except KeyError as k:
                 print("errore chiave ch link:", k)
                 resultsValueSetLink.append(False)
 
         # only the second link
-        skip = False
-        for i in range(len(resultsValueSetLink)-1):
-            if not skip:
-                if resultsValueSetLink[i]:
-                    if resultsValueSetLink[i+1]:
-                        resultsValueSetLink[i] = False
-                        skip = True
-                    if not resultsValueSetLink[i+1]:
-                        resultsValueSetLink[i] = False
-                        resultsValueSetLink[i+1] = True
-                        skip = True
-            else:
-                skip = False
+        # skip = False
+        # for i in range(len(resultsValueSetLink)-1):
+        #     if not skip:
+        #         if resultsValueSetLink[i]:
+        #             if resultsValueSetLink[i+1]:
+        #                 resultsValueSetLink[i] = False
+        #                 skip = True
+        #             if not resultsValueSetLink[i+1]:
+        #                 resultsValueSetLink[i] = False
+        #                 resultsValueSetLink[i+1] = True
+        #                 skip = True
+        #     else:
+        #         skip = False
+        
+        print("Before list link", resultsValueSetLink)
+        
+        self.list_link(resultsValueSetLink)        
+
+        print("After list link", resultsValueSetLink)
 
         coppieCanali = list(zip(canali, resultsValueSet, resultsValueSetSwitch, resultsValueSetName, resultsValueSetLink))
 
@@ -209,6 +219,216 @@ class MixerService:
                 resultsValueAuxSetName[aux.id] = ""
 
         return self.templates.TemplateResponse("scene.html", {"request": request, "canali": coppieCanali, "dcas": coppieDca, "valueMain" : valueMain, "switchMain" : switchMain, "scenes" : scenes, "auxs" : resultsValueAuxSetName})
+
+    def sync_fader(self, request):
+        canali = self.channelDAO.get_all_channels()
+
+        order = self.load_disposition()
+
+        canali_map = {str(c.id): c for c in canali}
+        canali = [canali_map[cid] for cid in order if cid in canali_map]
+
+
+        # get value canali
+        
+        listenAddressFader = []
+        listenAddressSwitch = []
+        listenAddressName = []
+        listenAddressLink = []
+
+        # initialize the list of addresses for request and listen
+        for canale in canali:
+            channelAddress = [int(x,16) for x in canale.midi_address.split(",")] 
+            
+            listenAddressFader.append(channelAddress + self.postMainFader)
+            listenAddressSwitch.append(channelAddress + self.postSwitch)
+            listenAddressName.append(channelAddress + self.postName)
+            listenAddressLink.append(channelAddress + self.postLink)
+
+        listenAddressFader.append(self.preMain + self.postMainFader)
+        listenAddressSwitch.append(self.preMain + self.postSwitch)
+
+        # channel request and listen
+        resultsValue = MidiListener.init_and_listen(listenAddressFader, call_type.CHANNEL)
+        resultsValueSet = []
+        
+        # get channel value
+        for canale in canali:
+            channelAddress = [int(x,16) for x in canale.midi_address.split(",")] 
+            try:
+                resultsValueSet.append(resultsValue[tuple(channelAddress + self.postMainFader)])
+            except KeyError as k:
+                print("errore chiave ch value:", k)
+                resultsValueSet.append(0)
+
+        # get main fader value
+        try:
+            valueMain = resultsValue[tuple(self.preMain + self.postMainFader)]
+        except KeyError as e:
+            print(f"error key main {e}")
+            valueMain = 0
+
+
+        # Channel switch get value and listen
+        resultsValueSwitch = MidiListener.init_and_listen(listenAddressSwitch, call_type.SWITCH)     
+        resultsValueSetSwitch = []
+
+        for canale in canali:
+            channelAddress = [int(x,16) for x in canale.midi_address.split(",")] 
+            try:
+                resultsValueSetSwitch.append(resultsValueSwitch[tuple(channelAddress + self.postSwitch)])
+            except KeyError as k:
+                print("errore chiave ch switch", k)
+                resultsValueSetSwitch.append(0)
+
+        try:
+            switchMain = resultsValueSwitch[tuple(self.preMain + self.postSwitch)]
+        except KeyError as e:
+            print(f"error key {e}")
+            switchMain = False
+
+
+        # get names channel
+        resultsValueName = MidiListener.init_and_listen(listenAddressName, call_type.NAME)       
+        resultsValueSetName = []
+        resultDcaValueSetName = []
+        
+        # get channel name
+        for canale in canali:
+            channelAddress = [int(x,16) for x in canale.midi_address.split(",")] 
+            try:
+                resultsValueSetName.append(resultsValueName[tuple(channelAddress + self.postName)])
+            except KeyError as k:
+                print("errore chiave ch name:", k)
+                resultsValueSetName.append(0)
+
+        # get link channel
+        resultsValueLink = MidiListener.init_and_listen(listenAddressLink, call_type.SWITCH)    
+        resultsValueSetLink = []
+
+        for address in listenAddressLink:
+            try:
+                resultsValueSetLink.append(not resultsValueLink[tuple(address)])
+            except KeyError as k:
+                print("errore chiave ch link:", k)
+                resultsValueSetLink.append(False)
+
+        resultsValueSetLink[0] = True
+        resultsValueSetLink[1] = True
+        # only the second link
+        self.list_link(resultsValueSetLink)
+        
+        coppieCanali = list(zip(canali, resultsValueSet, resultsValueSetSwitch, resultsValueSetName, resultsValueSetLink))
+
+        return json.dumps({"canali": [ {"id": c.id, "value": v, "switch": s, "name": n, "channelName": c.name, "link": l} for c, v, s, n, l in coppieCanali], "valueMain": valueMain, "switchMain": switchMain}, indent=4)
+
+    def sync_dca(self, request):
+        dca = self.dcaDAO.get_dca()
+
+        # get value canali
+        
+        listenAddressFader = []
+        listenAddressSwitch = []
+        listenAddressName = []
+        listenAddressLink = []
+
+        # initialize the list of addresses for request and listen
+
+        for dcaChannel in dca:
+            dca_address = [int(x,16) for x in dcaChannel.midi_address.split(",")]
+
+            listenAddressFader.append(dca_address + self.dca_fader_post)
+            listenAddressSwitch.append(dca_address + self.dca_switch_post)
+            listenAddressName.append(dca_address + self.postName)
+
+
+        # channel request and listen
+        resultsValue = MidiListener.init_and_listen(listenAddressFader, call_type.CHANNEL)
+
+        # get dca value
+        resultDcaValueSet = []
+
+        for dcaChannel in dca:
+            dcaAddress = [int(x,16) for x in dcaChannel.midi_address.split(",")] + self.dca_fader_post 
+            try:
+                resultDcaValueSet.append(resultsValue[tuple(dcaAddress)])
+            except KeyError as k:
+                print("errore chiave dca value:", k)
+                resultDcaValueSet.append(0)
+
+
+        # Channel switch get value and listen
+        resultsValueSwitch = MidiListener.init_and_listen(listenAddressSwitch, call_type.SWITCH)     
+
+        resultDcaValueSetSwitch = []
+
+        for dcaChannel in dca:
+            dcaAddress = [int(x,16) for x in dcaChannel.midi_address.split(",")] + self.dca_switch_post 
+            try:
+                resultDcaValueSetSwitch.append(resultsValueSwitch[tuple(dcaAddress)])
+            except KeyError as k:
+                print("errore chiave dca switch:", k)
+                resultDcaValueSetSwitch.append(0)
+
+
+        # get names channel
+        resultsValueName = MidiListener.init_and_listen(listenAddressName, call_type.NAME)       
+        resultDcaValueSetName = []
+
+        # get dca name
+
+        for dcaChannel in dca:
+            dcaAddress = [int(x,16) for x in dcaChannel.midi_address.split(",")] 
+            try:
+                resultDcaValueSetName.append(resultsValueName[tuple(dcaAddress + self.postName)])
+            except KeyError as k:
+                print("errore chiave dca name", k)
+                resultDcaValueSetName.append(0)
+
+        #DCA
+        coppieDca = list(zip(dca, resultDcaValueSet, resultDcaValueSetSwitch, resultDcaValueSetName))
+
+        return json.dumps({"dcas": [ {"id": d.id, "nameDca": d.name, "value": v, "switch": s, "name": n} for d, v, s, n in coppieDca]}, indent=4)
+    
+    def sync_aux(self, request):
+        # auxs name
+        listenAddressAuxName = []
+        listenAddressLink = []
+        auxs = self.auxDAO.get_all_aux()
+        for aux in auxs:
+            auxAddress = [int(x,16) for x in aux.midi_address_main.split(",")]
+            listenAddressAuxName.append(auxAddress + self.postName)
+            listenAddressLink.append(auxAddress + self.postLink)
+
+        resultsValueAuxName = MidiListener.init_and_listen(listenAddressAuxName, call_type.NAME) 
+        resultsValueAuxSetName = {}
+
+        for aux in auxs:
+            auxAddress = [int(x,16) for x in aux.midi_address_main.split(",")] 
+            try:
+                resultsValueAuxSetName[aux.id] = resultsValueAuxName[tuple(auxAddress + self.postName)]
+            except KeyError as k:
+                print("errore chiave ", k)
+                resultsValueAuxSetName[aux.id] = ""
+                
+                
+        resultsValueAuxLink = MidiListener.init_and_listen(listenAddressLink, call_type.SWITCH)    
+        resultsValueAuxSetLink = {}
+        for aux in auxs:
+            auxAddress = [int(x,16) for x in aux.midi_address_main.split(",")] 
+            try:
+                resultsValueAuxSetLink[aux.id] = not resultsValueAuxLink[tuple(auxAddress + self.postLink)]
+            except KeyError as k:
+                print("errore chiave ch link:", k)
+                resultsValueAuxSetLink[aux.id] = False
+        
+        aux_link = list(resultsValueAuxSetLink.values())
+
+        self.list_link(aux_link)
+
+        result = list(zip(auxs, resultsValueAuxSetName.values(), aux_link))
+
+        return json.dumps({"auxs": [ {"id": aux.id, "nameAux": aux.name, "name": name, "link": link} for aux, name, link in result]}, indent=4)
 
     def get_aux_parameters(self, aux_id):
         aux = self.auxDAO.get_aux_by_id(aux_id)
@@ -469,8 +689,24 @@ class MixerService:
         with open(os.path.join(os.path.dirname(__file__), "..", "..", "Database", "mixer_disposition.json"), "w", encoding="utf-8") as f:
             json.dump({"disposition": disposition}, f, indent=4, ensure_ascii=False)
 
-
     def load_disposition(self):
         with open(os.path.join(os.path.dirname(__file__), "..", "..", "Database", "mixer_disposition.json"), "r", encoding="utf-8") as f:
             data = json.load(f)
             return data.get("disposition", [])
+    
+    @staticmethod
+    def list_link(list):
+        # only the second link
+        skip = False
+        for i in range(len(list)-1):
+            if not skip:
+                if list[i]:
+                    if list[i+1]:
+                        list[i] = False
+                        skip = True
+                    if not list[i+1]:
+                        list[i] = False
+                        list[i+1] = True
+                        skip = True
+            else:
+                skip = False

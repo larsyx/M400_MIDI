@@ -13,6 +13,26 @@ async def home(request : Request):
 
     return mixer_service.load_fader(request)
 
+@router.get("/mixer/syncFader")
+async def sync_fader(request: Request):
+    user = get_current_user(request)
+    verify_mixer(user["sub"])
+
+    return mixer_service.sync_fader(request)
+
+@router.get("/mixer/syncDCA")
+async def sync_DCA(request: Request):
+    user = get_current_user(request)
+    verify_mixer(user["sub"])
+
+    return mixer_service.sync_dca(request)
+
+@router.get("/mixer/syncAux")
+async def sync_aux(request: Request):
+    user = get_current_user(request)
+    verify_mixer(user["sub"])
+
+    return mixer_service.sync_aux(request)
 
 @router.post("/mixer/set")
 async def set_fader(request: Request):
